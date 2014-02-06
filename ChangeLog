@@ -1,0 +1,3 @@
+opendroid: build ${BUILD_VERSION}
+opendroid: build $BUILD_VERSION
+
