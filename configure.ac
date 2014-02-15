@@ -55,12 +55,6 @@ AC_ARG_WITH(boxtype,
 AC_SUBST(BOXTYPE)
 AC_DEFINE_UNQUOTED(BOXTYPE,"$BOXTYPE",[box type])
 
-AC_ARG_WITH(distro,
-	[  --with-distro=NAME distro name [[openvix,openaaf,...]]],
-	[DISTRO="$withval"],[DISTRO="openaaf"])
-AC_SUBST(DISTRO)
-AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
-
 AC_ARG_WITH(machinebrand,
 	[  --with-machinebrand=NAME brand name [[Vu,Xtrend,...]]],
 	[MACHINE_BRAND="$withval"],[MACHINE_BRAND="Vu+"])
@@ -198,17 +192,11 @@ data/fonts/Makefile
 data/countries/Makefile
 data/extensions/Makefile
 data/keymaps/Makefile
-data/rc_models/Makefile
-data/rc_models/et6x00/Makefile
-data/rc_models/et9500/Makefile
-data/rc_models/et9x00/Makefile
-data/rc_models/vu/Makefile
-data/rc_models/odinm9/Makefile
-data/rc_models/odinm7/Makefile
 data/skin_default/Makefile
 data/skin_default/menu/Makefile
 data/skin_default/icons/Makefile
 data/skin_default/buttons/Makefile
+data/skin_default/spinner/Makefile
 include/Makefile
 lib/Makefile
 lib/base/eenv.cpp
@@ -239,6 +227,10 @@ lib/python/Plugins/Extensions/MediaPlayer/meta/Makefile
 lib/python/Plugins/Extensions/MediaScanner/Makefile
 lib/python/Plugins/Extensions/MediaScanner/meta/Makefile
 lib/python/Plugins/Extensions/Modem/Makefile
+lib/python/Plugins/Extensions/OpenXtaReader/Makefile
+lib/python/Plugins/Extensions/OpenXtaReader/db/Makefile
+lib/python/Plugins/Extensions/OpenXtaReader/pic/Makefile
+lib/python/Plugins/Extensions/OpenXtaReader/pic/buttons/Makefile
 lib/python/Plugins/Extensions/PicturePlayer/Makefile
 lib/python/Plugins/Extensions/PicturePlayer/meta/Makefile
 lib/python/Plugins/Extensions/PicturePlayer/data/Makefile
@@ -273,6 +265,12 @@ lib/python/Plugins/SystemPlugins/Satfinder/Makefile
 lib/python/Plugins/SystemPlugins/Satfinder/meta/Makefile
 lib/python/Plugins/SystemPlugins/SkinSelector/Makefile
 lib/python/Plugins/SystemPlugins/SkinSelector/meta/Makefile
+lib/python/Plugins/Extensions/ExtrasPanel/Makefile
+lib/python/Plugins/Extensions/ExtrasPanel/meta/Makefile
+lib/python/Plugins/Extensions/ExtrasPanel/pics/Makefile
+lib/python/Plugins/Extensions/ExtrasPanel/locale/Makefile
+lib/python/Plugins/Extensions/ExtrasPanel/icons/Makefile
+lib/python/Plugins/Extensions/ExtrasPanel/Extra/Makefile
 lib/python/Plugins/SystemPlugins/SoftwareManager/Makefile
 lib/python/Plugins/SystemPlugins/SoftwareManager/meta/Makefile
 lib/python/Plugins/SystemPlugins/VideoEnhancement/Makefile

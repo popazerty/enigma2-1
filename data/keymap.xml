@@ -36,6 +36,7 @@
 
 	<map context="SetupActions">
 		<key id="KEY_ENTER" mapto="ok" flags="m" />
+		<key id="KEY_MENU" mapto="menu" flags="m" />
 		<key id="KEY_OK" mapto="ok" flags="m" />
 		<key id="KEY_EXIT" mapto="cancel" flags="m" />
 		<key id="KEY_ESC" mapto="cancel" flags="m" />
@@ -95,7 +96,8 @@
 	</map>
 
 	<map context="InfobarExtensions">
-		<key id="KEY_BLUE" mapto="extensions" flags="b" />
+		<key id="KEY_BLUE" mapto="Extraspanel" flags="b" />
+                <key id="KEY_BLUE" mapto="extensions" flags="l" /> 
 	</map>
 
 	<map context="SatlistShortcutAction">
@@ -189,13 +191,10 @@
 
 	<map context="InfobarActions">
 		<key id="KEY_VIDEO" mapto="showMovies" flags="m" />
-		<key id="KEY_RADIO" mapto="toogleTvRadio" flags="m" />
-		<key id="KEY_TV" mapto="toogleTvRadio" flags="m" />
-		<key id="KEY_FAVORITES" mapto="openBouquetList" flags="b" />
+		<key id="KEY_RADIO" mapto="showRadio" flags="m" />
+		<key id="KEY_TV" mapto="showTv" flags="m" />
 		<key id="KEY_FILE" mapto="showMovies" flags="m" />
 		<key id="KEY_TEXT" mapto="showText" flags="m" />
-		<key id="KEY_MEDIA" mapto="showMovies" flags="m" />
-		<key id="KEY_LIST" mapto="showMediaPlayer" flags="b" />
 	</map>
 
 	<map context="InfobarAudioSelectionActions">
@@ -210,7 +209,7 @@
 	</map>
 
 	<map context="InfobarSubserviceSelectionActions">
-		<key id="KEY_GREEN" mapto="subserviceSelection" flags="b" />
+		<key id="KEY_GREEN" mapto="GreenPressed" flags="b" />
 	</map>
 
 	<map context="InfobarRedButtonActions">
@@ -402,6 +401,10 @@
 		<key id="KEY_PREVIOUS" mapto="movePrev" flags="b" />
 		<key id="KEY_NEXT" mapto="moveNext" flags="b" />
 		<key id="KEY_AUDIO" mapto="AudioSelection" flags="m" />
+		<key id="KEY_INFO" mapto="InfoButtonPressed" flags="b" />
+		<key id="KEY_EPG" mapto="EPGButtonPressed" flags="b" />
+		<key id="KEY_INFO" mapto="InfoButtonPressedLong" flags="l" />
+		<key id="KEY_EPG" mapto="EPGButtonPressedLong" flags="l" />
 	</map>
 	
 	<map context="InfobarCueSheetActions">
@@ -495,6 +498,7 @@
 		<key id="KEY_INFO" mapto="info" flags="m" />
 		<key id="KEY_EPG" mapto="info" flags="m" />
 		<key id="KEY_MENU" mapto="menu" flags="m" />
+		<key id="KEY_MENU" mapto="input_date_time" flags="m" />
 		<key id="KEY_CHANNELUP" mapto="nextBouquet" flags="m" />
 		<key id="KEY_CHANNELDOWN" mapto="prevBouquet" flags="m" />
 		<key id="KEY_NEXT" mapto="nextService" flags="m" />
@@ -552,6 +556,15 @@
 		<key id="KEY_DOWN" mapto="downUp" flags="b" />
 	</map>
 	
+	<map context="AudioSelectionActions">
+		<key id="KEY_RED" mapto="red" flags="m" />
+		<key id="KEY_GREEN" mapto="green" flags="m" />
+		<key id="KEY_AUDIO" mapto="yellow" flags="m" />
+		<key id="KEY_SUBTITLE" mapto="yellow" flags="m" />
+		<key id="KEY_YELLOW" mapto="yellow" flags="m" />
+		<key id="KEY_BLUE" mapto="blue" flags="m" />
+	</map>
+
 	<map context="ColorActions">
 		<key id="KEY_RED" mapto="red" flags="m" />
 		<key id="KEY_GREEN" mapto="green" flags="m" />
@@ -574,7 +587,6 @@
 	
 	<map context="HelpActions">
 		<key id="KEY_HELP" mapto="displayHelp" flags="m" />
-		<key id="KEY_OPTION" mapto="displayHelp" flags="m" />
 	</map>
 
 	<map context="ShortcutActions">
@@ -709,4 +721,31 @@
 			<key id="KEY_NEXTSONG" mapto="next" flags="m" />
 		</device-->
 	</map>
+	    <map context="CCcamInfoActions">
+		<key id="KEY_1" mapto="1" flags="m"/>
+		<key id="KEY_2" mapto="2" flags="m"/>
+		<key id="KEY_3" mapto="3" flags="m"/>
+		<key id="KEY_4" mapto="4" flags="m"/>
+		<key id="KEY_5" mapto="5" flags="m"/>
+		<key id="KEY_6" mapto="6" flags="m"/>
+		<key id="KEY_7" mapto="7" flags="m"/>
+		<key id="KEY_8" mapto="8" flags="m"/>
+		<key id="KEY_9" mapto="9" flags="m"/>
+		<key id="KEY_0" mapto="0" flags="m"/>
+		<key id="KEY_RED" mapto="red" flags="m"/>
+		<key id="KEY_GREEN" mapto="green" flags="m"/>
+		<key id="KEY_YELLOW" mapto="yellow" flags="m"/>
+		<key id="KEY_BLUE" mapto="blue" flags="m"/>
+		<key id="KEY_INFO" mapto="info" flags="m"/>
+		<key id="KEY_MENU" mapto="menu" flags="m"/>
+		<key id="KEY_EXIT" mapto="cancel" flags="m"/>
+		<key id="KEY_OK" mapto="ok" flags="m"/>
+		<key id="KEY_UP" mapto="up" flags="m"/>
+		<key id="KEY_DOWN" mapto="down" flags="m"/>
+		<key id="KEY_LEFT" mapto="left" flags="m"/>
+		<key id="KEY_RIGHT" mapto="right" flags="m"/>
+		<key id="KEY_CHANNELUP" mapto="incUphop" flags="m"/>
+		<key id="KEY_CHANNELDOWN" mapto="decUphop" flags="m"/>
+	</map>
 </keymap>
+
