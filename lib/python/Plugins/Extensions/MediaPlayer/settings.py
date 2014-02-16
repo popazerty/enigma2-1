@@ -6,6 +6,9 @@ from Components.MediaPlayer import PlayList
 from Components.config import config, getConfigListEntry, ConfigSubsection, configfile, ConfigText, ConfigYesNo, ConfigDirectory
 from Components.ConfigList import ConfigListScreen
 from Components.ActionMap import ActionMap
+from Components.Pixmap import Pixmap,MultiPixmap
+from Screens.VirtualKeyBoard import VirtualKeyBoard
+from Components.Sources.Boolean import Boolean
 
 config.mediaplayer = ConfigSubsection()
 config.mediaplayer.repeat = ConfigYesNo(default=False)
@@ -15,7 +18,6 @@ config.mediaplayer.defaultDir = ConfigDirectory()
 config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=False)
 config.mediaplayer.alternateUserAgent = ConfigText(default="")
 config.mediaplayer.sortPlaylists = ConfigYesNo(default=False)
-config.mediaplayer.alwaysHideInfoBar = ConfigYesNo(default=True)
 config.mediaplayer.onMainMenu = ConfigYesNo(default=False)
 
 class DirectoryBrowser(Screen, HelpableScreen):
@@ -68,6 +70,9 @@ class MediaPlayerSettings(Screen,ConfigListScreen):
 		self.skinName = ["MediaPlayerSettings", "Setup" ]
 		self.setup_title = _("Edit settings")
 		self.onChangedEntry = [ ]
+		self["HelpWindow"] = Pixmap()
+		self["HelpWindow"].hide()
+		self["VKeyIcon"] = Boolean(False)
 
 		self["key_red"] = StaticText(_("Cancel"))
 		self["key_green"] = StaticText(_("Save"))
@@ -98,7 +103,6 @@ class MediaPlayerSettings(Screen,ConfigListScreen):
 			if not config.mediaplayer.saveDirOnExit.getValue():
 				self.list.append(getConfigListEntry(_("start directory"), config.mediaplayer.defaultDir))
 			self.list.append(getConfigListEntry(_("sorting of playlists"), config.mediaplayer.sortPlaylists))
-			self.list.append(getConfigListEntry(_("Always hide infobar"), config.mediaplayer.alwaysHideInfoBar))
 			self.list.append(getConfigListEntry(_("show mediaplayer on mainmenu"), config.mediaplayer.onMainMenu))
 			self["config"].setList(self.list)
 		except KeyError:

@@ -68,6 +68,7 @@ is usually caused by not marking PSignals as immutable.
 #include <lib/gui/ewidgetanimation.h>
 #include <lib/gui/eslider.h>
 #include <lib/gui/epositiongauge.h>
+#include <lib/gui/egauge.h>
 #include <lib/gui/evideo.h>
 #include <lib/gui/ecanvas.h>
 #include <lib/python/connections.h>
@@ -95,7 +96,7 @@ is usually caused by not marking PSignals as immutable.
 #include <lib/dvb/cablescan.h>
 #include <lib/components/scan.h>
 #include <lib/components/file_eraser.h>
-#include <lib/components/tuxtopendroidpp.h>
+#include <lib/components/tuxtxtapp.h>
 #include <lib/driver/avswitch.h>
 #include <lib/driver/hdmi_cec.h>
 #include <lib/driver/rfmod.h>
@@ -185,7 +186,7 @@ typedef long time_t;
 %immutable iCryptoInfo::usedcaid;
 %immutable iCryptoInfo::decodetime;
 %immutable iCryptoInfo::usedcardid;
-%immutable eTuxtopendroidpp::appClosed;
+%immutable eTuxtxtApp::appClosed;
 %immutable iDVBChannel::receivedTsidOnid;
 %include <lib/base/message.h>
 %include <lib/base/etpm.h>
@@ -209,6 +210,7 @@ typedef long time_t;
 %include <lib/gui/ewindow.h>
 %include <lib/gui/eslider.h>
 %include <lib/gui/epositiongauge.h>
+%include <lib/gui/egauge.h>
 %include <lib/gui/ewidgetdesktop.h>
 %include <lib/gui/elistbox.h>
 %include <lib/gui/elistboxcontent.h>
@@ -236,7 +238,7 @@ typedef long time_t;
 %include <lib/dvb/cablescan.h>
 %include <lib/components/scan.h>
 %include <lib/components/file_eraser.h>
-%include <lib/components/tuxtopendroidpp.h>
+%include <lib/components/tuxtxtapp.h>
 %include <lib/driver/avswitch.h>
 %include <lib/driver/hdmi_cec.h>
 %include <lib/driver/rfmod.h>
@@ -390,7 +392,7 @@ void setEnableTtCachingOnOff(int);
 %{
 void setEnableTtCachingOnOff(int onoff)
 {
-	eTuxtopendroidpp *tt = eTuxtopendroidpp::getInstance();
+	eTuxtxtApp *tt = eTuxtxtApp::getInstance();
 	if (tt) tt->setEnableTtCachingOnOff(onoff);
 }
 %}
@@ -406,8 +408,12 @@ extern int getPrevAsciiCode();
 extern void addFont(const char *filename, const char *alias, int scale_factor, int is_replacement, int renderflags = 0);
 extern const char *getEnigmaVersionString();
 extern const char *getBoxType();
+extern const char *getMachineBrand();
+extern const char *getMachineName();
+extern const char *getDistro();
 extern const char *getImageVersionString();
 extern const char *getBuildVersionString();
+extern const char *getDriverDateString();
 extern void dump_malloc_stats(void);
 %}
 
@@ -418,8 +424,12 @@ extern void quitMainloop(int exit_code);
 extern eApplication *getApplication();
 extern const char *getEnigmaVersionString();
 extern const char *getBoxType();
+extern const char *getMachineBrand();
+extern const char *getMachineName();
+extern const char *getDistro();
 extern const char *getImageVersionString();
 extern const char *getBuildVersionString();
+extern const char *getDriverDateString();
 extern void dump_malloc_stats(void);
 
 %include <lib/python/python_console.i>

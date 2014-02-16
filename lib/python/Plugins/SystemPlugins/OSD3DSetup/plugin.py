@@ -18,8 +18,8 @@ class OSD3DSetupScreen(Screen, ConfigListScreen):
 	skin = """
 	<screen position="c-200,c-100" size="400,200" title="OSD 3D setup">
 		<widget name="config" position="c-175,c-75" size="350,150" />
-		<ePixmap pixmap="skin_default/buttons/green.png" position="c-145,e-45" zPosition="0" size="140,40" alphatest="on" />
-		<ePixmap pixmap="skin_default/buttons/red.png" position="c+5,e-45" zPosition="0" size="140,40" alphatest="on" />
+		<ePixmap pixmap="buttons/green.png" position="c-145,e-45" zPosition="0" size="140,40" alphatest="on" />
+		<ePixmap pixmap="buttons/red.png" position="c+5,e-45" zPosition="0" size="140,40" alphatest="on" />
 		<widget name="ok" position="c-145,e-45" size="140,40" valign="center" halign="center" zPosition="1" font="Regular;20" transparent="1" backgroundColor="green" />
 		<widget name="cancel" position="c+5,e-45" size="140,40" valign="center" halign="center" zPosition="1" font="Regular;20" transparent="1" backgroundColor="red" />
 	</screen>"""
@@ -47,8 +47,8 @@ class OSD3DSetupScreen(Screen, ConfigListScreen):
 		self.list = []
 		ConfigListScreen.__init__(self, self.list, session = self.session)
 
-		mode = config.plugins.OSD3DSetup.mode.value
-		znorm = config.plugins.OSD3DSetup.znorm.value
+		mode = config.plugins.OSD3DSetup.mode.getValue()
+		znorm = config.plugins.OSD3DSetup.znorm.getValue()
 
 		self.mode = ConfigSelection(choices = modelist, default = mode)
 		self.znorm = ConfigSlider(default = znorm + 50, increment = 1, limits = (0, 100))
@@ -66,11 +66,11 @@ class OSD3DSetupScreen(Screen, ConfigListScreen):
 		self.setPreviewSettings()
 
 	def setPreviewSettings(self):
-		applySettings(self.mode.value, int(self.znorm.value) - 50)
+		applySettings(self.mode.getValue(), int(self.znorm.getValue()) - 50)
 
 	def keyGo(self):
-		config.plugins.OSD3DSetup.mode.value = self.mode.value
-		config.plugins.OSD3DSetup.znorm.value = int(self.znorm.value) - 50
+		config.plugins.OSD3DSetup.mode.value = self.mode.getValue()
+		config.plugins.OSD3DSetup.znorm.value = int(self.znorm.getValue()) - 50
 		config.plugins.OSD3DSetup.save()
 		self.close()
 
@@ -107,7 +107,7 @@ def applySettings(mode, znorm):
 		return
 
 def setConfiguredSettings():
-	applySettings(config.plugins.OSD3DSetup.mode.value, int(config.plugins.OSD3DSetup.znorm.value))
+	applySettings(config.plugins.OSD3DSetup.mode.getValue(), int(config.plugins.OSD3DSetup.znorm.getValue()))
 
 def main(session, **kwargs):
 	session.open(OSD3DSetupScreen)

@@ -41,7 +41,6 @@ public:
 	int getInfo(const eServiceReference &ref, int w);
 	int isPlayable(const eServiceReference &ref, const eServiceReference &ignore, bool simulate) { return 1; }
 	long long getFileSize(const eServiceReference &ref);
-	RESULT getEvent(const eServiceReference &ref, ePtr<eServiceEvent> &ptr, time_t start_time);
 };
 
 class eStreamBufferInfo: public iStreamBufferInfo
@@ -143,7 +142,6 @@ public:
 
 		// iServiceInformation
 	RESULT getName(std::string &name);
-	RESULT getEvent(ePtr<eServiceEvent> &evt, int nownext);
 	int getInfo(int w);
 	std::string getInfoString(int w);
 	ePtr<iServiceInfoContainer> getInfoObject(int w);
@@ -224,11 +222,6 @@ public:
 		std::string missing_codec;
 	};
 
-protected:
-	ePtr<eTimer> m_nownext_timer;
-	ePtr<eServiceEvent> m_event_now, m_event_next;	
-	void updateEpgCacheNowNext();
-
 private:
 	static int pcm_delay;
 	static int ac3_delay;
@@ -307,7 +300,7 @@ private:
 		uint32_t end_ms;
 		std::string text;
 
-		subtitle_page_t(uint32_t start_ms_in, uint32_t end_ms_in, const std::string& text_in)
+		subtitle_page_t(uint32_t start_ms_in, uint32_t end_ms_in, std::string text_in)
 			: start_ms(start_ms_in), end_ms(end_ms_in), text(text_in)
 		{
 		}

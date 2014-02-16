@@ -58,9 +58,9 @@ class CableScan:
 class CableScanStatus(Screen):
 	skin = """
 	<screen position="150,115" size="420,180" title="Cable Scan">
-		<widget name="frontend" pixmap="skin_default/icons/scan-c.png" position="5,5" size="64,64" transparent="1" alphatest="on" />
+		<widget name="frontend" pixmap="icons/scan-c.png" position="5,5" size="64,64" transparent="1" alphatest="on" />
 		<widget name="scan_state" position="10,120" zPosition="2" size="400,30" font="Regular;18" />
-		<widget name="scan_progress" position="10,155" size="400,15" pixmap="skin_default/progress_big.png" borderWidth="2" borderColor="#cccccc" />
+		<widget name="scan_progress" position="10,155" size="400,15" pixmap="progress_big.png" borderWidth="2" borderColor="#cccccc" />
 	</screen>"""
 
 	def __init__(self, session, scanTuner, scanNetwork, scanFrequency, scanSymbolRate, scanModulation, keepNumbers, hdList):
@@ -166,7 +166,7 @@ class CableScanScreen(ConfigListScreen, Screen):
 		self.startScan()
 
 	def startScan(self):
-		self.session.open(CableScanStatus, scanTuner = int(self.scan_nims.value), scanNetwork = config.plugins.CableScan.networkid.value, scanFrequency = config.plugins.CableScan.frequency.value * 1000, scanSymbolRate = config.plugins.CableScan.symbolrate.value * 1000, scanModulation = int(config.plugins.CableScan.modulation.value), keepNumbers = config.plugins.CableScan.keepnumbering.value, hdList = config.plugins.CableScan.hdlist.value)
+		self.session.open(CableScanStatus, scanTuner = int(self.scan_nims.getValue()), scanNetwork = config.plugins.CableScan.networkid.getValue(), scanFrequency = config.plugins.CableScan.frequency.getValue() * 1000, scanSymbolRate = config.plugins.CableScan.symbolrate.getValue() * 1000, scanModulation = int(config.plugins.CableScan.modulation.getValue()), keepNumbers = config.plugins.CableScan.keepnumbering.getValue(), hdList = config.plugins.CableScan.hdlist.getValue())
 
 	def keyCancel(self):
 		self.close()

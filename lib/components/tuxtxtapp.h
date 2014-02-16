@@ -1,5 +1,5 @@
-#ifndef __LIB_COMPONENTS_TUXTOPENDROIDPP_H__
-#define __LIB_COMPONENTS_TUXTOPENDROIDPP_H__
+#ifndef __LIB_COMPONENTS_TUXTXTAPP_H__
+#define __LIB_COMPONENTS_TUXTXTAPP_H__
 
 #include <string>
 #include <lib/base/ebase.h>
@@ -8,13 +8,13 @@
 #include <lib/python/python.h>
 #include <lib/python/connections.h>
 
-class eTuxtopendroidpp: private eThread, public Object
+class eTuxtxtApp: private eThread, public Object
 {
 #ifndef SWIG
 	int pid;
 	int demux;
 	bool enableTtCaching, uiRunning;
-	static eTuxtopendroidpp *instance;
+	static eTuxtxtApp *instance;
 	pthread_mutex_t cacheChangeLock;
 
 	eFixedMessagePump<int> messagePump;
@@ -24,9 +24,9 @@ class eTuxtopendroidpp: private eThread, public Object
 	void thread_finished();
 #endif
 public:
-	eTuxtopendroidpp();
-	~eTuxtopendroidpp();
-	static eTuxtopendroidpp *getInstance() { return instance; }
+	eTuxtxtApp();
+	~eTuxtxtApp();
+	static eTuxtxtApp *getInstance() { return instance; }
 	int startUi();
 	void initCache();
 	void freeCache();
@@ -37,4 +37,4 @@ public:
 	PSignal0<void> appClosed;
 };
 
-#endif // __LIB_COMPONENTS_TUXTOPENDROIDPP_H__
+#endif // __LIB_COMPONENTS_TUXTXTAPP_H__

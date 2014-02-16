@@ -1,5 +1,3 @@
-InfoBarCount = 0
-
 class InfoBarBase:
 
 	onInfoBarOpened = [ ]
@@ -43,14 +41,10 @@ class InfoBarBase:
 			ServiceEventTracker.setActiveInfoBar(self, not steal_current_service and nav.getCurrentService(), nav.getCurrentlyPlayingServiceOrGroup())
 		self.onClose.append(self.__close)
 		InfoBarBase.infoBarOpened(self)
-		global InfoBarCount
-		InfoBarCount += 1
 
 	def __close(self):
 		ServiceEventTracker.popActiveInfoBar()
 		InfoBarBase.infoBarClosed(self)
-		global InfoBarCount
-		InfoBarCount -= 1
 
 class ServiceEventTracker:
 	"""Tracks service events into a screen"""
