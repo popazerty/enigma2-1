@@ -1,5 +1,4 @@
-SUBDIRS = border buttons countries crossepg dvr epg extensions spinner icons infobar lcd logos menu piconbg window
+SUBDIRS = menu icons buttons 
+  
+  installdir = $(pkgdatadir)/skin_default
 
-installdir = $(pkgdatadir)/skin_default
-
-dist_install_DATA = *.png
