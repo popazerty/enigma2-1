@@ -1,4 +1,4 @@
-#include <lib/components/tuxtxtapp.h>
+#include <lib/components/tuxtopendroidpp.h>
 #include <lib/base/init.h>
 #include <lib/base/init_num.h>
 #include <lib/driver/rc.h>
@@ -14,18 +14,18 @@ extern "C" void tuxtxt_start(int tpid, int demux);
 extern "C" int tuxtxt_stop();
 extern "C" void tuxtxt_close();
 
-eAutoInitP0<eTuxtxtApp> init_eTuxtxtApp(eAutoInitNumbers::lowlevel, "Tuxtxt");
-eTuxtxtApp *eTuxtxtApp::instance = NULL;
+eAutoInitP0<eTuxtopendroidpp> init_eTuxtopendroidpp(eAutoInitNumbers::lowlevel, "Tuxtxt");
+eTuxtopendroidpp *eTuxtopendroidpp::instance = NULL;
 
-eTuxtxtApp::eTuxtxtApp() : pid(0), enableTtCaching(false), uiRunning(false), messagePump(eApp, 0)
+eTuxtopendroidpp::eTuxtopendroidpp() : pid(0), enableTtCaching(false), uiRunning(false), messagePump(eApp, 0)
 {
-	CONNECT(messagePump.recv_msg, eTuxtxtApp::recvEvent);
+	CONNECT(messagePump.recv_msg, eTuxtopendroidpp::recvEvent);
 	pthread_mutex_init( &cacheChangeLock, 0 );
 	if (!instance)
 		instance=this;
 }
 
-eTuxtxtApp::~eTuxtxtApp()
+eTuxtopendroidpp::~eTuxtopendroidpp()
 {
 	if (instance==this)
 		instance=0;
@@ -33,7 +33,7 @@ eTuxtxtApp::~eTuxtxtApp()
 	pthread_mutex_destroy( &cacheChangeLock );
 }
 
-void eTuxtxtApp::recvEvent(const int &evt)
+void eTuxtopendroidpp::recvEvent(const int &evt)
 {
 	uiRunning = false;
 	eRCInput::getInstance()->unlock();
@@ -43,7 +43,7 @@ void eTuxtxtApp::recvEvent(const int &evt)
 	/* emit */appClosed();
 }
 
-int eTuxtxtApp::startUi()
+int eTuxtopendroidpp::startUi()
 {
 	if (fbClass::getInstance()->lock() >= 0)
 	{
@@ -61,23 +61,23 @@ int eTuxtxtApp::startUi()
 	return 0;
 }
 
-void eTuxtxtApp::thread()
+void eTuxtopendroidpp::thread()
 {
 	hasStarted();
 	tuxtxt_run_ui(pid, demux);
 }
 
-void eTuxtxtApp::thread_finished()
+void eTuxtopendroidpp::thread_finished()
 {
 	messagePump.send(0);
 }
 
-void eTuxtxtApp::initCache()
+void eTuxtopendroidpp::initCache()
 {
 	tuxtxt_init();
 }
 
-void eTuxtxtApp::freeCache()
+void eTuxtopendroidpp::freeCache()
 {
 	pthread_mutex_lock( &cacheChangeLock );
 	if ( !uiRunning )
@@ -88,7 +88,7 @@ void eTuxtxtApp::freeCache()
 	pthread_mutex_unlock( &cacheChangeLock );
 }
 
-void eTuxtxtApp::startCaching( int tpid, int tdemux)
+void eTuxtopendroidpp::startCaching( int tpid, int tdemux)
 {
 	pid = tpid;
 	demux = tdemux;
@@ -96,7 +96,7 @@ void eTuxtxtApp::startCaching( int tpid, int tdemux)
 		tuxtxt_start(pid, demux);
 }
 
-void eTuxtxtApp::stopCaching()
+void eTuxtopendroidpp::stopCaching()
 {
 	pthread_mutex_lock( &cacheChangeLock );
 	if ( !uiRunning )
@@ -105,7 +105,7 @@ void eTuxtxtApp::stopCaching()
 	pthread_mutex_unlock( &cacheChangeLock );
 }
 
-void eTuxtxtApp::setEnableTtCachingOnOff( int onoff )
+void eTuxtopendroidpp::setEnableTtCachingOnOff( int onoff )
 {
 	if (onoff && !enableTtCaching)		// Switch caching on
 	{

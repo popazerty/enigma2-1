@@ -25,7 +25,7 @@ class SkinSetup(Screen):
 #		self["KEY_HELP"] = Button(_("HELP"))
 #                self["actions"] = ActionMap(["OkCancelActions", "HelpActions"], {"ok": self.okClicked, "cancel": self.close, "displayHelp" : self.readme}, -1)
                 self["actions"] = ActionMap(["OkCancelActions"], {"ok": self.okClicked, "cancel": self.close}, -1)
-                txt = _("Here you can change skin, configure mainmenu, configure second-infobar or configure skin XTA.")
+                txt = _("Here you can change skin, configure mainmenu, configure second-infobar or configure skin PLI-HD.")
                 self["info"].setText(txt)
                 self.onShown.append(self.startSession)
 
@@ -35,7 +35,7 @@ class SkinSetup(Screen):
                 self.res.append(_("Configure mainmenu"))
                 self.res.append(_("Configure second-infobar"))
 		self.res.append(_("Show Picons in Channel List"))
-                self.res.append(_("XTAskin Setup"))
+                self.res.append(_("PLI-HDskin Setup"))
                 self.res.append(_("Exit"))
                 self["list"].setList(self.res)
     
@@ -50,13 +50,13 @@ class SkinSetup(Screen):
 		elif ires == 3:
 		        self.session.open(SettingsD)
                 elif ires == 4:
-		        self.xtaskin()  
+		        self.PLI-HDskin()  
                				
 		else:
                         self.close()
                         
 
-    def xtaskin(self):                         
+    def PLI-HDskin(self):                         
                 try:        
                         from Plugins.Extensions.iSkin.plugin import MenuStart
                         self.session.open(MenuStart) 
