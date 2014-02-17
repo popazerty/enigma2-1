@@ -12,7 +12,6 @@ class ServiceName(Converter, object):
 	PROVIDER = 3
 	REFERENCE = 4
 	EDITREFERENCE = 5
-	SID = 6	
 
 	def __init__(self, type):
 		Converter.__init__(self, type)
@@ -27,8 +26,6 @@ class ServiceName(Converter, object):
 			self.type = self.NAME_ONLY
 		elif type == "NameAndEvent":
 			self.type = self.NAME_EVENT
-		elif type == "Sid":
-			self.type = self.SID			
 		else:
 			self.type = self.NAME
 
@@ -58,7 +55,7 @@ class ServiceName(Converter, object):
 					return "%s - " % name
 				else:
 					return "%s - %s" % (name, act_event.getEventName())
-			elif self.type != self.NAME_ONLY and config.usage.show_infobar_channel_number.getValue() and hasattr(self.source, "serviceref") and self.source.serviceref.toString().find('0:0:0:0:0:0:0:0:0') == -1:
+			elif self.type != self.NAME_ONLY and config.usage.show_infobar_channel_number.getValue() and hasattr(self.source, "serviceref") and '0:0:0:0:0:0:0:0:0' not in self.source.serviceref.toString():
 				numservice = self.source.serviceref
 				num = numservice and numservice.getChannelNum() or None
 				if num is not None:
@@ -76,20 +73,6 @@ class ServiceName(Converter, object):
 			if nref:
 				ref = nref
 			return ref.toString()
-		elif self.type == self.SID:
-			if ref is None:
-				tmpref = info.getInfoString(iServiceInformation.sServiceref)
-			else:
-				tmpref = ref.toString()
-
-			if tmpref:
-				refsplit = tmpref.split(':')
-				if len(refsplit) >= 3: 
-					return refsplit[3]
-				else:
-					return tmpref
-			else:
-				return 'N/A'			
 
 	text = property(getText)
 

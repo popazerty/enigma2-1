@@ -4,7 +4,7 @@ from enigma import ePixmap, ePicLoad
 from Tools.Alternatives import GetWithAlternative
 from Tools.Directories import pathExists, SCOPE_ACTIVE_SKIN, resolveFilename
 from Components.Harddisk import harddiskmanager
-from enigma import getBoxType
+from boxbranding import getBoxType
 
 searchPaths = []
 lastLcdPiconPath = None
@@ -21,7 +21,7 @@ def onMountpointAdded(mountpoint):
 	global searchPaths
 	try:
 		if getBoxType() == 'vuultimo':
-			path = os.path.join(mountpoint, 'piconlcd') + '/'
+			path = os.path.join(mountpoint, 'lcd_picon') + '/'
 		else:
 			path = os.path.join(mountpoint, 'picon') + '/'
 		if os.path.isdir(path) and path not in searchPaths:
@@ -36,7 +36,7 @@ def onMountpointAdded(mountpoint):
 def onMountpointRemoved(mountpoint):
 	global searchPaths
 	if getBoxType() == 'vuultimo':
-		path = os.path.join(mountpoint, 'piconlcd') + '/'
+		path = os.path.join(mountpoint, 'lcd_picon') + '/'
 	else:
 		path = os.path.join(mountpoint, 'picon') + '/'
 	try:
@@ -84,10 +84,11 @@ def getLcdPiconName(serviceName):
 	pngname = findLcdPicon(sname)
 	if not pngname:
 		fields = sname.split('_', 3)
-		if len(fields) > 2 and fields[2] != '2':
-			#fallback to 1 for tv services with nonstandard servicetypes
+		if len(fields) > 2 and fields[2] != '2': #fallback to 1 for tv services with nonstandard servicetypes
 			fields[2] = '1'
-			pngname = findLcdPicon('_'.join(fields))
+		if len(fields) > 0 and fields[0] == '4097': #fallback to 1 for IPTV streams
+			fields[0] = '1'
+		pngname = findLcdPicon('_'.join(fields))
 	return pngname
 
 class LcdPicon(Renderer):
@@ -144,7 +145,7 @@ class LcdPicon(Renderer):
 
 	def updatePicon(self, picInfo=None):
 		ptr = self.PicLoad.getData()
-		if ptr != None:
+		if ptr is not None:
 			self.instance.setPixmap(ptr.__deref__())
 			self.instance.show()
 

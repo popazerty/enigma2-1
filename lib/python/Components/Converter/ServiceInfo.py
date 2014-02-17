@@ -26,6 +26,7 @@ class ServiceInfo(Converter, object):
 	AUDIOTRACKS_AVAILABLE = 18
 	SUBTITLES_AVAILABLE = 19
 	EDITMODE = 20
+	IS_STREAM = 21
 
 	def __init__(self, type):
 		Converter.__init__(self, type)
@@ -51,6 +52,7 @@ class ServiceInfo(Converter, object):
 				"AudioTracksAvailable": (self.AUDIOTRACKS_AVAILABLE, (iPlayableService.evUpdatedInfo,)),
 				"SubtitlesAvailable": (self.SUBTITLES_AVAILABLE, (iPlayableService.evUpdatedInfo,)),
 				"Editmode": (self.EDITMODE, (iPlayableService.evUpdatedInfo,)),
+				"IsStream": (self.IS_STREAM, (iPlayableService.evUpdatedInfo,)),
 			}[type]
 
 	def getServiceInfoString(self, info, what, convert = lambda x: "%d" % x):
@@ -79,7 +81,7 @@ class ServiceInfo(Converter, object):
 				idx = 0
 				while idx < n:
 					i = audio.getTrackInfo(idx)
-					description = i.getDescription();
+					description = i.getDescription()
 					if "AC3" in description or "AC-3" in description or "DTS" in description:
 						return True
 					idx += 1
@@ -104,6 +106,8 @@ class ServiceInfo(Converter, object):
 			return False
 		elif self.type == self.EDITMODE:
 			return hasattr(self.source, "editmode") and not not self.source.editmode
+		elif self.type == self.IS_STREAM:
+			return service.streamed() is not None
 		return False
 
 	boolean = property(getBoolean)
@@ -116,15 +120,9 @@ class ServiceInfo(Converter, object):
 			return ""
 
 		if self.type == self.XRES:
-			ret = self.getServiceInfoString(info, iServiceInformation.sVideoWidth)
-			if ret != "65535":
-				return ret
-			return ""	
+			return self.getServiceInfoString(info, iServiceInformation.sVideoWidth)
 		elif self.type == self.YRES:
-			ret = self.getServiceInfoString(info, iServiceInformation.sVideoHeight)
-			if ret != "65535":
-				return ret
-			return ""
+			return self.getServiceInfoString(info, iServiceInformation.sVideoHeight)
 		elif self.type == self.APID:
 			return self.getServiceInfoString(info, iServiceInformation.sAudioPID)
 		elif self.type == self.VPID:
