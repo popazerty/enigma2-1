@@ -26,13 +26,15 @@ from email.Utils import formatdate
 
 _session = None
 
-def get_size(self, start_path = '.'):
+def get_size(start_path=None):
 	total_size = 0
-	for dirpath, dirnames, filenames in walk(start_path):
-		for f in filenames:
-			fp = path.join(dirpath, f)
-			total_size += path.getsize(fp)
-	return total_size
+	if start_path:
+		for dirpath, dirnames, filenames in walk(start_path):
+			for f in filenames:
+				fp = path.join(dirpath, f)
+				total_size += path.getsize(fp)
+		return total_size
+	return 0
 
 def AutoLogManager(session=None, **kwargs):
 	global debuglogcheckpoller
@@ -68,7 +70,8 @@ class LogManagerPoller:
 
 	def TrashTimerJob(self):
 		print '[LogManager] Trash Poll Started'
-		Components.Task.job_manager.AddJob(self.createTrashJob())
+		self.JobTrash()
+		# Components.Task.job_manager.AddJob(self.createTrashJob())
 
 	def createTrimJob(self):
 		job = Components.Task.Job(_("LogManager"))
@@ -392,9 +395,9 @@ class LogManager(Screen):
 		msg = MIMEMultipart()
 		if config.logmanager.user.getValue() != '' and config.logmanager.useremail.getValue() != '':
 			fromlogman = config.logmanager.user.getValue() + '  <' + config.logmanager.useremail.getValue() + '>'
-			tocrashlogs = 'crashlogs@dummy.org'
+			tovixlogs = 'vixlogs@oe-alliance.com'
 			msg['From'] = fromlogman
-			msg['To'] = tocrashlogs
+			msg['To'] = tovixlogs
 			msg['Cc'] = fromlogman
 			msg['Date'] = formatdate(localtime=True)
 			msg['Subject'] = 'Ref: ' + ref
@@ -430,23 +433,23 @@ class LogManager(Screen):
 				self.saveSelection()
 
 			# Send the email via our own SMTP server.
-			wos_user = 'crashlogs@dummy.org'
-			wos_pwd = base64.b64decode('NDJJWnojMEpldUxX')
+			wos_user = 'vixlogs@oe-alliance.com'
+			wos_pwd = base64.b64decode('elZMRFMwaFprNUdp')
 
 			try:
-				print "connecting to server: mail.dummy.org"
+				print "connecting to server: mail.oe-alliance.com"
 				#socket.setdefaulttimeout(30)
-				s = smtplib.SMTP("mail.dummy.org",26)
+				s = smtplib.SMTP("mail.oe-alliance.com", 26)
 				s.login(wos_user, wos_pwd)
 				if config.logmanager.usersendcopy.getValue():
-					s.sendmail(fromlogman, [tocrashlogs, fromlogman], msg.as_string())
+					s.sendmail(fromlogman, [tovixlogs, fromlogman], msg.as_string())
 					s.quit()
-					self.session.open(MessageBox, sentfiles + ' ' + _('has been sent to the SVN team team.\nplease quote') + ' ' + str(ref) + ' ' + _('when asking question about this log\n\nA copy has been sent to yourself.'), MessageBox.TYPE_INFO)
+					self.session.open(MessageBox, sentfiles + ' ' + _('has been sent to the ViX beta team.\nplease quote') + ' ' + str(ref) + ' ' + _('when asking question about this log\n\nA copy has been sent to yourself.'), MessageBox.TYPE_INFO)
 				else:
-					s.sendmail(fromlogman, tocrashlogs, msg.as_string())
+					s.sendmail(fromlogman, tovixlogs, msg.as_string())
 					s.quit()
-					self.session.open(MessageBox, sentfiles + ' ' + _('has been sent to the SVN team team.\nplease quote') + ' ' + str(ref) + ' ' + _('when asking question about this log'), MessageBox.TYPE_INFO)
-			except Exception,e:
+					self.session.open(MessageBox, sentfiles + ' ' + _('has been sent to the ViX beta team.\nplease quote') + ' ' + str(ref) + ' ' + _('when asking question about this log'), MessageBox.TYPE_INFO)
+			except Exception, e:
 				self.session.open(MessageBox, _("Error:\n%s" % e), MessageBox.TYPE_INFO, timeout = 10)
 		else:
 			self.session.open(MessageBox, _('You have not setup your user info in the setup screen\nPress MENU, and enter your info, then try again'), MessageBox.TYPE_INFO, timeout = 10)

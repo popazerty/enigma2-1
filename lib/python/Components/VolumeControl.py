@@ -21,7 +21,7 @@ class VolumeControl:
 		VolumeControl.instance = self
 
 		config.audio = ConfigSubsection()
-		config.audio.volume = ConfigInteger(default = 50, limits = (0, 100))
+		config.audio.volume = ConfigInteger(default = 100, limits = (0, 100))
 
 		self.volumeDialog = session.instantiateDialog(Volume)
 		self.muteDialog = session.instantiateDialog(Mute)
@@ -36,9 +36,9 @@ class VolumeControl:
 
 	def volSave(self):
 		if self.volctrl.isMuted():
-			config.audio.volume.setValue(0)
+			config.audio.volume.value = 0
 		else:
-			config.audio.volume.setValue(self.volctrl.getVolume())
+			config.audio.volume.value = self.volctrl.getVolume()
 		config.audio.volume.save()
 
 	def volUp(self):

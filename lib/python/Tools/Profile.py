@@ -1,13 +1,13 @@
 # the implementation here is a bit crappy.
+from boxbranding import getBoxType
 import time
 from Directories import resolveFilename, SCOPE_CONFIG
-from enigma import getBoxType
 
 PERCENTAGE_START = 50
 PERCENTAGE_END = 100
 
 profile_start = time.time()
- 
+
 profile_data = {}
 total_time = 1
 profile_file = None
@@ -43,15 +43,15 @@ def profile(id):
 			else:
 				perc = PERCENTAGE_START
 			try:
-				if getBoxType() == "odinm7" or getBoxType() == "odinm6" or getBoxType() == "xp1000s":
+				if getBoxType() in ("odinm7", "odinm6", "xp1000s"):
 					f = open("/dev/dbox/oled0", "w")
 					f.write("%d" % perc)
-				elif getBoxType() == "gb800se" or getBoxType() == "gb800solo":
+				elif getBoxType() in ("gb800se", "gb800solo"):
 					f = open("/dev/dbox/oled0", "w")
 					f.write("%d  \n" % perc)
 				elif getBoxType() == "gb800seplus":
 					f = open("/dev/mcu", "w")
-					f.write("%d  \n" % perc)					
+					f.write("%d  \n" % perc)
 				elif getBoxType() == "ebox5000":
 					f = open("/proc/progress", "w")
 					f.write("%d" % perc)

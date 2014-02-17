@@ -10,10 +10,11 @@ import enigma
 def getTrashFolder(path=None):
 	# Returns trash folder without symlinks
 	try:
-		if path is None:
+		print 'PATH:',path
+		if path is None or os.path.realpath(path) == '/media/autofs':
 			print 'path is none'
 		else:
-			if path.find('/movie') >0:
+			if '/movie' in path:
 				mountpoint = Harddisk.findMountPoint(os.path.realpath(path))
 				trashcan = os.path.join(mountpoint, 'movie')
 			else:
@@ -47,7 +48,7 @@ class Trashcan:
 
 	def gotRecordEvent(self, service, event):
 		self.recordings = len(self.session.nav.getRecordings())
-		if (event == enigma.iRecordableService.evEnd):
+		if event == enigma.iRecordableService.evEnd:
 			self.cleanIfIdle()
 
 	def destroy(self):

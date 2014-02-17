@@ -1,12 +1,12 @@
+from boxbranding import getMachineBrand, getMachineName
+from os import path
+
 from Screens.Screen import Screen
 from Components.ConfigList import ConfigListScreen
 from Components.config import config, configfile, getConfigListEntry
 from Components.Sources.StaticText import StaticText
-from Components.SystemInfo import SystemInfo
-from enigma import getMachineBrand, getMachineName
-from Tools.Directories import fileExists
-from os import path
-if path.exists("/dev/hdmi_cec") or path.exists("/dev/misc/hdmi_cec0"):
+
+if path.exists("/dev/hdmi_cec"):
 	import Components.HdmiCec
 
 class HdmiCECSetupScreen(Screen, ConfigListScreen):
@@ -30,7 +30,6 @@ class HdmiCECSetupScreen(Screen, ConfigListScreen):
 		Screen.setTitle(self, _("HDMI CEC Setup"))
 
 		from Components.ActionMap import ActionMap
-		from Components.Button import Button
 
 		self["key_red"] = StaticText(_("Cancel"))
 		self["key_green"] = StaticText(_("OK"))
@@ -72,8 +71,6 @@ class HdmiCECSetupScreen(Screen, ConfigListScreen):
 			self.list.append(getConfigListEntry(_("Put your %s %s in standby") % (getMachineBrand(), getMachineName()), config.hdmicec.control_receiver_standby))
 			self.list.append(getConfigListEntry(_("Wakeup your %s %s from standby") % (getMachineBrand(), getMachineName()), config.hdmicec.control_receiver_wakeup))
 			self.list.append(getConfigListEntry(_("Minimum send interval"), config.hdmicec.minimum_send_interval))
-			if fileExists("/proc/stb/hdmi/preemphasis"):
-				self.list.append(getConfigListEntry(_("Use HDMI-preemphasis"), config.hdmicec.preemphasis))
 		self["config"].list = self.list
 		self["config"].l.setList(self.list)
 

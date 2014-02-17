@@ -22,8 +22,8 @@ config.misc.fastscan.last_configuration = ConfigText(default = "()")
 
 class FastScan:
 	def __init__(self, text, progressbar, scanTuner = 0, transponderParameters = None, scanPid = 900, keepNumbers = False, keepSettings = False, providerName = 'Favorites'):
-		self.text = text;
-		self.progressbar = progressbar;
+		self.text = text
+		self.progressbar = progressbar
 		self.transponderParameters = transponderParameters
 		self.scanPid = scanPid
 		self.scanTuner = scanTuner
@@ -33,7 +33,7 @@ class FastScan:
 		self.done = False
 
 	def execBegin(self):
-		self.text.setText(_('Scanning %s...') % (self.providerName))
+		self.text.setText(_('Scanning %s...') % self.providerName)
 		self.progressbar.setValue(0)
 		self.scan = eFastScan(self.scanPid, self.providerName, self.transponderParameters, self.keepNumbers, self.keepSettings)
 		self.scan.scanCompleted.get().append(self.scanCompleted)
@@ -136,21 +136,16 @@ class FastScanScreen(ConfigListScreen, Screen):
 		Screen.__init__(self, session)
 		self.setTitle(_("Fast Scan"))
 
-		self.providers = {}
-		self.providers['Canal Digitaal'] = (0, 900, True)
-		self.providers['TV Vlaanderen'] = (0, 910, True)
-		self.providers['TéléSAT'] = (0, 920, True)
-		self.providers['Mobistar NL'] = (0, 930, False)
-		self.providers['Mobistar FR'] = (0, 940, False)
-		self.providers['AustriaSat'] = (0, 950, False)
-		self.providers['Skylink Czech Republic'] = (1, 30, False)
-		self.providers['Skylink Slovak Republic'] = (1, 31, False)
-		self.providers['Canal Digitaal Astra3'] = (2, 900, True)
-		self.providers['TV Vlaanderen Astra3'] = (2, 910, True)
-		self.providers['TéléSAT Astra3'] = (2, 920, True)
-		self.providers['Mobistar NL Astra3'] = (2, 930, False)
-		self.providers['Mobistar FR Astra3'] = (2, 940, False)
-		self.providers['AustriaSat Astra3'] = (2, 950, False)
+		self.providers = {'Canal Digitaal': (1, 900, True),
+						  'TV Vlaanderen': (1, 910, True),
+						  'TéléSAT': (0, 920, True),
+						  'AustriaSat': (0, 950, False),
+						  'Skylink Czech Republic': (1, 30, False),
+						  'Skylink Slovak Republic': (1, 31, False),
+						  'TéléSAT Astra3': (1, 920, True),
+						  'AustriaSat Astra3': (1, 950, False),
+						  'Canal Digitaal Astra 1': (0, 900, True),
+						  'TV Vlaanderen  Astra 1': (0, 910, True)}
 
 		self.transponders = ((12515000, 22000000, eDVBFrontendParametersSatellite.FEC_5_6, 192,
 			eDVBFrontendParametersSatellite.Polarisation_Horizontal, eDVBFrontendParametersSatellite.Inversion_Unknown,
@@ -159,10 +154,6 @@ class FastScanScreen(ConfigListScreen, Screen):
 			(12070000, 27500000, eDVBFrontendParametersSatellite.FEC_3_4, 235,
 			eDVBFrontendParametersSatellite.Polarisation_Horizontal, eDVBFrontendParametersSatellite.Inversion_Unknown,
 			eDVBFrontendParametersSatellite.System_DVB_S, eDVBFrontendParametersSatellite.Modulation_QPSK,
-			eDVBFrontendParametersSatellite.RollOff_alpha_0_35, eDVBFrontendParametersSatellite.Pilot_Off),
-			(12187000, 27500000, eDVBFrontendParametersSatellite.FEC_2_3, 235,
-			eDVBFrontendParametersSatellite.Polarisation_Horizontal, eDVBFrontendParametersSatellite.Inversion_Unknown,
-			eDVBFrontendParametersSatellite.System_DVB_S2, eDVBFrontendParametersSatellite.Modulation_8PSK,
 			eDVBFrontendParametersSatellite.RollOff_alpha_0_35, eDVBFrontendParametersSatellite.Pilot_Off))
 
 		self["actions"] = ActionMap(["SetupActions", "MenuActions"],
@@ -267,7 +258,7 @@ def FastScanStart(menuid, **kwargs):
 		return []
 
 def Plugins(**kwargs):
-	if (nimmanager.hasNimType("DVB-S")):
+	if nimmanager.hasNimType("DVB-S"):
 		return PluginDescriptor(name=_("Fast Scan"), description="Scan Dutch/Belgian sat provider", where = PluginDescriptor.WHERE_MENU, fnc=FastScanStart)
 	else:
 		return []

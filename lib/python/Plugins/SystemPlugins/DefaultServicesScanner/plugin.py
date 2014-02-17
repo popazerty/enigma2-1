@@ -42,7 +42,7 @@ class DefaultServiceScan(ServiceScan):
 
 	def __init__(self, session, scanList):
 		try:
-			unlink(resolveFilename(SCOPE_CONFIG) + "/lamedb");
+			unlink(resolveFilename(SCOPE_CONFIG) + "/lamedb")
 		except OSError:
 			pass
 		db = eDVBDB.getInstance()
@@ -64,7 +64,7 @@ class DefaultServicesScannerPlugin(ScanSetup):
 		# backup lamedb
 		confdir = resolveFilename(SCOPE_CONFIG)
 		copyfile(confdir + "/lamedb", confdir + "/lamedb.backup")
-		self.scan_type.setValue("multisat")
+		self.scan_type.value = "multisat"
 		self.createSetup()
 		self.scanIndex = 0
 		self.selectSat(0)
@@ -73,9 +73,9 @@ class DefaultServicesScannerPlugin(ScanSetup):
 	def selectSat(self, index):
 		for satindex in range(len(self.multiscanlist)):
 			if satindex != index:
-				self.multiscanlist[satindex][1].setValue(False)
+				self.multiscanlist[satindex][1].value = False
 			else:
-				self.multiscanlist[satindex][1].setValue(True)
+				self.multiscanlist[satindex][1].value = True
 
 	def runScan(self):
 		print "runScan"
@@ -115,7 +115,7 @@ class DefaultServicesScannerPlugin(ScanSetup):
 		<file type="services" name="lamedb.%d">
 		</file>
 	</files>
-</default>""" % (satint, "Dream", nimmanager.getSatDescription(satint), satint)
+</default>""" % (satint, "OpenPli", nimmanager.getSatDescription(satint), satint)
 			file.write(xml)
 			file.close()
 

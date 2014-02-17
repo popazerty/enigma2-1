@@ -1,23 +1,8 @@
 #!/bin/sh
 
-if [ `cat /etc/model | cut -c 1-2`=="gb" ]; then
-	cat /etc/model > /proc/stb/info/gbmodel
-fi
-
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
-
-# workaround for corrupt ssl files
-if [ ! "$(grep config.misc.firstrun /etc/enigma2/settings)" == "config.misc.firstrun=false" ]; then
-	rm -rf /etc/enigma2/cert.pem &
-	rm -rf /etc/enigma2/key.pem &
-fi
-
-# update NTP time if NTP Time Enabled
-if [ "$(grep config.misc.SyncTimeUsing /etc/enigma2/settings)" == "config.misc.SyncTimeUsing=1" ]; then
-	/usr/bin/ntpdate -s -u pool.ntp.org &
-fi
 
 if [ -x @bindir@/showiframe ]; then
 	if [ -f @sysconfdir@/enigma2/backdrop.mvi ]; then
@@ -41,20 +26,6 @@ if [ -e /opt/lib/libmediaclient.so ]; then
 	LIBS="/opt/lib/libmediaclient.so /usr/lib/libopen.so.0.0.0"
 else
 	LIBS="/usr/lib/libopen.so.0.0.0"
-fi
-
-#check for specific pagecache helper lib
-if [ -e /usr/lib/libpagecache.so ]; then
-	LIBS="$LIBS /usr/lib/libpagecache.so"
-fi
-
-#check for receiver specific passthrough helper lib
-if [ -e @libdir@/libpassthrough.so ]; then
-	LIBS="$LIBS @libdir@/libpassthrough.so"
-fi
-
-if [ ! -e /etc/enigma2/settings ]; then
-	touch /etc/enigma2/settings
 fi
 
 sync
@@ -101,11 +72,7 @@ case $ret in
 		;;
 	43)
 		init 1
-		;;		
-	44)
-		# little hack but it will be fixed soon in drivers
-		/usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/wait.mvi && echo fpupload > /dev/dbox/oled0 && sleep 3 && cat /tmp/micom.bin > /dev/mcu && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/reboot.mvi && sleep 200000
-		;;			
+		;;
 	*)
 		rm -f /tmp/.listen.camd.socket.ignore
 		;;

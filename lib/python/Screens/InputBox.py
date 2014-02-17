@@ -89,7 +89,8 @@ class InputBox(Screen):
 		self["input"].toggleOverwrite()
 
 class PinInput(InputBox):
-	def __init__(self, session, service = "", triesEntry = None, pinList = [], popup = False, *args, **kwargs):
+	def __init__(self, session, service="", triesEntry=None, pinList=None, popup=False, *args, **kwargs):
+		if not pinList: pinList = []
 		InputBox.__init__(self, session = session, text = "    ", maxSize = True, type = Input.PIN, *args, **kwargs)
 
 		self.waitTime = 15
@@ -132,12 +133,12 @@ class PinInput(InputBox):
 			InputBox.keyNumberGlobal(self, number)
 
 	def checkPin(self, pin):
-		if pin is not None and pin.find(" ") == -1 and int(pin) in self.pinList:
+		if pin is not None and " " not in pin and int(pin) in self.pinList:
 			return True
 		return False
 
 	def go(self):
-		self.triesEntry.time.setValue(int(time()))
+		self.triesEntry.time.value = int(time())
 		self.triesEntry.time.save()
 		if self.checkPin(self["input"].getText()):
 			self.setTries(3)
@@ -172,7 +173,7 @@ class PinInput(InputBox):
 		self.showTries()
 
 	def setTries(self, tries):
-		self.triesEntry.tries.setValue(tries)
+		self.triesEntry.tries.value = tries
 		self.triesEntry.tries.save()
 
 	def showTries(self):

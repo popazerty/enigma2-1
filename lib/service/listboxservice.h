@@ -37,7 +37,7 @@ public:
 	int markedQueryNext(eServiceReference &ref);
 
 	int lookupService(const eServiceReference &ref);
-	void setCurrent(const eServiceReference &ref);
+	bool setCurrent(const eServiceReference &ref);
 
 	enum {
 		visModeSimple,
@@ -149,6 +149,7 @@ private:
 
 		/* support for movemode */
 	bool m_current_marked;
+	void swapServices(list::iterator, list::iterator);
 
 	eServiceReference m_is_playable_ignore;
 

@@ -12,8 +12,6 @@ from Components.Sources.Boolean import Boolean
 from Components.Sources.StaticText import StaticText
 from Components.SystemInfo import SystemInfo
 
-from enigma import eEnv
-import xml.etree.cElementTree
 
 class SetupSummary(Screen):
 	def __init__(self, session, parent):
@@ -41,8 +39,7 @@ class SetupSummary(Screen):
 
 class TimeshiftSettings(Screen,ConfigListScreen):
 	def removeNotifier(self):
-		if config.usage.setup_level.notifiers:
-			config.usage.setup_level.notifiers.remove(self.levelChanged)
+		config.usage.setup_level.notifiers.remove(self.levelChanged)
 
 	def levelChanged(self, configElement):
 		list = []

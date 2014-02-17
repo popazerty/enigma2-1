@@ -3,7 +3,6 @@ from Tools.Directories import resolveFilename, SCOPE_SKIN
 from xml.etree.ElementTree import ElementTree
 from Components.config import config, ConfigInteger
 from Components.RcModel import rc_model
-from enigma import getBoxType
 
 config.misc.rcused = ConfigInteger(default = 1)
 
@@ -29,13 +28,10 @@ class Rc:
 		self.onShown.append(self.initRc)
 
 	def initRc(self):
-		if getBoxType() == 'ventonhdx':
+		if self.isDefaultRc:
 			self["rc"].setPixmapNum(config.misc.rcused.getValue())
 		else:
-			if self.isDefaultRc:
-				self["rc"].setPixmapNum(config.misc.rcused.getValue())
-			else:
-				self["rc"].setPixmapNum(0)
+			self["rc"].setPixmapNum(0)
 
 	def readPositions(self):
 		if self.isDefaultRc:
@@ -56,7 +52,7 @@ class Rc:
 	def getSelectPic(self, pos):
 		for selectPic in self.selectpics:
 			if pos[1] <= selectPic[0]:
-				return (selectPic[1], selectPic[2])
+				return selectPic[1], selectPic[2]
 		return None
 
 	def hideRc(self):
@@ -68,13 +64,9 @@ class Rc:
 
 	def selectKey(self, key):
 		if self.isDefaultRc:
-			rc = self.rcs[config.misc.rcused.getValue()]
+			rc = self.rcs[config.misc.rcused.value]
 		else:
-			try:
-				rc = self.rcs[2]
-			except:
-				rc = self.rcs[config.misc.rcused.getValue()]
-
+			rc = self.rcs[2]
 		if rc.has_key(key):
 			rcpos = self["rc"].getPosition()
 			pos = rc[key]

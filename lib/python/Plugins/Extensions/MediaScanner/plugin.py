@@ -53,7 +53,7 @@ def menuHook(menuid):
 	if menuid != "mainmenu":
 		return [ ]
 	from Tools.BoundFunction import boundFunction
-	return [(("%s (files)") % r.description, boundFunction(menuEntry, r.description, r.mountpoint), "hotplug_%s" % r.mountpoint, None) for r in harddiskmanager.getMountedPartitions(onlyhotplug = True)]
+	return [("%s (files)" % r.description, boundFunction(menuEntry, r.description, r.mountpoint), "hotplug_%s" % r.mountpoint, None) for r in harddiskmanager.getMountedPartitions(onlyhotplug = True)]
 
 global_session = None
 
@@ -99,10 +99,7 @@ def movielist_open(list, session, **kwargs):
 		if not path.endswith('/'):
 			path += '/'
 		config.movielist.last_videodir.value = path
-		try:
-			InfoBar.instance.showMovies(eServiceReference(stype, 0, f.path))
-		except:
-			pass
+		InfoBar.instance.showMovies(eServiceReference(stype, 0, f.path))
 
 def filescan(**kwargs):
 	from Components.Scanner import Scanner, ScanPath

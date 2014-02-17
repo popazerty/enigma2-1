@@ -1,48 +1,37 @@
 # -*- coding: UTF-8 -*-
 # CCcam Info by AliAbdul
 from base64 import encodestring
+from os import listdir, remove, rename, system
+
+from enigma import eListboxPythonMultiContent, eTimer, gFont, loadPNG, RT_HALIGN_RIGHT
+
 from Components.ActionMap import ActionMap, NumberActionMap
-from Components.config import config, ConfigInteger, ConfigSelection, ConfigSubsection, ConfigText, ConfigYesNo, getConfigListEntry
+from Components.config import config, getConfigListEntry
 from Components.ConfigList import ConfigListScreen
 from Components.Console import Console
 from Components.Label import Label
-from Components.Language import language
 from Components.MenuList import MenuList
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
 from Components.ScrollLabel import ScrollLabel
-from Components.ServiceEventTracker import ServiceEventTracker
-from enigma import eListboxPythonMultiContent, ePoint, eTimer, getDesktop, gFont, iPlayableService, iServiceInformation, loadPNG, RT_HALIGN_RIGHT
-from os import environ, listdir, remove, rename, system, popen, path
-from Plugins.Plugin import PluginDescriptor
 from Screens.HelpMenu import HelpableScreen
+
 #from Screens.InfoBar import InfoBar
 from Screens.LocationBox import LocationBox
 from Screens.MessageBox import MessageBox
 from Screens.Screen import Screen
 from Screens.VirtualKeyBoard import VirtualKeyBoard
-from skin import parseColor
-from Tools.Directories import fileExists, resolveFilename, SCOPE_LANGUAGE, SCOPE_PLUGINS
+from Tools.Directories import fileExists
 from twisted.internet import reactor
 from twisted.web.client import HTTPClientFactory
 from urlparse import urlparse, urlunparse
-import gettext
 
 #TOGGLE_SHOW = InfoBar.toggleShow
 
 VERSION = "v1.3c"
 DATE = "24.12.2009"
+CFG = "/etc/CCcam.cfg"
 
 #############################################################
-
-def confPath():
-	search_dirs = [ "/usr", "/var", "/etc" ]
-	sdirs = " ".join(search_dirs)
-	cmd = 'find %s -name "CCcam.cfg" | head -n 1' % sdirs
-	res = popen(cmd).read()
-	if res == "":
-		return None
-	else:
-		return res.replace("\n", "")
 
 def _parse(url):
 	url = url.strip()
@@ -89,13 +78,6 @@ def getPage(url, contextFactory=None, *args, **kwargs):
 	reactor.connectTCP(host, port, factory)
 
 	return factory.deferred
-
-def searchConfig():
-	global CFG, CFG_path
-	CFG = confPath()
-	CFG_path = '/var/etc'
-	if CFG:
-		CFG_path =  path.dirname(CFG)
 
 #############################################################
 
@@ -215,9 +197,9 @@ def getConfigNameAndContent(fileName):
 		idx = name.index("\n")
 		name = name[:idx]
 	else:
-		name = fileName.replace(CFG_path + "/", "")
+		name = fileName.replace("/var/etc/", "")
 
-	return (name, content)
+	return name, content
 
 #############################################################
 
@@ -246,7 +228,7 @@ class CCcamShareViewList(MenuList):
 		self.l.setFont(0, gFont("Regular", 18))
 
 def CCcamListEntry(name, idx):
-	res = [(name)]
+	res = [name]
 	if idx == 10:
 		idx = "red"
 	elif idx == 11:
@@ -266,7 +248,7 @@ def CCcamListEntry(name, idx):
 	return res
 
 def CCcamServerListEntry(name, color):
-	res = [(name)]
+	res = [name]
 	png = "/usr/share/enigma2/skin_default/buttons/key_%s.png" % color
 	if fileExists(png):
 		res.append(MultiContentEntryPixmapAlphaTest(pos=(0, 0), size=(35, 25), png=loadPNG(png)))
@@ -274,24 +256,24 @@ def CCcamServerListEntry(name, color):
 	return res
 
 def CCcamShareListEntry(hostname, type, caid, system, uphops, maxdown):
-	res = [(hostname, type, caid, system, uphops, maxdown)]
-	res.append(MultiContentEntryText(pos=(0, 0), size=(250, 20), font=0, text=hostname))
-	res.append(MultiContentEntryText(pos=(250, 0), size=(250, 20), font=0, text=_("Type: ")+type, flags=RT_HALIGN_RIGHT))
-	res.append(MultiContentEntryText(pos=(0, 20), size=(250, 20), font=0, text=_("CaID: ")+caid))
-	res.append(MultiContentEntryText(pos=(250, 20), size=(250, 20), font=0, text=_("System: ")+system, flags=RT_HALIGN_RIGHT))
-	res.append(MultiContentEntryText(pos=(0, 40), size=(250, 20), font=0, text=_("Uphops: ")+uphops))
-	res.append(MultiContentEntryText(pos=(250, 40), size=(250, 20), font=0, text=_("Maxdown: ")+maxdown, flags=RT_HALIGN_RIGHT))
+	res = [(hostname, type, caid, system, uphops, maxdown),
+		   MultiContentEntryText(pos=(0, 0), size=(250, 20), font=0, text=hostname),
+		   MultiContentEntryText(pos=(250, 0), size=(250, 20), font=0, text=_("Type: ") + type, flags=RT_HALIGN_RIGHT),
+		   MultiContentEntryText(pos=(0, 20), size=(250, 20), font=0, text=_("CaID: ") + caid),
+		   MultiContentEntryText(pos=(250, 20), size=(250, 20), font=0, text=_("System: ") + system, flags=RT_HALIGN_RIGHT),
+		   MultiContentEntryText(pos=(0, 40), size=(250, 20), font=0, text=_("Uphops: ") + uphops),
+		   MultiContentEntryText(pos=(250, 40), size=(250, 20), font=0, text=_("Maxdown: ") + maxdown, flags=RT_HALIGN_RIGHT)]
 	return res
 
 def CCcamShareViewListEntry(caidprovider, providername, numberofcards, numberofreshare):
-	res = [(caidprovider, providername, numberofcards)]
-	res.append(MultiContentEntryText(pos=(0, 0), size=(430, 20), font=0, text=providername))
-	res.append(MultiContentEntryText(pos=(430, 0), size=(50, 20), font=0, text=numberofcards, flags=RT_HALIGN_RIGHT))
-	res.append(MultiContentEntryText(pos=(480, 0), size=(50, 20), font=0, text=numberofreshare, flags=RT_HALIGN_RIGHT))
+	res = [(caidprovider, providername, numberofcards),
+		   MultiContentEntryText(pos=(0, 0), size=(430, 20), font=0, text=providername),
+		   MultiContentEntryText(pos=(430, 0), size=(50, 20), font=0, text=numberofcards, flags=RT_HALIGN_RIGHT),
+		   MultiContentEntryText(pos=(480, 0), size=(50, 20), font=0, text=numberofreshare, flags=RT_HALIGN_RIGHT)]
 	return res
 
 def CCcamConfigListEntry(file):
-	res = [(file)]
+	res = [file]
 
 	try:
 		f = open(CFG, "r")
@@ -313,7 +295,7 @@ def CCcamConfigListEntry(file):
 	return res
 
 def CCcamMenuConfigListEntry(name, blacklisted):
-	res = [(name)]
+	res = [name]
 
 	if blacklisted:
 		png = lock_off
@@ -337,7 +319,6 @@ class CCcamInfoMain(Screen):
 
 		self.working = False
 		self.Console = Console()
-		searchConfig()
 
 		if config.cccaminfo.profile.getValue() == "":
 			self.readConfig()
@@ -418,20 +399,20 @@ class CCcamInfoMain(Screen):
 		if (username is not None) and (password is not None) and (username != "") and (password != ""):
 			self.url = self.url.replace('http://', ("http://%s:%s@" % (username, password)))
 
-		config.cccaminfo.profile.setValue("")
+		config.cccaminfo.profile.value = ""
 		config.cccaminfo.profile.save()
 
 	def profileSelected(self, url=None):
 		if url is not None:
 			self.url = url
-			config.cccaminfo.profile.setValue(self.url)
+			config.cccaminfo.profile.value = self.url
 			config.cccaminfo.profile.save()
 			self.showInfo(_("New profile: ") + url, _("Profile"))
 		else:
 			self.showInfo(_("Using old profile: ") + self.url, _("Profile"))
 
 	def keyNumberGlobal(self, idx):
-		if (self.working) == False and (idx < len(self.menu_list)):
+		if self.working == False and (idx < len(self.menu_list)):
 			self.working = True
 			sel = self.menu_list[idx]
 
@@ -509,19 +490,19 @@ class CCcamInfoMain(Screen):
 		self.keyNumberGlobal(self["menu"].getSelectedIndex())
 
 	def up(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].up()
 
 	def down(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].down()
 
 	def left(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].pageUp()
 
 	def right(self):
-		if self.working == False:
+		if not self.working:
 			self["menu"].pageDown()
 
 	def getWebpageError(self, error=""):
@@ -818,7 +799,7 @@ class CCcamShareViewMenu(Screen, HelpableScreen):
 		self.onLayoutFinish.append(self.getProviders)
 
 	def exit(self):
-		if self.working == False:
+		if not self.working:
 			self.close()
 
 	def getProviders(self):
@@ -1198,11 +1179,11 @@ class CCcamInfoConfigMenu(ConfigListScreen, Screen):
 	def __init__(self, session, profile):
 		Screen.__init__(self, session)
 		Screen.setTitle(self, _("CCcam Info Setup"))
-		config.cccaminfo.name.setValue(profile.name)
-		config.cccaminfo.ip.setValue(profile.ip)
-		config.cccaminfo.username.setValue(profile.username)
-		config.cccaminfo.password.setValue(profile.password)
-		config.cccaminfo.port.setValue(profile.port)
+		config.cccaminfo.name.value = profile.name
+		config.cccaminfo.ip.value = profile.ip
+		config.cccaminfo.username.value = profile.username
+		config.cccaminfo.password.value = profile.password
+		config.cccaminfo.port.value = profile.port
 
 		ConfigListScreen.__init__(self, [
 			getConfigListEntry(_("Name:"), config.cccaminfo.name),
@@ -1318,7 +1299,7 @@ class CCcamInfoRemoteBoxMenu(Screen):
 
 	def locationCallback(self, callback):
 		if callback:
-			config.cccaminfo.profiles.setValue(("%s/CCcamInfo.profiles"%callback).replace("//", "/"))
+			config.cccaminfo.profiles.value = ("%s/CCcamInfo.profiles"%callback).replace("//", "/")
 			config.cccaminfo.profiles.save()
 		del self.list
 		self.list = []
@@ -1372,7 +1353,7 @@ class CCcamInfoShareInfo(Screen):
 		self.onLayoutFinish.append(self.readShares)
 
 	def exit(self):
-		if self.working == False:
+		if not self.working:
 			self.close()
 
 	def readShares(self):
@@ -1438,28 +1419,28 @@ class CCcamInfoShareInfo(Screen):
 		self.working = False
 
 	def uhopsPlus(self):
-		if self.working == False:
+		if not self.working:
 			self.uphops += 1
 			if self.uphops > 9:
 				self.uphops = -1
 			self.refreshList()
 
 	def uhopsMinus(self):
-		if self.working == False:
+		if not self.working:
 			self.uphops -= 1
 			if self.uphops < -1:
 				self.uphops = 9
 			self.refreshList()
 
 	def maxdownPlus(self):
-		if self.working == False:
+		if not self.working:
 			self.maxdown += 1
 			if self.maxdown > 9:
 				self.maxdown = -1
 			self.refreshList()
 
 	def maxdownMinus(self):
-		if self.working == False:
+		if not self.working:
 			self.maxdown -= 1
 			if self.maxdown < -1:
 				self.maxdown = 9
@@ -1519,13 +1500,13 @@ class CCcamInfoConfigSwitcher(Screen):
 		list = []
 
 		try:
-			files = listdir(CFG_path)
+			files = listdir("/var/etc")
 		except:
 			files = []
 
 		for file in files:
 			if file.startswith("CCcam_") and file.endswith(".cfg"):
-				list.append(CCcamConfigListEntry(CFG_path + "/"+file))
+				list.append(CCcamConfigListEntry("/var/etc/"+file))
 
 		self["list"].setList(list)
 
@@ -1680,6 +1661,6 @@ class CCcamInfoMenuConfig(Screen):
 
 	def locationCallback(self, callback):
 		if callback:
-			config.cccaminfo.blacklist.setValue(("%s/CCcamInfo.blacklisted"%callback).replace("//", "/"))
+			config.cccaminfo.blacklist.value = ("%s/CCcamInfo.blacklisted"%callback).replace("//", "/")
 			config.cccaminfo.blacklist.save()
 

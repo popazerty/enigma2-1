@@ -10,7 +10,7 @@ from Screens.MessageBox import MessageBox
 from Tools.Directories import fileExists
 from os import system, listdir, rename, path, mkdir
 from time import sleep
-from enigma import getMachineBrand, getMachineName
+from boxbranding import getMachineBrand, getMachineName
 
 class CronTimers(Screen):
 	def __init__(self, session):
@@ -59,9 +59,9 @@ class CronTimers(Screen):
 			self.updateList()
 
 	def checkNetworkStateFinished(self, result, retval,extra_args=None):
-		if result.find('bad address') != -1:
+		if 'bad address' in result:
 			self.session.openWithCallback(self.InstallPackageFailed, MessageBox, _("Your %s %s is not connected to the internet, please check your network settings and try again.") % (getMachineBrand(), getMachineName()), type=MessageBox.TYPE_INFO, timeout=10, close_on_any_key=True)
-		elif result.find('wget returned 1') != -1 or result.find('wget returned 255') != -1 or result.find('404 Not Found') != -1:
+		elif ('wget returned 1' or 'wget returned 255' or '404 Not Found') in result:
 			self.session.openWithCallback(self.InstallPackageFailed, MessageBox, _("Sorry feeds are down for maintenance, please try again later."), type=MessageBox.TYPE_INFO, timeout=10, close_on_any_key=True)
 		else:
 			self.session.openWithCallback(self.InstallPackage, MessageBox, _('Ready to install "%s" ?') % self.service_name, MessageBox.TYPE_YESNO)
@@ -88,7 +88,7 @@ class CronTimers(Screen):
 		self.updateList()
 
 	def UninstallCheck(self):
-		if self.my_crond_run == False:
+		if not self.my_crond_run:
 			self.Console.ePopen('/usr/bin/opkg list_installed ' + self.service_name, self.RemovedataAvail)
 		else:
 			self.close()
@@ -131,9 +131,9 @@ class CronTimers(Screen):
 			cb(name, desc)
 
 	def CrondStart(self):
-		if self.my_crond_run == False:
+		if not self.my_crond_run:
 			self.Console.ePopen('/etc/init.d/busybox-cron start', self.StartStopCallback)
-		elif self.my_crond_run == True:
+		elif self.my_crond_run:
 			self.Console.ePopen('/etc/init.d/busybox-cron stop', self.StartStopCallback)
 
 	def StartStopCallback(self, result = None, retval = None, extra_args = None):
@@ -170,7 +170,7 @@ class CronTimers(Screen):
 			self['labdisabled'].show()
 		if crond_process:
 			self.my_crond_run = True
-		if self.my_crond_run == True:
+		if self.my_crond_run:
 			self['labstop'].hide()
 			self['labrun'].show()
 			self['key_yellow'].setText(_("Stop"))
@@ -345,7 +345,7 @@ class CronTimersConfig(Screen, ConfigListScreen):
 		if config.crontimers.runwhen.value == 'Weekly':
 			self.list.append(getConfigListEntry(_("What Day of week ?"), config.crontimers.dayofweek))
 		if config.crontimers.runwhen.value == 'Monthly':
-			self.list.append(getConfigListEntry(_("What Day of month ?"), config.crontimers.dayofmonth))
+			self.list.append(getConfigListEntry(_("What date of month ?"), config.crontimers.dayofmonth))
 		self.list.append(getConfigListEntry(_("Command type"), config.crontimers.commandtype))
 		if config.crontimers.commandtype.value == 'custom':
 			self.list.append(getConfigListEntry(_("Command To Run"), config.crontimers.user_command))

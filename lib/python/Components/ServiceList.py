@@ -22,7 +22,8 @@ class ServiceList(HTMLComponent, GUIComponent):
 	MODE_NORMAL = 0
 	MODE_FAVOURITES = 1
 
-	def __init__(self):
+	def __init__(self, serviceList):
+		self.serviceList = serviceList
 		GUIComponent.__init__(self)
 		self.l = eListboxServiceContent()
 
@@ -137,8 +138,38 @@ class ServiceList(HTMLComponent, GUIComponent):
 		for x in self.onSelectionChanged:
 			x()
 
-	def setCurrent(self, ref):
-		self.l.setCurrent(ref)
+	def setCurrent(self, ref, adjust=True):
+		if self.l.setCurrent(ref):
+			return None
+		from Components.ServiceEventTracker import InfoBarCount
+		if adjust and config.usage.multibouquet.value and InfoBarCount == 1:
+			print "[servicelist] search for service in userbouquets"
+			if self.serviceList:
+				revert_mode = config.servicelist.lastmode.value
+				revert_root = self.getRoot()
+				self.serviceList.setTvMode()
+				bouquets = self.serviceList.getBouquetList()
+				for bouquet in bouquets:
+					self.serviceList.enterUserbouquet(bouquet[1])
+					if self.l.setCurrent(ref):
+						config.servicelist.lastmode.save()
+						self.serviceList.saveChannel(ref)
+						return True
+				self.serviceList.setRadioMode()
+				bouquets = self.serviceList.getBouquetList()
+				for bouquet in bouquets:
+					self.serviceList.enterUserbouquet(bouquet[1])
+					if self.l.setCurrent(ref):
+						config.servicelist.lastmode.save()
+						self.serviceList.saveChannel(ref)
+						return True
+				print "[servicelist] service not found in any userbouquets"
+				if revert_mode == "tv":
+					self.serviceList.setModeTv()
+				elif revert_mode == "radio":
+					self.serviceList.setModeRadio()
+				self.serviceList.enterUserbouquet(revert_root)
+		return False
 
 	def getCurrent(self):
 		r = eServiceReference()
@@ -163,7 +194,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 		index = self.l.getNextBeginningWithChar(char)
 		indexup = self.l.getNextBeginningWithChar(char.upper())
 		if indexup != 0:
-			if (index > indexup or index == 0):
+			if index > indexup or index == 0:
 				index = indexup
 
 		self.instance.moveSelectionTo(index)
@@ -301,7 +332,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 			channelNumberWidth = 0
 			channelNumberSpace = 0
 		else:
-			channelNumberWidth = 55
+			channelNumberWidth = config.usage.alternative_number_mode.getValue() and 55 or 63
 			channelNumberSpace = 10
 
 		self.l.setElementPosition(self.l.celServiceNumber, eRect(0, 0, channelNumberWidth, self.ItemHeight))

@@ -1,10 +1,8 @@
-SUBDIRS = fonts extensions keymaps rc_models
+SUBDIRS = fonts extensions keymaps
 
 dist_pkgdata_DATA = \
 	encoding.conf \
 	keymap.xml \
-	keymap.ntr \
-	keymap.u80 \
 	menu.xml \
 	black.mvi \
 	rcpositions.xml \
@@ -12,22 +10,22 @@ dist_pkgdata_DATA = \
 	skin_subtitles.xml \
 	startwizard.xml \
 	userinterfacepositionerwizard.xml \
+	videowizard.xml \
 	freesat.t1 \
 	freesat.t2 \
 	unicable.xml \
 	hd-testcard.mvi \
-	distro-logo.png \
-	distro-lcd-logo.png
+	distro-logo.png
 
 if HAVE_TEXTLCD
 SUBDIRS += displaytext
 endif
 
-if HAVE_COLORLCD2
+if HAVE_COLORLCD
 SUBDIRS += display96
 endif
 
-if HAVE_COLORLCD1
+if HAVE_COLORLCD128
 SUBDIRS += display128
 endif
 
@@ -36,9 +34,13 @@ SUBDIRS += display220
 endif
 
 if HAVE_BWLCD255
-SUBDIRS += display255
+SUBDIRS += vfd255
 endif
 
 if HAVE_BWLCD140
-SUBDIRS += display140
+SUBDIRS += vfd140
+endif
+
+if HAVE_BWLCD128
+SUBDIRS += vfd128
 endif
