@@ -34,8 +34,6 @@ class ServiceScan:
 			else:
 				result = self.foundServices + self.scan.getNumServices()
 				percentage = self.scan.getProgress()
-				if percentage > 99:
-					percentage = 99
 				#TRANSLATORS: The stb is performing a channel scan, progress percentage is printed in '%d' (and '%%' will show a single '%' symbol)
 				message = ngettext("Scanning - %d%% completed", "Scanning - %d%% completed", percentage) % percentage
 				message += ", "
@@ -63,13 +61,13 @@ class ServiceScan:
 						if ("%d.%d" % (orb_pos/10, orb_pos%10)) in sat_name:
 							network = sat_name
 						else:
-							network = "%s %d.%d %s" % (sat_name, orb_pos / 10, orb_pos % 10, h)
+							network = ("%s %d.%d %s") % (sat_name, orb_pos / 10, orb_pos % 10, h)
 						tp_text = { tp.System_DVB_S : "DVB-S", tp.System_DVB_S2 : "DVB-S2" }.get(tp.system, "")
 						if tp_text == "DVB-S2":
-							tp_text = "%s %s" % ( tp_text,
+							tp_text = ("%s %s") % ( tp_text,
 								{ tp.Modulation_Auto : "Auto", tp.Modulation_QPSK : "QPSK",
 									tp.Modulation_8PSK : "8PSK", tp.Modulation_QAM16 : "QAM16" }.get(tp.modulation, ""))
-						tp_text = "%s %d%c / %d / %s" % ( tp_text, tp.frequency/1000,
+						tp_text = ("%s %d%c / %d / %s") % ( tp_text, tp.frequency/1000,
 							{ tp.Polarisation_Horizontal : 'H', tp.Polarisation_Vertical : 'V', tp.Polarisation_CircularLeft : 'L',
 								tp.Polarisation_CircularRight : 'R' }.get(tp.polarisation, ' '),
 							tp.symbol_rate/1000,
@@ -80,7 +78,7 @@ class ServiceScan:
 					elif tp_type == iDVBFrontend.feCable:
 						network = _("Cable")
 						tp = transponder.getDVBC()
-						tp_text = "DVB-C %s %d / %d / %s" %( { tp.Modulation_Auto : "AUTO",
+						tp_text = ("DVB-C %s %d / %d / %s") %( { tp.Modulation_Auto : "AUTO",
 							tp.Modulation_QAM16 : "QAM16", tp.Modulation_QAM32 : "QAM32",
 							tp.Modulation_QAM64 : "QAM64", tp.Modulation_QAM128 : "QAM128",
 							tp.Modulation_QAM256 : "QAM256" }.get(tp.modulation, ""),
@@ -96,7 +94,7 @@ class ServiceScan:
 						if channel:
 							channel = _("CH") + "%s " % channel
 						freqMHz = "%0.1f MHz" % (tp.frequency/1000000.)
-						tp_text = "%s %s %s %s" %(
+						tp_text = ("%s %s %s %s") %(
 							{
 								tp.System_DVB_T : "DVB-T",
 								tp.System_DVB_T2 : "DVB-T2"

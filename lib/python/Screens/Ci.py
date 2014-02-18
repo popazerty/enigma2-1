@@ -116,7 +116,7 @@ class MMIDialog(Screen):
 			self.showWait()
 		elif self.tag == "ENQ":
 			cur = self["entries"].getCurrent()
-			answer = str(cur[1].getValue())
+			answer = str(cur[1].value)
 			length = len(answer)
 			while length < cur[1].getLength():
 				answer = '0'+answer
@@ -178,7 +178,8 @@ class MMIDialog(Screen):
 		self["title"].setText("")
 		self["subtitle"].setText("")
 		self["bottom"].setText("")
-		list = [(self.wait_text, ConfigNothing())]
+		list = [ ]
+		list.append( (self.wait_text, ConfigNothing()) )
 		self.updateList(list)
 
 	def showScreen(self):
@@ -257,7 +258,7 @@ class CiMessageHandler:
 			if slot in self.dlgs:
 				self.dlgs[slot].ciStateChanged()
 			elif eDVBCI_UI.getInstance().availableMMI(slot) == 1:
-				if self.session and not config.usage.hide_ci_messages.getValue():
+				if self.session and not config.usage.hide_ci_messages.value:
 					self.dlgs[slot] = self.session.openWithCallback(self.dlgClosed, MMIDialog, slot, 3)
 
 	def dlgClosed(self, slot):
@@ -277,7 +278,6 @@ CiHandler = CiMessageHandler()
 class CiSelection(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
-		self.setTitle(_("Common Interface"))
 		self["actions"] = ActionMap(["OkCancelActions", "CiSelectionActions"],
 			{
 				"left": self.keyLeft,
@@ -301,7 +301,7 @@ class CiSelection(Screen):
 		menuList.l.setList(self.list)
 		self["entries"] = menuList
 		self["entries"].onSelectionChanged.append(self.selectionChanged)
-		self["text"] = Label(_("Slot %d")% 1)
+		self["text"] = Label(_("Slot %d")%(1))
 
 	def selectionChanged(self):
 		cur_idx = self["entries"].getCurrentIndex()

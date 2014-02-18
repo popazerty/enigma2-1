@@ -4,10 +4,12 @@ import xml.etree.cElementTree
 import os
 
 profile("LOAD:enigma_skin")
-from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, addFont, gRGB, eWindowStyleSkinned, getDesktop
+from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, \
+	addFont, gRGB, eWindowStyleSkinned, getDesktop
 from Components.config import ConfigSubsection, ConfigText, config
-from Components.Sources.Source import ObsoleteSource
-from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_SKIN_IMAGE, SCOPE_FONTS, SCOPE_ACTIVE_SKIN, SCOPE_ACTIVE_LCDSKIN, SCOPE_CURRENT_SKIN, SCOPE_CONFIG, fileExists
+from Components.Converter.Converter import Converter
+from Components.Sources.Source import Source, ObsoleteSource
+from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_SKIN_IMAGE, SCOPE_FONTS, SCOPE_CURRENT_SKIN, SCOPE_CONFIG, fileExists
 from Tools.Import import my_import
 from Tools.LoadPixmap import LoadPixmap
 from Components.RcModel import rc_model
@@ -31,14 +33,9 @@ def dump(x, i=0):
 class SkinError(Exception):
 	def __init__(self, message):
 		self.msg = message
-	def __str__(self):
-		return "{%s}: %s. Please contact the skin's author!" % (config.skin.primary_skin.getValue(), self.msg)
 
-class DisplaySkinError(Exception):
-	def __init__(self, message):
-		self.msg = message
 	def __str__(self):
-		return "{%s}: %s. Please contact the skin's author!" % (config.skin.display_skin.getValue(), self.msg)
+		return "{%s}: %s. Please contact the skin's author!" % (config.skin.primary_skin.value, self.msg)
 
 dom_skins = [ ]
 
@@ -47,9 +44,7 @@ def addSkin(name, scope = SCOPE_SKIN):
 	filename = resolveFilename(scope, name)
 	if fileExists(filename):
 		mpath = os.path.dirname(filename) + "/"
-		file = open(filename, 'r')
-		dom_skins.append((mpath, xml.etree.cElementTree.parse(file).getroot()))
-		file.close()
+		dom_skins.append((mpath, xml.etree.cElementTree.parse(filename).getroot()))
 		return True
 	return False
 
@@ -74,13 +69,11 @@ def skin_user_skinname():
 # example: loadSkin("nemesis_greenline/skin.xml")
 config.skin = ConfigSubsection()
 DEFAULT_SKIN = "PLI-HD/skin.xml"
+# on SD hardware, PLi-HD will not be available
 if not fileExists(resolveFilename(SCOPE_SKIN, DEFAULT_SKIN)):
-	# in that case, fallback to Magic (which is an SD skin)
-	DEFAULT_SKIN = "skin.xml"
+	# in that case, fallback to PLi-HD (which is an SD skin)
+	DEFAULT_SKIN = "PLi-HD/skin.xml"
 config.skin.primary_skin = ConfigText(default=DEFAULT_SKIN)
-
-DEFAULT_DISPLAY_SKIN = "skin_display.xml"
-config.skin.display_skin = ConfigText(default=DEFAULT_DISPLAY_SKIN)
 
 profile("LoadSkin")
 try:
@@ -96,30 +89,23 @@ except (SkinError, IOError, AssertionError), err:
 addSkin('skin_box.xml')
 # add optional discrete second infobar
 addSkin('skin_second_infobar.xml')
+# Only one of these is present, compliments of AM_CONDITIONAL
 display_skin_id = 1
-try:
-	if not addSkin(os.path.join('display', config.skin.display_skin.getValue())):
-		raise DisplaySkinError, "display skin not found"
-except Exception, err:
-	print "SKIN ERROR:", err
-	skin = DEFAULT_DISPLAY_SKIN
-	if config.skin.display_skin.getValue() == skin:
-		skin = 'skin_display.xml'
-	print "defaulting to standard display skin...", skin
-	config.skin.display_skin.value = skin
-	skin = os.path.join('display', skin)
-	addSkin(skin)
-	del skin
+addSkin('skin_display.xml')
+if addSkin('skin_display96.xml'):
+	# Color OLED
+	display_skin_id = 2
+addSkin('skin_text.xml')
 
 addSkin('skin_subtitles.xml')
 
 try:
-	if not addSkin(config.skin.primary_skin.getValue()):
+	if not addSkin(config.skin.primary_skin.value):
 		raise SkinError, "primary skin not found"
 except Exception, err:
 	print "SKIN ERROR:", err
 	skin = DEFAULT_SKIN
-	if config.skin.primary_skin.getValue() == skin:
+	if config.skin.primary_skin.value == skin:
 		skin = 'skin.xml'
 	print "defaulting to standard skin...", skin
 	config.skin.primary_skin.value = skin
@@ -134,7 +120,7 @@ def parseCoordinate(s, e, size=0, font=None):
 	if s == "center":
 		val = (e - size)/2
 	elif s == '*':
-		return None
+	        return None
 	else:
 		if s[0] is 'e':
 			val = e
@@ -143,20 +129,20 @@ def parseCoordinate(s, e, size=0, font=None):
 			val = e/2
 			s = s[1:]
 		else:
-			val = 0
+			val = 0;
 		if s:
 			if s[-1] is '%':
 				val += e * int(s[:-1]) / 100
 			elif s[-1] is 'w':
-				val += fonts[font][3] * int(s[:-1])
+			        val += fonts[font][3] * int(s[:-1]);
 			elif s[-1] is 'h':
-				val += fonts[font][2] * int(s[:-1])
+			        val += fonts[font][2] * int(s[:-1]);
 			else:
 				val += int(s)
 	if val < 0:
 		val = 0
 	return val
-
+	        
 
 def getParentSize(object, desktop):
 	size = eSize()
@@ -210,7 +196,7 @@ def parseColor(s):
 		try:
 			return colorNames[s]
 		except:
-			raise SkinError("color '%s' must be #aarrggbb or valid named color" % s)
+			raise SkinError("color '%s' must be #aarrggbb or valid named color" % (s))
 	return gRGB(int(s[1:], 0x10))
 
 def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, ignore=(), filenames=frozenset(("pixmap", "pointer", "seek_pointer", "backgroundPixmap", "selectionPixmap", "sliderPixmap", "scrollbarbackgroundPixmap"))):
@@ -221,10 +207,7 @@ def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, igno
 	for attrib, value in node.items():
 		if attrib not in ignore:
 			if attrib in filenames:
-				pngfile = resolveFilename(SCOPE_ACTIVE_SKIN, value, path_prefix=skin_path_prefix)
-				if fileExists(resolveFilename(SCOPE_ACTIVE_LCDSKIN, value, path_prefix=skin_path_prefix)):
-					pngfile = resolveFilename(SCOPE_ACTIVE_LCDSKIN, value, path_prefix=skin_path_prefix)
-				value = pngfile
+				value = resolveFilename(SCOPE_SKIN_IMAGE, value, path_prefix=skin_path_prefix)
 			# Bit of a hack this, really. When a window has a flag (e.g. wfNoBorder)
 			# it needs to be set at least before the size is set, in order for the
 			# window dimensions to be calculated correctly in all situations.
@@ -232,12 +215,12 @@ def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, igno
 			# Similar situation for a scrollbar in a listbox; when the scrollbar setting is applied after
 			# the size, a scrollbar will not be shown until the selection moves for the first time
 			if attrib == 'size':
-				size = value.encode("utf-8")
+			        size = value.encode("utf-8")
 			elif attrib == 'position':
-				pos = value.encode("utf-8")
+			        pos = value.encode("utf-8")
 			elif attrib == 'font':
-				font = value.encode("utf-8")
-				skinAttributes.append((attrib, font))
+			        font = value.encode("utf-8")
+			        skinAttributes.append((attrib, font))
 			else:
 				skinAttributes.append((attrib, value.encode("utf-8")))
 	if pos is not None:
@@ -248,7 +231,7 @@ def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, igno
 
 def morphRcImagePath(value):
 	if rc_model.rcIsDefault() is False:
-		if ('rc.png' or 'oldrc.png') in value:
+		if value == '/usr/share/enigma2/skin_default/rc.png' or value == '/usr/share/enigma2/skin_default/rcold.png':
 			value = rc_model.getRcLocation() + 'rc.png'
 	return value
 
@@ -258,7 +241,7 @@ def loadPixmap(path, desktop):
 		path = path[:option]
 	ptr = LoadPixmap(morphRcImagePath(path), desktop)
 	if ptr is None:
-		raise SkinError("pixmap file %s not found!" % path)
+		raise SkinError("pixmap file %s not found!" % (path))
 	return ptr
 
 class AttributeParser:
@@ -286,7 +269,7 @@ class AttributeParser:
 	def position(self, value):
 		if isinstance(value, tuple):
 			self.guiObject.move(ePoint(*value))
-		else:
+		else: 
 			self.guiObject.move(parsePosition(value, self.scale, self.guiObject, self.desktop, self.guiObject.csize()))
 	def size(self, value):
 		if isinstance(value, tuple):
@@ -337,7 +320,7 @@ class AttributeParser:
 					"orRightToLeft": (self.guiObject.orHorizontal, True),
 				}[value])
 		except KeyError:
-			print "oprientation must be either orVertical or orHorizontal!, not %s. Please contact the skin's author!" % value
+			print "oprientation must be either orVertical or orHorizontal!"
 	def valign(self, value):
 		try:
 			self.guiObject.setVAlign(
@@ -346,7 +329,7 @@ class AttributeParser:
 					"bottom": self.guiObject.alignBottom
 				}[value])
 		except KeyError:
-			print "valign must be either top, center or bottom!, not %s. Please contact the skin's author!" % value
+			print "valign must be either top, center or bottom!"
 	def halign(self, value):
 		try:
 			self.guiObject.setHAlign(
@@ -356,7 +339,7 @@ class AttributeParser:
 					"block": self.guiObject.alignBlock
 				}[value])
 		except KeyError:
-			print "halign must be either left, center, right or block!, not %s. Please contact the skin's author!" % value
+			print "halign must be either left, center, right or block!"
 	def textOffset(self, value):
 		x, y = value.split(',')
 		self.guiObject.setTextOffset(ePoint(int(x) * self.scale[0][0] / self.scale[0][1], int(y) * self.scale[1][0] / self.scale[1][1]))
@@ -376,18 +359,6 @@ class AttributeParser:
 		self.guiObject.setForegroundColor(parseColor(value))
 	def foregroundColorSelected(self, value):
 		self.guiObject.setForegroundColorSelected(parseColor(value))
-	def foregroundNotCrypted(self, value):
-		self.guiObject.setForegroundColor(parseColor(value))
-	def backgroundNotCrypted(self, value):
-		self.guiObject.setBackgroundColor(parseColor(value))
-	def foregroundCrypted(self, value):
-		self.guiObject.setForegroundColor(parseColor(value))
-	def backgroundCrypted(self, value):
-		self.guiObject.setBackgroundColor(parseColor(value))
-	def foregroundEncrypted(self, value):
-		self.guiObject.setForegroundColor(parseColor(value))
-	def backgroundEncrypted(self, value):
-		self.guiObject.setBackgroundColor(parseColor(value))
 	def shadowColor(self, value):
 		self.guiObject.setShadowColor(parseColor(value))
 	def selectionDisabled(self, value):
@@ -469,7 +440,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 	for skininclude in skin.findall("include"):
 		filename = skininclude.attrib.get("filename")
 		if filename:
-			skinfile = resolveFilename(SCOPE_ACTIVE_SKIN, filename, path_prefix=path_prefix)
+			skinfile = resolveFilename(SCOPE_CURRENT_SKIN, filename, path_prefix=path_prefix)
 			if not fileExists(skinfile):
 				skinfile = resolveFilename(SCOPE_SKIN_IMAGE, filename, path_prefix=path_prefix)
 			if fileExists(skinfile):
@@ -505,16 +476,14 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 				render = 0
 			resolved_font = resolveFilename(SCOPE_FONTS, filename, path_prefix=path_prefix)
 			if not fileExists(resolved_font): #when font is not available look at current skin path
-				resolved_font = resolveFilename(SCOPE_ACTIVE_SKIN, filename)
-				if fileExists(resolveFilename(SCOPE_CURRENT_SKIN, filename)):
-					resolved_font = resolveFilename(SCOPE_CURRENT_SKIN, filename)
-				elif fileExists(resolveFilename(SCOPE_ACTIVE_LCDSKIN, filename)):
-					resolved_font = resolveFilename(SCOPE_ACTIVE_LCDSKIN, filename)
+				skin_path = resolveFilename(SCOPE_CURRENT_SKIN, filename)
+				if fileExists(skin_path):
+					resolved_font = skin_path
 			addFont(resolved_font, name, scale, is_replacement, render)
 			#print "Font: ", resolved_font, name, scale, is_replacement
 		for alias in c.findall("alias"):
-			get = alias.attrib.get
-			try:
+		        get = alias.attrib.get
+		        try:
 				name = get("name")
 				font = get("font")
 				size = int(get("size"))
@@ -527,7 +496,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 
 
 	for c in skin.findall("subtitles"):
-		from enigma import eSubtitleWidget
+		from enigma import eWidget, eSubtitleWidget
 		scale = ((1,1),(1,1))
 		for substyle in c.findall("sub"):
 			get_attr = substyle.attrib.get
@@ -568,7 +537,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 			offset = parseSize(get_attr("offset"), ((1,1),(1,1)))
 			font = parseFont(get_attr("font"), ((1,1),(1,1)))
 
-		style.setTitleFont(font)
+		style.setTitleFont(font);
 		style.setTitleOffset(offset)
 		#print "  ", font, offset
 		for borderset in windowstyle.findall("borderset"):
@@ -578,10 +547,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 				bpName = get_attr("pos")
 				filename = get_attr("filename")
 				if filename and bpName:
-					pngfile = resolveFilename(SCOPE_ACTIVE_SKIN, filename, path_prefix=path_prefix)
-					if fileExists(resolveFilename(SCOPE_SKIN_IMAGE, filename, path_prefix=path_prefix)):
-						pngfile = resolveFilename(SCOPE_SKIN_IMAGE, filename, path_prefix=path_prefix)
-					png = loadPixmap(pngfile, desktop)
+					png = loadPixmap(resolveFilename(SCOPE_SKIN_IMAGE, filename, path_prefix=path_prefix), desktop)
 					style.setPixmap(eWindowStyleSkinned.__dict__[bsName], eWindowStyleSkinned.__dict__[bpName], png)
 				#print "  borderset:", bpName, filename
 		for color in windowstyle.findall("color"):
@@ -591,7 +557,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 			try:
 				style.setColor(eWindowStyleSkinned.__dict__["col" + colorType], color)
 			except:
-				raise SkinError("Unknown color %s" % colorType)
+				raise SkinError("Unknown color %s" % (colorType))
 				#pass
 			#print "  color:", type, color
 		x = eWindowStyleManager.getInstance()
@@ -627,8 +593,7 @@ def loadSkin(name, scope = SCOPE_SKIN):
 	filename = resolveFilename(scope, name)
 	if fileExists(filename):
 		path = os.path.dirname(filename) + "/"
-		file = open(filename, 'r')
-		for elem in xml.etree.cElementTree.parse(file).getroot():
+		for elem in xml.etree.cElementTree.parse(filename).getroot():
 			if elem.tag == 'screen':
 				name = elem.attrib.get('name', None)
 				if name:
@@ -638,14 +603,14 @@ def loadSkin(name, scope = SCOPE_SKIN):
 						elem.clear()
 						continue
 					if name in dom_screens:
-						# Clear old versions, save memory
-						dom_screens[name][0].clear()
-					dom_screens[name] = (elem, path)
+						print "loadSkin: Screen already defined elsewhere:", name
+						elem.clear()
+					else:
+						dom_screens[name] = (elem, path)
 				else:
 					elem.clear()
 			else:
 				elem.clear()
-		file.close()
 
 def loadSkinData(desktop):
 	# Kinda hackish, but this is called once by mytest.py
@@ -677,14 +642,13 @@ def loadSkinData(desktop):
 	del dom_skins
 
 class additionalWidget:
-	def __init__(self):
-		pass
+	pass
 
 # Class that makes a tuple look like something else. Some plugins just assume
 # that size is a string and try to parse it. This class makes that work.
 class SizeTuple(tuple):
 	def split(self, *args):
-		return str(self[0]), str(self[1])
+		return (str(self[0]), str(self[1]))
 	def strip(self, *args):
 		return '%s,%s' % self
 	def __str__(self):
@@ -692,7 +656,7 @@ class SizeTuple(tuple):
 
 class SkinContext:
 	def __init__(self, parent=None, pos=None, size=None, font=None):
-		if parent is not None:
+	        if parent is not None:
 			if pos is not None:
 				pos, size = parent.parse(pos, size, font)
 				self.x, self.y = pos
@@ -703,26 +667,26 @@ class SkinContext:
 				self.w = None
 				self.h = None
 	def __str__(self):
-		return "Context (%s,%s)+(%s,%s) " % (self.x, self.y, self.w, self.h)
+	        return "Context (%s,%s)+(%s,%s) " % (self.x, self.y, self.w, self.h)
 	def parse(self, pos, size, font):
-		if pos == "fill":
-			pos = (self.x, self.y)
-			size = (self.w, self.h)
-			self.w = 0
-			self.h = 0
+	        if pos == "fill":
+	                pos = (self.x, self.y)
+	                size = (self.w, self.h)
+	                self.w = 0
+	                self.h = 0
 		else:
 			w,h = size.split(',')
 			w = parseCoordinate(w, self.w, 0, font)
 			h = parseCoordinate(h, self.h, 0, font)
 			if pos == "bottom":
-				pos = (self.x, self.y + self.h - h)
-				size = (self.w, h)
-				self.h -= h
+			        pos = (self.x, self.y + self.h - h)
+			        size = (self.w, h)
+			        self.h -= h
 			elif pos == "top":
-				pos = (self.x, self.y)
-				size = (self.w, h)
-				self.h -= h
-				self.y += h
+			        pos = (self.x, self.y)
+			        size = (self.w, h)
+			        self.h -= h
+			        self.y += h
 			elif pos == "left":
 				pos = (self.x, self.y)
 				size = (w, self.h)
@@ -736,24 +700,24 @@ class SkinContext:
 				size = (w, h)
 				pos = pos.split(',')
 				pos = (self.x + parseCoordinate(pos[0], self.w, size[0], font), self.y + parseCoordinate(pos[1], self.h, size[1], font))
-		return SizeTuple(pos), SizeTuple(size)
+		return (SizeTuple(pos), SizeTuple(size))
 
 class SkinContextStack(SkinContext):
 	# A context that stacks things instead of aligning them
 	def parse(self, pos, size, font):
-		if pos == "fill":
-			pos = (self.x, self.y)
-			size = (self.w, self.h)
+	        if pos == "fill":
+	                pos = (self.x, self.y)
+	                size = (self.w, self.h)
 		else:
 			w,h = size.split(',')
 			w = parseCoordinate(w, self.w, 0, font)
 			h = parseCoordinate(h, self.h, 0, font)
 			if pos == "bottom":
-				pos = (self.x, self.y + self.h - h)
-				size = (self.w, h)
+			        pos = (self.x, self.y + self.h - h)
+			        size = (self.w, h)
 			elif pos == "top":
-				pos = (self.x, self.y)
-				size = (self.w, h)
+			        pos = (self.x, self.y)
+			        size = (self.w, h)
 			elif pos == "left":
 				pos = (self.x, self.y)
 				size = (w, self.h)
@@ -764,7 +728,7 @@ class SkinContextStack(SkinContext):
 				size = (w, h)
 				pos = pos.split(',')
 				pos = (self.x + parseCoordinate(pos[0], self.w, size[0], font), self.y + parseCoordinate(pos[1], self.h, size[1], font))
-		return SizeTuple(pos), SizeTuple(size)
+		return (SizeTuple(pos), SizeTuple(size))
 
 def readSkin(screen, skin, names, desktop):
 	if not isinstance(names, list):
@@ -789,14 +753,14 @@ def readSkin(screen, skin, names, desktop):
 	if myscreen is None and getattr(screen, "skin", None):
 		skin = screen.skin
 		print "[SKIN] Parsing embedded skin", name
-		if isinstance(skin, tuple):
+		if (isinstance(skin, tuple)):
 			for s in skin:
 				candidate = xml.etree.cElementTree.fromstring(s)
 				if candidate.tag == 'screen':
 					sid = candidate.attrib.get('id', None)
 					if (not sid) or (int(sid) == display_skin_id):
-						myscreen = candidate
-						break
+						myscreen = candidate 
+						break;
 			else:
 				print "[SKIN] Hey, no suitable screen!"
 		else:
@@ -826,7 +790,7 @@ def readSkin(screen, skin, names, desktop):
 
 	# now walk all widgets and stuff
 	def process_none(widget, context):
-		pass
+	        pass
 
 	def process_widget(widget, context):
 		get_attr = widget.attrib.get
@@ -868,7 +832,7 @@ def readSkin(screen, skin, names, desktop):
 				if isinstance(source, ObsoleteSource):
 					# however, if we found an "obsolete source", issue warning, and resolve the real source.
 					print "WARNING: SKIN '%s' USES OBSOLETE SOURCE '%s', USE '%s' INSTEAD!" % (name, wsource, source.new_source)
-					print "OBSOLETE SOURCE WILL BE REMOVED %s, PLEASE UPDATE!" % source.removal_date
+					print "OBSOLETE SOURCE WILL BE REMOVED %s, PLEASE UPDATE!" % (source.removal_date)
 					if source.description:
 						print source.description
 					wsource = source.new_source
@@ -881,7 +845,7 @@ def readSkin(screen, skin, names, desktop):
 
 			wrender = get_attr('render')
 			if not wrender:
-				raise SkinError("you must define a renderer with render= for source '%s'" % wsource)
+				raise SkinError("you must define a renderer with render= for source '%s'" % (wsource))
 			for converter in widget.findall("convert"):
 				ctype = converter.get('type')
 				assert ctype, "'convert'-tag needs a 'type'-attribute"
@@ -958,20 +922,20 @@ def readSkin(screen, skin, names, desktop):
 		if layout == 'stack':
 			cc = SkinContextStack
 		else:
-			cc = SkinContext
+		        cc = SkinContext
 		try:
 			c = cc(context, widget.attrib.get('position'), widget.attrib.get('size'), widget.attrib.get('font'))
 		except Exception, ex:
-			raise SkinError("Failed to create skincontext (%s,%s,%s) in %s: %s" % (widget.attrib.get('position'), widget.attrib.get('size'), widget.attrib.get('font'), context, ex) )
+		        raise SkinError("Failed to create skincontext (%s,%s,%s) in %s: %s" % (widget.attrib.get('position'), widget.attrib.get('size'), widget.attrib.get('font'), context, ex) )
 		process_screen(widget, c)
 
 	processors = {
-			None: process_none,
-			"widget": process_widget,
-			"applet": process_applet,
-			"eLabel": process_elabel,
-			"ePixmap": process_epixmap,
-			"panel": process_panel
+	        None: process_none,
+	        "widget": process_widget,
+	        "applet": process_applet,
+	        "eLabel": process_elabel,
+	        "ePixmap": process_epixmap,
+	        "panel": process_panel
 	}
 
 	try:

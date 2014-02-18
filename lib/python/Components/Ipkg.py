@@ -108,7 +108,7 @@ class IpkgComponent:
 		self.cmd.dataAvail.remove(self.cmdData)
 
 	def cmdData(self, data):
-# 		print "data:", data
+		print "data:", data
 		if self.cache is None:
 			self.cache = data
 		else:

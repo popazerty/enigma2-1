@@ -1,8 +1,8 @@
+import enigma
+import sys
 import time
 
-import enigma
 import tests
-
 
 #enigma.reset()
 def test_timer(repeat = 0, timer_start = 3600, timer_length = 1000, sim_length = 86400 * 7):
@@ -16,6 +16,9 @@ def test_timer(repeat = 0, timer_start = 3600, timer_length = 1000, sim_length =
 	print "old mwt:", t.MaxWaitTime
 	t.MaxWaitTime = 86400 * 1000
 	
+	# hack:
+	NavigationInstance.instance.SleepTimer.MaxWaitTime = 86400 * 1000
+
 	t.processed_timers = [ ]
 	t.timer_list = [ ]
 
@@ -68,6 +71,7 @@ def test_timer(repeat = 0, timer_start = 3600, timer_length = 1000, sim_length =
 	if t_initial[3:6] != t_repeated[3:6]:
 		raise tests.TestError("repeated timer time of day does not match")
 
+import FakeNotifications
 #sys.modules["Tools.Notifications"] = FakeNotifications
 #sys.modules["Tools.NumericalTextInput.NumericalTextInput"] = FakeNotifications
 

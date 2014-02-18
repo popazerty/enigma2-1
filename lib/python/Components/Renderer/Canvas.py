@@ -1,6 +1,6 @@
-from enigma import eCanvas, eRect, gRGB
-
 from Renderer import Renderer
+
+from enigma import eCanvas, eRect, ePoint, gRGB
 
 class Canvas(Renderer):
 	GUI_WIDGET = eCanvas

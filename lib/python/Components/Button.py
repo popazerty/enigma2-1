@@ -5,21 +5,20 @@ from VariableText import VariableText
 from enigma import eButton
 
 class Button(VariableText, HTMLComponent, GUIComponent):
-	def __init__(self, text="", onClick=None):
-		if not onClick: onClick = []
+	def __init__(self, text="", onClick = [ ]):
 		GUIComponent.__init__(self)
 		VariableText.__init__(self)
 		self.setText(text)
 		self.onClick = onClick
-
+	
 	def push(self):
 		for x in self.onClick:
 			x()
 		return 0
-
+	
 	def disable(self):
 		pass
-
+	
 	def enable(self):
 		pass
 

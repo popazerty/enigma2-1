@@ -1,46 +1,31 @@
-SUBDIRS = fonts extensions keymaps
+SUBDIRS = countries fonts extensions keymaps skin_default
 
 dist_pkgdata_DATA = \
 	encoding.conf \
 	keymap.xml \
 	menu.xml \
+	prev.png \
+	radio.mvi \
 	black.mvi \
 	rcpositions.xml \
 	setup.xml \
+	skin_default.xml \
 	skin_subtitles.xml \
+	skin.xml \
 	startwizard.xml \
-	userinterfacepositionerwizard.xml \
-	videowizard.xml \
 	freesat.t1 \
 	freesat.t2 \
-	unicable.xml \
-	hd-testcard.mvi \
-	distro-logo.png
+	unicable.xml
 
 if HAVE_TEXTLCD
-SUBDIRS += displaytext
-endif
-
+dist_pkgdata_DATA += skin_text.xml
+else
 if HAVE_COLORLCD
-SUBDIRS += display96
+dist_pkgdata_DATA += skin_display96.xml
+else
+dist_pkgdata_DATA += skin_display.xml
+endif
 endif
 
-if HAVE_COLORLCD128
-SUBDIRS += display128
-endif
-
-if HAVE_COLORLCD220
-SUBDIRS += display220
-endif
-
-if HAVE_BWLCD255
-SUBDIRS += vfd255
-endif
-
-if HAVE_BWLCD140
-SUBDIRS += vfd140
-endif
-
-if HAVE_BWLCD128
-SUBDIRS += vfd128
-endif
+skin_display.xml: skin_display_default.xml
+	test -f skin_display_$(BOXTYPE).xml && cp skin_display_$(BOXTYPE).xml skin_display.xml || cp skin_display_default.xml skin_display.xml

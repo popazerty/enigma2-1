@@ -1,23 +1,23 @@
-from Screens.Screen import Screen
+import gettext
+from Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Language import language
 from Components.config import config
 from Components.Sources.List import List
 from Components.Label import Label
-from Components.Sources.StaticText import StaticText
 from Components.Pixmap import Pixmap
 from Screens.InfoBar import InfoBar
 from Screens.Rc import Rc
-from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
+from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN, SCOPE_LANGUAGE
 from Tools.LoadPixmap import LoadPixmap
-
+import enigma
 
 def LanguageEntryComponent(file, name, index):
-	png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + index + ".png"))
-	if png is None:
-		png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + file + ".png"))
-		if png is None:
-			png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/missing.png"))
+	png = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "countries/" + index + ".png"))
+	if png == None:
+		png = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "countries/" + file + ".png"))
+		if png == None:
+			png = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "countries/missing.png"))
 	res = (index, name, png)
 	return res
 
@@ -28,21 +28,15 @@ class LanguageSelection(Screen):
 		self.oldActiveLanguage = language.getActiveLanguage()
 
 		self.list = []
-		self["summarylangname"] = StaticText()
 		self["languages"] = List(self.list)
 
 		self.updateList()
 		self.onLayoutFinish.append(self.selectActiveLanguage)
 
-		self["key_red"] = Label(_("Cancel"))
-		self["key_green"] = Label(_("Save"))
-
-		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
+		self["actions"] = ActionMap(["OkCancelActions"],
 		{
 			"ok": self.save,
 			"cancel": self.cancel,
-			"red": self.cancel,
-			"green": self.save,
 		}, -1)
 
 	def selectActiveLanguage(self):
@@ -55,7 +49,7 @@ class LanguageSelection(Screen):
 
 	def save(self):
 		self.commit(self.run())
-		if InfoBar.instance and self.oldActiveLanguage != config.osd.language.getValue():
+		if InfoBar.instance and self.oldActiveLanguage != config.osd.language.value:
 			self.close(True)
 		else:
 			self.close()
@@ -67,8 +61,8 @@ class LanguageSelection(Screen):
 	def run(self):
 		print "updating language..."
 		lang = self["languages"].getCurrent()[0]
-		if lang != config.osd.language.getValue():
-			config.osd.language.setValue(lang)
+		if lang != config.osd.language.value:
+			config.osd.language.value = lang
 			config.osd.language.save()
 		return lang
 
@@ -81,7 +75,7 @@ class LanguageSelection(Screen):
 	def updateList(self):
 		languageList = language.getLanguageList()
 		if not languageList: # no language available => display only english
-			list = [ LanguageEntryComponent("en", "English (UK)", "en_GB") ]
+			list = [ LanguageEntryComponent("en", "English", "en_EN") ]
 		else:
 			list = [ LanguageEntryComponent(file = x[1][2].lower(), name = x[1][0], index = x[0]) for x in languageList]
 		self.list = list
@@ -93,7 +87,6 @@ class LanguageWizard(LanguageSelection, Rc):
 		Rc.__init__(self)
 		self.onLayoutFinish.append(self.selectKeys)
 		self["wizard"] = Pixmap()
-		self["summarytext"] = StaticText()
 		self["text"] = Label()
 		self.setText()
 
@@ -104,11 +97,3 @@ class LanguageWizard(LanguageSelection, Rc):
 
 	def setText(self):
 		self["text"].setText(_("Please use the UP and DOWN keys to select your language. Afterwards press the OK button."))
-		self["summarytext"].setText(_("Please use the UP and DOWN keys to select your language. Afterwards press the OK button."))
-
-	def createSummary(self):
-		return LanguageWizardSummary
-
-class LanguageWizardSummary(Screen):
-	def __init__(self, session, parent):
-		Screen.__init__(self, session, parent)

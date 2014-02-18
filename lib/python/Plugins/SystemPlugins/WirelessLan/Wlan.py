@@ -1,16 +1,25 @@
-from os import system, path as os_path
-from string import maketrans, strip
-
 from Components.config import config, ConfigYesNo, NoSave, ConfigSubsection, ConfigText, ConfigSelection, ConfigPassword
 from Components.Console import Console
 from Components.Network import iNetwork
+
+from os import system, path as os_path
+from string import maketrans, strip
+import sys
+import types
+from re import compile as re_compile, search as re_search, escape as re_escape
 from pythonwifi.iwlibs import getNICnames, Wireless, Iwfreq, getWNICnames
 from pythonwifi import flags as wififlags
 
+list = []
+list.append("Unencrypted")
+list.append("WEP")
+list.append("WPA")
+list.append("WPA/WPA2")
+list.append("WPA2")
 
-list = ["Unencrypted", "WEP", "WPA", "WPA/WPA2", "WPA2"]
-
-weplist = ["ASCII", "HEX"]
+weplist = []
+weplist.append("ASCII")
+weplist.append("HEX")
 
 config.plugins.wlan = ConfigSubsection()
 config.plugins.wlan.essid = NoSave(ConfigText(default = "", fixed_size = False))
@@ -27,20 +36,20 @@ class Wlan:
 	def __init__(self, iface = None):
 		self.iface = iface
 		self.oldInterfaceState = None
-
+		
 		a = ''; b = ''
 		for i in range(0, 255):
-			a += chr(i)
+			a = a + chr(i)
 			if i < 32 or i > 127:
-				b += ' '
+				b = b + ' '
 			else:
-				b += chr(i)
-
+				b = b + chr(i)
+		
 		self.asciitrans = maketrans(a, b)
 
 	def asciify(self, str):
 		return str.translate(self.asciitrans)
-
+	
 	def getWirelessInterfaces(self):
 		return getWNICnames()
 
@@ -78,21 +87,20 @@ class Wlan:
 					encryption = True
 				else:
 					encryption = None
-
+				
 				signal = str(result.quality.siglevel-0x100) + " dBm"
 				quality = "%s/%s" % (result.quality.quality,ifobj.getQualityMax().quality)
-
+				
 				extra = []
 				for element in result.custom:
 					element = element.encode()
 					extra.append( strip(self.asciify(element)) )
 				for element in extra:
 					if 'SignalStrength' in element:
-						signal = element[element.index('SignalStrength')+15:element.index(',L')]
+						signal = element[element.index('SignalStrength')+15:element.index(',L')]					
 					if 'LinkQuality' in element:
-						quality = element[element.index('LinkQuality')+12:len(element)]
+						quality = element[element.index('LinkQuality')+12:len(element)]				
 
-				# noinspection PyProtectedMember
 				aps[bssid] = {
 					'active' : True,
 					'bssid': result.bssid,
@@ -107,9 +115,9 @@ class Wlan:
 					'custom' : extra,
 				}
 
-				index += 1
+				index = index + 1
 		return aps
-
+		
 	def stopGetNetworkList(self):
 		if self.oldInterfaceState is not None:
 			if self.oldInterfaceState is False:
@@ -123,13 +131,13 @@ iWlan = Wlan()
 class wpaSupplicant:
 	def __init__(self):
 		pass
-
+		
 	def writeConfig(self, iface):
-		essid = config.plugins.wlan.essid.getValue()
-		hiddenessid = config.plugins.wlan.hiddenessid.getValue()
-		encryption = config.plugins.wlan.encryption.getValue()
-		wepkeytype = config.plugins.wlan.wepkeytype.getValue()
-		psk = config.plugins.wlan.psk.getValue()
+		essid = config.plugins.wlan.essid.value
+		hiddenessid = config.plugins.wlan.hiddenessid.value
+		encryption = config.plugins.wlan.encryption.value
+		wepkeytype = config.plugins.wlan.wepkeytype.value
+		psk = config.plugins.wlan.psk.value
 		fp = file(getWlanConfigName(iface), 'w')
 		fp.write('#WPA Supplicant Configuration by enigma2\n')
 		fp.write('ctrl_interface=/var/run/wpa_supplicant\n')
@@ -169,7 +177,7 @@ class wpaSupplicant:
 		fp.write('\n')
 		fp.close()
 		#system('cat ' + getWlanConfigName(iface))
-
+		
 	def loadConfig(self,iface):
 		configfile = getWlanConfigName(iface)
 		if not os_path.exists(configfile):
@@ -203,7 +211,7 @@ class wpaSupplicant:
 					if split[1] in ('WPA RSN', 'WPA WPA2'):
 						mode = 'WPA/WPA2'
 					encryption = mode
-
+					
 				elif split[0] == 'wep_key0':
 					encryption = 'WEP'
 					if split[1].startswith('"') and split[1].endswith('"'):
@@ -211,23 +219,23 @@ class wpaSupplicant:
 						config.plugins.wlan.psk.value = split[1][1:-1]
 					else:
 						config.plugins.wlan.wepkeytype.value = 'HEX'
-						config.plugins.wlan.psk.value = split[1]
-
+						config.plugins.wlan.psk.value = split[1]						
+					
 				elif split[0] == 'psk':
 					config.plugins.wlan.psk.value = split[1][1:-1]
 				else:
 					pass
 
 			config.plugins.wlan.encryption.value = encryption
-
+				
 			wsconfig = {
-					'hiddenessid': config.plugins.wlan.hiddenessid.getValue(),
-					'ssid': config.plugins.wlan.essid.getValue(),
-					'encryption': config.plugins.wlan.encryption.getValue(),
-					'wepkeytype': config.plugins.wlan.wepkeytype.getValue(),
-					'key': config.plugins.wlan.psk.getValue(),
+					'hiddenessid': config.plugins.wlan.hiddenessid.value,
+					'ssid': config.plugins.wlan.essid.value,
+					'encryption': config.plugins.wlan.encryption.value,
+					'wepkeytype': config.plugins.wlan.wepkeytype.value,
+					'key': config.plugins.wlan.psk.value,
 				}
-
+		
 			for (key, item) in wsconfig.items():
 				if item is "None" or item is "":
 					if key == 'hiddenessid':
@@ -235,7 +243,7 @@ class wpaSupplicant:
 					if key == 'ssid':
 						wsconfig['ssid'] = ""
 					if key == 'encryption':
-						wsconfig['encryption'] = "WPA2"
+						wsconfig['encryption'] = "WPA2"			
 					if key == 'wepkeytype':
 						wsconfig['wepkeytype'] = "ASCII"
 					if key == 'key':
@@ -265,7 +273,7 @@ class Status:
 			print "[iStatus] killing self.WlanConsole"
 			self.WlanConsole.killAll()
 			self.WlanConsole = None
-
+			
 	def getDataForInterface(self, iface, callback = None):
 		self.WlanConsole = Console()
 		cmd = "iwconfig " + iface
@@ -338,13 +346,13 @@ class Status:
 					if "Noise" in line:
 						signal = line[line.index('Signal level')+13:line.index('  Noise')]
 					else:
-						signal = line[line.index('Signal level')+13:len(line)]
+						signal = line[line.index('Signal level')+13:len(line)]						
 				if signal is not None:
 					data['signal'] = signal
 
 		self.wlaniface[iface] = data
 		self.backupwlaniface = self.wlaniface
-
+		
 		if self.WlanConsole is not None:
 			if len(self.WlanConsole.appContainers) == 0:
 				print "[Wlan.py] self.wlaniface after loading:", self.wlaniface
@@ -358,5 +366,5 @@ class Status:
 			if self.wlaniface[self.iface].has_key(attribute):
 				return self.wlaniface[self.iface][attribute]
 		return None
-
+	
 iStatus = Status()

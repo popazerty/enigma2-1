@@ -51,7 +51,7 @@ class SystemMessage(Screen):
 	skin = """
 		<screen position="150,200" size="450,200" title="System Message" >
 			<widget source="text" position="0,0" size="450,200" font="Regular;20" halign="center" valign="center" render="Label" />
-			<ePixmap pixmap="icons/input_error.png" position="5,5" size="53,53" alphatest="on" />
+			<ePixmap pixmap="skin_default/icons/input_error.png" position="5,5" size="53,53" alphatest="on" />
 		</screen>"""
 	def __init__(self, session, message):
 		from Components.Sources.StaticText import StaticText
@@ -70,6 +70,7 @@ class SystemMessage(Screen):
 
 def Plugins(**kwargs):
 	from Tools.StbHardware import getFPVersion
+	from Screens.MessageBox import MessageBox
 
 	version = getFPVersion()
 	newversion = getUpgradeVersion() or 0

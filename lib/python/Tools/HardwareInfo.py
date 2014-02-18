@@ -1,5 +1,3 @@
-from boxbranding import getBoxType, getBrandOEM
-
 class HardwareInfo:
 	device_name = None
 	device_version = None
@@ -46,7 +44,4 @@ class HardwareInfo:
 		return HardwareInfo.device_version
 
 	def has_hdmi(self):
-		return getBrandOEM() in ('xtrend', 'gigablue', 'dags', 'ixuss', 'odin', 'vuplus', 'ini', 'ebox') or (getBoxType() in ('dm7020hd', 'dm800se', 'dm500hd', 'dm8000') and HardwareInfo.device_version is not None)
-
-	def has_deepstandby(self):
-		return getBoxType() != 'dm800'
+		return (HardwareInfo.device_name == 'dm7020hd' or HardwareInfo.device_name == 'dm800se' or HardwareInfo.device_name == 'dm500hd' or (HardwareInfo.device_name == 'dm8000' and HardwareInfo.device_version != None))

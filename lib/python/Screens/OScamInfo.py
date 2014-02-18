@@ -1,21 +1,27 @@
+from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.ChoiceBox import ChoiceBox
 
 from Components.ActionMap import ActionMap, NumberActionMap
+from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest, MultiContentEntryPixmap, MultiContentEntryPixmapAlphaBlend
 from Components.Sources.List import List
 from Components.Sources.StaticText import StaticText
 from Components.config import config, configfile, getConfigListEntry
 from Components.ConfigList import ConfigList, ConfigListScreen
 from Components.MenuList import MenuList
+from Components.Label import Label
+from Components.ScrollLabel import ScrollLabel
+from Components.Button import Button
 
 from Tools.LoadPixmap import LoadPixmap
+from Tools.Directories import resolveFilename, SCOPE_CURRENT_PLUGIN
 
-from enigma import eTimer, RT_HALIGN_LEFT, eListboxPythonMultiContent, gFont, getDesktop, eSize, ePoint
+from enigma import eTimer, quitMainloop, RT_HALIGN_LEFT, RT_HALIGN_CENTER, RT_VALIGN_CENTER, eListboxPythonMultiContent, eListbox, gFont, getDesktop, ePicLoad, eSize, ePoint
 from xml.etree import ElementTree
 
 from operator import itemgetter
-import os, time
+import os, re, time
 import urllib2
 
 fb = getDesktop(0).size()
@@ -28,9 +34,6 @@ else:
 	HDSKIN = False
 
 class OscamInfo:
-	def __init__(self):
-		pass
-
 	TYPE = 0
 	NAME = 1
 	PROT = 2
@@ -38,6 +41,7 @@ class OscamInfo:
 	SRVNAME = 4
 	ECMTIME = 5
 	IP_PORT = 6
+	ECMTIME = 7
 	HEAD = { NAME: _("Label"), PROT: _("Protocol"),
 		CAID_SRVID: "CAID:SrvID", SRVNAME: _("Serv.Name"),
 		ECMTIME: _("ECM-Time"), IP_PORT: _("IP-Address") }
@@ -89,7 +93,7 @@ class OscamInfo:
 			if err != "":
 				return err
 			else:
-				return user, pwd, port
+				return (user, pwd, port)
 		else:
 			return _("file oscam.conf could not be found")
 
@@ -103,7 +107,7 @@ class OscamInfo:
 				elif "httppwd" in udata:
 					self.password = ""
 				else:
-					return False, udata
+					return (False, udata)
 			else:
 				self.port = udata[2]
 				self.username = udata[0]
@@ -138,9 +142,9 @@ class OscamInfo:
 				err = str(e.code)
 		if err is not False:
 			print "[openWebIF] Fehler: %s" % err
-			return False, err
+			return (False, err)
 		else:
-			return True, data
+			return (True, data)
 
 	def readXML(self, typ):
 		if typ == "l":
@@ -335,6 +339,11 @@ class oscMenuList(MenuList):
 		self.l.setFont(3, gFont("Regular", 12))
 
 class OscamInfoMenu(Screen):
+	skin = """
+		<screen position="center,center" size="400, 300" title="OscamInfoMenu" >
+			<widget name="mainmenu" position="10,10" size="380,280" scrollbarMode="showOnDemand" />
+		</screen>"""
+
 	def __init__(self, session):
 		self.session = session
 		self.menu = [ _("Show /tmp/ecm.info"), _("Show Clients"), _("Show Readers/Proxies"), _("Show Log"), _("Card infos (CCcam-Reader)"), _("ECM Statistics"), _("Setup") ]
@@ -405,7 +414,7 @@ class OscamInfoMenu(Screen):
 		elif entry == 1:
 			if config.oscaminfo.userdatafromconf.getValue():
 				if self.osc.confPath() is None:
-					config.oscaminfo.userdatafromconf.value = False
+					config.oscaminfo.userdatafromconf.setValue(False)
 					config.oscaminfo.userdatafromconf.save()
 					self.session.openWithCallback(self.ErrMsgCallback, MessageBox, _("File oscam.conf not found.\nPlease enter username/password manually."), MessageBox.TYPE_ERROR)
 				else:
@@ -415,7 +424,7 @@ class OscamInfoMenu(Screen):
 		elif entry == 2:
 			if config.oscaminfo.userdatafromconf.getValue():
 				if self.osc.confPath() is None:
-					config.oscaminfo.userdatafromconf.value = False
+					config.oscaminfo.userdatafromconf.setValue(False)
 					config.oscaminfo.userdatafromconf.save()
 					self.session.openWithCallback(self.ErrMsgCallback, MessageBox, _("File oscam.conf not found.\nPlease enter username/password manually."), MessageBox.TYPE_ERROR)
 				else:
@@ -425,7 +434,7 @@ class OscamInfoMenu(Screen):
 		elif entry == 3:
 			if config.oscaminfo.userdatafromconf.getValue():
 				if self.osc.confPath() is None:
-					config.oscaminfo.userdatafromconf.value = False
+					config.oscaminfo.userdatafromconf.setValue(False)
 					config.oscaminfo.userdatafromconf.save()
 					self.session.openWithCallback(self.ErrMsgCallback, MessageBox, _("File oscam.conf not found.\nPlease enter username/password manually."), MessageBox.TYPE_ERROR)
 				else:
@@ -497,6 +506,9 @@ class OscamInfoMenu(Screen):
 		self["mainmenu"].moveToIndex(0)
 
 class oscECMInfo(Screen, OscamInfo):
+	skin = """<screen position="center,center" size="500, 300" title="ECM Info" >
+			<widget name="output" position="10,10" size="580,300" scrollbarMode="showOnDemand" />
+		</screen>"""
 	def __init__(self, session):
 		Screen.__init__(self, session)
 		self.ecminfo = "/tmp/ecm.info"
@@ -719,7 +731,8 @@ class oscInfo(Screen, OscamInfo):
 			if self.what != "l":
 				heading = ( self.HEAD[self.NAME], self.HEAD[self.PROT], self.HEAD[self.CAID_SRVID],
 						self.HEAD[self.SRVNAME], self.HEAD[self.ECMTIME], self.HEAD[self.IP_PORT], "")
-				outlist = [heading]
+				outlist = [ ]
+				outlist.append( heading )
 				for i in data:
 					outlist.append( i )
 				self.fieldsize = self.calcSizes(outlist)
@@ -1031,7 +1044,7 @@ class oscReaderStats(Screen, OscamInfo):
 								except IndexError:
 									last_req = time.strftime("%H:%M:%S",time.localtime(float(lastreq)))
 							else:
-								last_req = ""
+									last_req = ""
 						else:
 							avg_time = last_time = last_req = ""
 #						if lastreq != "":
@@ -1049,6 +1062,7 @@ class oscReaderStats(Screen, OscamInfo):
 		for i in outlist:
 			out.append( (i[0], i[1], i[2], i[3], i[4], i[5], i[6], str(i[7])) )
 
+
 		if HDSKIN:
 			self["output"].setStyle("HD")
 		else:
@@ -1057,7 +1071,19 @@ class oscReaderStats(Screen, OscamInfo):
 		title = [ _("Reader Statistics"), title2 ]
 		self.setTitle( " ".join(title))
 
+
+
 class OscamInfoConfigScreen(Screen, ConfigListScreen):
+	skin = """
+		<screen name="OscamInfoConfigScreen" position="center,center" size="560,450" title="Oscam Info Setup">
+			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
+			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
+			<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
+			<widget name="config" position="5,50" size="550,360" scrollbarMode="showOnDemand" zPosition="1"/>
+			<widget name="status" render="Label" position="10,380" zPosition="1" size="540,70" font="Regular;16" halign="center" valign="center" transparent="1" />
+		</screen>"""
+
 	def __init__(self, session, msg = None):
 		Screen.__init__(self, session)
 		self.session = session

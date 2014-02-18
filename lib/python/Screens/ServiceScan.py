@@ -1,6 +1,4 @@
-from enigma import eServiceReference
-
-from Screens.Screen import Screen
+from Screen import Screen
 from Components.ServiceScan import ServiceScan as CScan
 from Components.ProgressBar import ProgressBar
 from Components.Label import Label
@@ -8,7 +6,7 @@ from Components.ActionMap import ActionMap
 from Components.FIFOList import FIFOList
 from Components.Sources.FrontendInfo import FrontendInfo
 from Components.config import config
-
+from enigma import eServiceCenter, eServiceReference
 
 class ServiceScanSummary(Screen):
 	skin = """
@@ -34,6 +32,7 @@ class ServiceScanSummary(Screen):
 class ServiceScan(Screen):
 
 	def ok(self):
+		print "ok"
 		if self["scan"].isDone():
 			if self.currentInfobar.__class__.__name__ == "InfoBar":
 				selectedService = self["servicelist"].getCurrentSelection()
@@ -67,18 +66,16 @@ class ServiceScan(Screen):
 	def __init__(self, session, scanList):
 		Screen.__init__(self, session)
 
-		self["Title"] = Label(_("Scanning..."))
 		self.scanList = scanList
 
 		if hasattr(session, 'infobar'):
 			self.currentInfobar = session.infobar
-			if self.currentInfobar:
-				self.currentServiceList = self.currentInfobar.servicelist
-				if self.session.pipshown and self.currentServiceList:
-					if self.currentServiceList.dopipzap:
-						self.currentServiceList.togglePipzap()
-					del self.session.pip
-					self.session.pipshown = False
+			self.currentServiceList = self.currentInfobar.servicelist
+			if self.session.pipshown and self.currentServiceList:
+				if self.currentServiceList.dopipzap:
+					self.currentServiceList.togglePipzap()
+				del self.session.pip
+				self.session.pipshown = False
 		else:
 			self.currentInfobar = None
 
@@ -110,4 +107,5 @@ class ServiceScan(Screen):
 		self["scan"] = CScan(self["scan_progress"], self["scan_state"], self["servicelist"], self["pass"], self.scanList, self["network"], self["transponder"], self["FrontendInfo"], self.session.summary)
 
 	def createSummary(self):
+		print "ServiceScanCreateSummary"
 		return ServiceScanSummary

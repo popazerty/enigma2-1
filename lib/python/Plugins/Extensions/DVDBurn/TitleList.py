@@ -1,13 +1,7 @@
-from boxbranding import getMachineBrand, getMachineName
-
-import DVDProject
-import TitleCutter
-import TitleProperties
-import ProjectSettings
-import DVDToolbox
-import Process
+import DVDProject, TitleList, TitleCutter, TitleProperties, ProjectSettings, DVDToolbox, Process
 from Screens.Screen import Screen
 from Screens.ChoiceBox import ChoiceBox
+from Screens.InputBox import InputBox
 from Screens.MessageBox import MessageBox
 from Screens.HelpMenu import HelpableScreen
 from Screens.TaskView import JobView
@@ -16,17 +10,18 @@ from Components.ActionMap import HelpableActionMap, ActionMap
 from Components.Sources.List import List
 from Components.Sources.StaticText import StaticText
 from Components.Sources.Progress import Progress
+from Components.MultiContent import MultiContentEntryText
 from Components.Label import MultiColorLabel
+from enigma import gFont, RT_HALIGN_LEFT, RT_HALIGN_RIGHT
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS
-
 
 class TitleList(Screen, HelpableScreen):
 	skin = """
 		<screen name="TitleList" position="center,center" size="560,470" title="DVD Tool" >
-			<ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="buttons/green.png" position="140,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
 			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
 			<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
 			<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#a08500" transparent="1" />
@@ -47,21 +42,21 @@ class TitleList(Screen, HelpableScreen):
 					}
 				</convert>
 			</widget>
-			<ePixmap pixmap="div-h.png" position="0,390" zPosition="10" size="560,2" />
-			<ePixmap pixmap="buttons/key_menu.png" position="10,394" size="35,25" alphatest="on" />
+			<ePixmap pixmap="skin_default/div-h.png" position="0,390" zPosition="10" size="560,2" />
+			<ePixmap pixmap="skin_default/buttons/key_menu.png" position="10,394" size="35,25" alphatest="on" />
 			<widget source="hint" render="Label" position="50,396" size="540,22" font="Regular;18" halign="left" />
 			<widget name="medium_label"  position="10,420" size="540,22" font="Regular;18" halign="left" foregroundColors="#FFFFFF,#FFFF00,#FF0000" />
 			<widget source="space_bar_single" render="Progress" position="10,446" size="270,24" borderWidth="1" zPosition="2" backgroundColor="#254f7497" />
 			<widget source="space_label_single" render="Label" position="10,449" size="270,22" zPosition="3" font="Regular;18" halign="center" transparent="1" foregroundColor="#000000" />
 			<widget source="space_bar_dual" render="Progress" position="10,446" size="540,24" borderWidth="1" backgroundColor="#254f7497" />
 			<widget source="space_label_dual" render="Label" position="10,449" size="540,22" zPosition="2" font="Regular;18" halign="center" transparent="1" foregroundColor="#000000" />
-
+			
 		</screen>"""
 
 	def __init__(self, session, project = None):
 		Screen.__init__(self, session)
 		HelpableScreen.__init__(self)
-
+		
 		self["titleactions"] = HelpableActionMap(self, "DVDTitleList",
 			{
 				"addTitle": (self.addTitle, _("Add a new title"), _("Add title")),
@@ -143,7 +138,7 @@ class TitleList(Screen, HelpableScreen):
 		job_manager.in_background = False
 		self.session.openWithCallback(self.JobViewCB, JobView, self.backgroundJob)
 		self.backgroundJob = None
-
+	
 	def titleProperties(self):
 		if self.getCurrentTitle():
 			self.session.openWithCallback(self.updateTitleList, TitleProperties.TitleProperties, self, self.project, self["titles"].getIndex())
@@ -162,15 +157,15 @@ class TitleList(Screen, HelpableScreen):
 		from Components.ActionMap import HelpableActionMap
 		class DVDMovieSelection(MovieSelection):
 			skin = """<screen name="DVDMovieSelection" position="center,center" size="560,445" title="Select a movie">
-				<ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" alphatest="on" />
-				<ePixmap pixmap="buttons/green.png" position="140,0" size="140,40" alphatest="on" />
-				<ePixmap pixmap="buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
+				<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
+				<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
+				<ePixmap pixmap="skin_default/buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
 				<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
 				<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
 				<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#a08500" transparent="1" />
 				<widget name="waitingtext" position="0,45" size="560,395" zPosition="4" font="Regular;22" halign="center" valign="center" />
 				<widget name="list" position="5,40" size="550,375" zPosition="2" scrollbarMode="showOnDemand" />
-				<widget name="DescriptionBorder" pixmap="border_eventinfo.png" position="0,316" zPosition="1" size="560,103" transparent="1" alphatest="on" />
+				<widget name="DescriptionBorder" pixmap="skin_default/border_eventinfo.png" position="0,316" zPosition="1" size="560,103" transparent="1" alphatest="on" />
 				<widget source="Service" render="Label" position="5,318" zPosition="1" size="480,35" font="Regular;17" foregroundColor="#cccccc">
 					<convert type="MovieInfo">ShortDescription</convert>
 				</widget>
@@ -194,7 +189,7 @@ class TitleList(Screen, HelpableScreen):
 				self["ColorActions"] = HelpableActionMap(self, "ColorActions",
 				{
 					"red": (self.close, _("Close title selection")),
-					"green": (self.insertWithoutEdit, "insert without cutlist editor"),
+					"green": (self.insertWithoutEdit, ("insert without cutlist editor")),
 					"yellow": (self.movieSelected, _("Add a new title"))
 				})
 			def updateTags(self):
@@ -220,7 +215,7 @@ class TitleList(Screen, HelpableScreen):
 		if source is None:
 			return None
 		if not source.getPath().endswith(".ts"):
-			self.session.open(MessageBox,text = _("You can only burn %s %s recordings!") % (getMachineBrand(), getMachineName()), type = MessageBox.TYPE_ERROR)
+			self.session.open(MessageBox,text = _("You can only burn receiver recordings!"), type = MessageBox.TYPE_ERROR)
 			return None
 		t = self.project.addService(source)
 		try:
@@ -232,7 +227,7 @@ class TitleList(Screen, HelpableScreen):
 	def removeCurrentTitle(self):
 		title = self.getCurrentTitle()
 		self.removeTitle(title)
-
+	
 	def removeTitle(self, title):
 		if title is not None:
 			self.project.titles.remove(title)
@@ -358,7 +353,7 @@ class TitleList(Screen, HelpableScreen):
 		t = self.current_edit_title
 		t.titleEditDone(cutlist)
 		if t.VideoType != 0:
-			self.session.openWithCallback(self.DVDformatCB,MessageBox,text = _("The DVD standard doesn't support H.264 (HDTV) video streams. Do you want to create a %s %s format data DVD (which will not play in stand-alone DVD players) instead?") % (getMachineBrand(), getMachineName()), type = MessageBox.TYPE_YESNO)
+			self.session.openWithCallback(self.DVDformatCB,MessageBox,text = _("The DVD standard doesn't support H.264 (HDTV) video streams. Do you want to create a special format data DVD (which will not play in stand-alone DVD players) instead?"), type = MessageBox.TYPE_YESNO)
 		else:
 			self.updateTitleList()
 
@@ -371,7 +366,7 @@ class TitleList(Screen, HelpableScreen):
 
 	def DVDformatCB(self, answer):
 		t = self.current_edit_title
-		if answer:
+		if answer == True:
 			self.project.settings.authormode.setValue("data_ts")
 			self.updateTitleList()
 		else:
