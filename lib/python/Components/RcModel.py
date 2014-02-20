@@ -8,10 +8,10 @@ class RcModel:
 	RCTYPE_VU = 4
 	RCTYPE_ODINM9 = 5
 	RCTYPE_ODINM7 = 6
-    RCTYPE_E3HD = 7
-    RCTYPE_IQON = 8
-    RCTYPE_XP1000 = 9
-    RCTYPE_INI2 = 10
+        RCTYPE_E3HD = 7
+        RCTYPE_IQON = 8
+        RCTYPE_XP1000 = 9
+        RCTYPE_INI2 = 10
 
 	def __init__(self):
 		self.currentRcType = self.RCTYPE_DMM
@@ -31,7 +31,7 @@ class RcModel:
 	def readRcTypeFromProc(self):
 		if os.path.exists('/proc/stb/info/boxtype'):
 			model = self.readFile('/proc/stb/info/boxtype')
-			if len(model) == 6 and model[:2] == 'et':
+			if len(model) == 10 and model[:2] == 'et':
 				rc = self.readFile('/proc/stb/ir/rc/type')
 				if rc == '4':
 					self.currentRcType = self.RCTYPE_DMM
@@ -47,9 +47,9 @@ class RcModel:
 					self.currentRcType = self.RCTYPE_E3HD
                                 elif rc == '11':
 					self.currentRcType = self.RCTYPE_IQON
-                                elif rc == '12':
+                                elif rc == '11':
 					self.currentRcType = self.RCTYPE_XP1000
-                                elif rc == '13':
+                                elif rc == '11':
 					self.currentRcType = self.RCTYPE_INI2
 				elif rc == '9':
 					self.currentRcType = self.RCTYPE_ET9500
