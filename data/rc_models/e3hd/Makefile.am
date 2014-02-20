@@ -1,4 +1,4 @@
-installdir = $(pkgdatadir)/rc_models/dmm0
+installdir = $(pkgdatadir)/rc_models/e3hd
 
 dist_install_DATA = \
 	rc.png \

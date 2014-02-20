@@ -1,4 +1,4 @@
-installdir = $(pkgdatadir)/rc_models/et6500
+installdir = $(pkgdatadir)/rc_models/odinm7
 
 dist_install_DATA = \
 	rc.png \
