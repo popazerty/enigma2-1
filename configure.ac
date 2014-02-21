@@ -208,6 +208,7 @@ data/rc_models/odinm7/Makefile
 data/rc_models/e3hd/Makefile
 data/rc_models/ini2/Makefile
 data/rc_models/iqon/Makefile
+data/rc_models/xp1000/Makefile
 data/skin_default/Makefile
 data/skin_default/menu/Makefile
 data/skin_default/icons/Makefile
