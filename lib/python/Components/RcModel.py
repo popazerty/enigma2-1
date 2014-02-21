@@ -46,19 +46,19 @@ class RcModel:
 					self.currentRcType = self.RCTYPE_VU
 				elif rc == '9':
 					self.currentRcType = self.RCTYPE_ET9500
-					elif rc == '10':
+				elif rc == '10':
 					self.currentRcType = self.RCTYPE_ET4X00
 				elif model == 'odinm9':
 					self.currentRcType = self.RCTYPE_ODINM9
 				elif model == 'odinm7':
 					self.currentRcType = self.RCTYPE_ODINM7
-					elif model == 'e3hd':
+				elif model == 'e3hd':
 					self.currentRcType = self.RCTYPE_E3HD
-					elif model == 'ini2':
+				elif model == 'ini2':
 					self.currentRcType = self.RCTYPE_INI2
-					elif model == 'iqon':
+				elif model == 'iqon':
 					self.currentRcType = self.RCTYPE_IQON
-					elif model == 'xp1000':
+				elif model == 'xp1000':
 					self.currentRcType = self.RCTYPE_XP1000
 				elif os.path.exists('/proc/stb/info/vumodel'):
 					self.currentRcType = self.RCTYPE_VU
@@ -68,7 +68,7 @@ class RcModel:
 			return '/usr/share/enigma2/rc_models/et9x00/'
 		elif self.currentRcType == self.RCTYPE_ET9500:
 			return '/usr/share/enigma2/rc_models/et9500/'
-			elif self.currentRcType == self.RCTYPE_ET4x00:
+		elif self.currentRcType == self.RCTYPE_ET4x00:
 			return '/usr/share/enigma2/rc_models/et4x00/'
 		elif self.currentRcType == self.RCTYPE_ET6X00:
 			return '/usr/share/enigma2/rc_models/et6x00/'
