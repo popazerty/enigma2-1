@@ -57,7 +57,7 @@ AC_DEFINE_UNQUOTED(BOXTYPE,"$BOXTYPE",[box type])
 
 AC_ARG_WITH(distro,
 	[  --with-distro=NAME distro name [[openvix,openaaf,...]]],
-	[DISTRO="$withval"],[DISTRO="opendroid"])
+	[DISTRO="$withval"],[DISTRO="openaaf"])
 AC_SUBST(DISTRO)
 AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
 
@@ -205,10 +205,6 @@ data/rc_models/et9x00/Makefile
 data/rc_models/vu/Makefile
 data/rc_models/odinm9/Makefile
 data/rc_models/odinm7/Makefile
-data/rc_models/e3hd/Makefile
-data/rc_models/ini2/Makefile
-data/rc_models/iqon/Makefile
-data/rc_models/xp1000/Makefile
 data/skin_default/Makefile
 data/skin_default/menu/Makefile
 data/skin_default/icons/Makefile
