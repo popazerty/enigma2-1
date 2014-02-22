@@ -8,6 +8,7 @@ class RcModel:
 	RCTYPE_VU = 4
 	RCTYPE_ODINM9 = 5
 	RCTYPE_ODINM7 = 6
+	RCTYPE_ET4X00 = 7
 
 	def __init__(self):
 		self.currentRcType = self.RCTYPE_DMM
@@ -41,6 +42,8 @@ class RcModel:
 					self.currentRcType = self.RCTYPE_VU
 				elif rc == '9':
 					self.currentRcType = self.RCTYPE_ET9500
+				elif rc == '10':
+					self.currentRcType = self.RCTYPE_Et4X00
 				elif model == 'odinm9':
 					self.currentRcType = self.RCTYPE_ODINM9
 				elif model == 'odinm7':
