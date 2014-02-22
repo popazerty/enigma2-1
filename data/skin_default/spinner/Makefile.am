@@ -24,21 +24,4 @@ dist_install_DATA = \
         wait21.png \
         wait22.png \
         wait23.png \
-        wait24.png \
-        wait25.png \
-	wait26.png \
-	wait27.png \
-	wait28.png \
-        wait29.png \
-        wait30.png \
-        wait31.png \
-        wait32.png \
-	wait33.png \
-	wait34.png \
-        wait35.png \
-        wait36.png \
-        wait37.png \
-        wait38.png \
-	wait39.png \
-        wait40.png \
-        wait41.png 
+        wait24.png 
