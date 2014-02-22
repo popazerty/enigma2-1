@@ -58,6 +58,8 @@ class RcModel:
 			return '/usr/share/enigma2/rc_models/et9500/'
 		elif self.currentRcType == self.RCTYPE_ET6X00:
 			return '/usr/share/enigma2/rc_models/et6x00/'
+		elif self.currentRcType == self.RCTYPE_ET4X00:
+			return '/usr/share/enigma2/rc_models/et4x00/'
 		elif self.currentRcType == self.RCTYPE_VU:
 			return '/usr/share/enigma2/rc_models/vu/'
 		elif self.currentRcType == self.RCTYPE_ODINM9:
