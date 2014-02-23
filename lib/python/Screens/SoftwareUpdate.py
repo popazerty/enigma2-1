@@ -2,10 +2,12 @@ from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
 from Screens.Screen import Screen
 from Screens.Standby import TryQuitMainloop 
+from Screens.About import CommitInfo
 from Components.ActionMap import ActionMap, NumberActionMap
 from Components.Ipkg import IpkgComponent
 from Components.Sources.StaticText import StaticText
 from Components.Slider import Slider
+from Tools.BoundFunction import boundFunction
 from enigma import eTimer, getBoxType, eDVBDB
 from urllib import urlopen
 import socket
@@ -72,17 +74,17 @@ class UpdatePlugin(Screen):
 		message = ""
 		picon = None
 		default = True
-#		try:
+		try:
 			# TODO: Use Twisted's URL fetcher, urlopen is evil. And it can
 			# run in parallel to the package update.
-#			if getBoxType() in urlopen("http://openpli.org/status").read().split(','):
-#				message = _("The current beta image might not be stable.\nFor more information see %s.") % ("www.openpli.org")
-#				picon = MessageBox.TYPE_ERROR
-#				default = False
-#		except:
-#			message = _("The status of the current beta image could not be checked because %s can not be reached.") % ("www.openpli.org")
-#			picon = MessageBox.TYPE_ERROR
-#			default = False
+			if getBoxType() in urlopen("http://openpli.org/status").read().split(','):
+				message = _("The current beta image might not be stable.\nFor more information see %s.") % ("www.openpli.org")
+				picon = MessageBox.TYPE_ERROR
+				default = False
+		except:
+			message = _("The status of the current beta image could not be checked because %s can not be reached.") % ("www.openpli.org")
+			picon = MessageBox.TYPE_ERROR
+			default = False
 		socket.setdefaulttimeout(currentTimeoutDefault)
 		if default:
 			self.startActualUpdate(True)
@@ -173,6 +175,7 @@ class UpdatePlugin(Screen):
 					choices = [(_("Update and reboot (recommended)"), "cold"),
 						(_("Update and ask to reboot"), "hot"),
 						(_("Update channel list only"), "channels"),
+						(_("Show latest commits on sourceforge"), "commits"),
 						(_("Cancel"), "")]
 					self.session.openWithCallback(self.startActualUpgrade, ChoiceBox, title=message, list=choices)
 				else:
@@ -228,6 +231,8 @@ class UpdatePlugin(Screen):
 			self.channellist_only = 1
 			self.slider.setValue(1)
 			self.ipkg.startCmd(IpkgComponent.CMD_LIST, args = {'installed_only': True})
+		elif answer[1] == "commits":
+			self.session.openWithCallback(boundFunction(self.ipkgCallback, IpkgComponent.EVENT_DONE, None), CommitInfo)
 		else:
 			self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE, args = {'test_only': False})
 
