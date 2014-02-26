@@ -57,7 +57,7 @@
 	</colors>
 	<!-- Screwed Stone II skin (skin_default.xml) /Nemesis -->
 
-	<include filename="xta/skin_listchannel.xml" />
+	<include filename="opendroid/skin_listchannel.xml" />
 	<!-- Iconmain screen -->
   <screen name="Iconmain" position="center,center" size="1280,720" title="Mainmenu" flags="wfNoBorder" backgroundColor="transparent">
     <widget name="title" position="423,520" size="400,50" zPosition="3" halign="center" foregroundColor="white" backgroundColor="white" font="Regular;40" transparent="1" />
