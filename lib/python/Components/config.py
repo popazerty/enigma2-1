@@ -32,28 +32,24 @@ class ConfigElement(object):
 		self.save_forced = False
 		self.last_value = None
 		self.save_disabled = False
-		self.__notifiers = None
-		self.__notifiers_final = None
+		self.__notifiers = { }
+		self.__notifiers_final = { }
 		self.enabled = True
 		self.callNotifiersOnSaveAndCancel = False
 
 	def getNotifiers(self):
-		if self.__notifiers is None:
-			self.__notifiers = [ ]
-		return self.__notifiers
+		return [func for (func, val, call_on_save_and_cancel) in self.__notifiers.itervalues()]
 
 	def setNotifiers(self, val):
-		self.__notifiers = val
+		print "just readonly access to notifiers is allowed! append/remove doesnt work anymore! please use addNotifier, removeNotifier, clearNotifiers"
 
 	notifiers = property(getNotifiers, setNotifiers)
 
 	def getNotifiersFinal(self):
-		if self.__notifiers_final is None:
-			self.__notifiers_final = [ ]
-		return self.__notifiers_final
+		return [func for (func, val, call_on_save_and_cancel) in self.__notifiers_final.itervalues()]
 
 	def setNotifiersFinal(self, val):
-		self.__notifiers_final = val
+		print "just readonly access to notifiers_final is allowed! append/remove doesnt work anymore! please use addNotifier, removeNotifier, clearNotifiers"
 
 	notifiers_final = property(getNotifiersFinal, setNotifiersFinal)
 
@@ -112,12 +108,15 @@ class ConfigElement(object):
 			for x in self.notifiers_final:
 				x(self)
 
-	def addNotifier(self, notifier, initial_call = True, immediate_feedback = True):
+	# immediate_feedback = True means call notifier on every value CHANGE
+	# immediate_feedback = False means call notifier on leave the config element (up/down) when value have CHANGED
+	# call_on_save_or_cancel = True means call notifier always on save/cancel.. even when value have not changed
+	def addNotifier(self, notifier, initial_call = True, immediate_feedback = True, call_on_save_or_cancel = False):
 		assert callable(notifier), "notifiers must be callable"
 		if immediate_feedback:
-			self.notifiers.append(notifier)
+			self.__notifiers[str(notifier)] = (notifier, self.value, call_on_save_or_cancel)
 		else:
-			self.notifiers_final.append(notifier)
+			self.__notifiers_final[str(notifier)] = (notifier, self.value, call_on_save_or_cancel)
 		# CHECKME:
 		# do we want to call the notifier
 		#  - at all when adding it? (yes, though optional)
@@ -128,6 +127,16 @@ class ConfigElement(object):
 		#     the entry could just be new.)
 		if initial_call:
 			notifier(self)
+
+
+	def removeNotifier(self, notifier):
+		try:
+			del self.__notifiers[str(notifier)]
+		except:
+			pass
+			
+	def clearNotifiers(self):
+		self.__notifiers = { }
 
 	def disableSave(self):
 		self.save_disabled = True
@@ -731,6 +740,139 @@ class ConfigMAC(ConfigSequence):
 	def __init__(self, default):
 		ConfigSequence.__init__(self, seperator = ":", limits = mac_limits, default = default)
 
+class ConfigMacText(ConfigElement, NumericalTextInput):
+	def __init__(self, default = "", visible_width = False):
+		ConfigElement.__init__(self)
+		NumericalTextInput.__init__(self, nextFunc = self.nextFunc, handleTimeout = False)
+
+		self.marked_pos = 0
+		self.allmarked = (default != "")
+		self.fixed_size = 17
+		self.visible_width = visible_width
+		self.offset = 0
+		self.overwrite = 17
+		self.help_window = None
+		self.value = self.last_value = self.default = default
+		self.useableChars = ('0123456789ABCDEF')
+
+	def validateMarker(self):
+		textlen = len(self.text)
+		if self.marked_pos > textlen-1:
+			self.marked_pos = textlen-1
+		elif self.marked_pos < 0:
+			self.marked_pos = 0
+
+	def insertChar(self, ch, pos, owr):
+		if self.text[pos] == ':':
+			pos += 1
+		if owr or self.overwrite:
+			self.text = self.text[0:pos] + ch + self.text[pos + 1:]
+		elif self.fixed_size:
+			self.text = self.text[0:pos] + ch + self.text[pos:-1]
+		else:
+			self.text = self.text[0:pos] + ch + self.text[pos:]
+
+	def handleKey(self, key):
+		if key == KEY_LEFT:
+			self.timeout()
+			if self.allmarked:
+				self.marked_pos = len(self.text)
+				self.allmarked = False
+			else:
+				if self.text[self.marked_pos-1] == ':':
+					self.marked_pos -= 2
+				else:
+					self.marked_pos -= 1
+		elif key == KEY_RIGHT:
+			self.timeout()
+			if self.allmarked:
+				self.marked_pos = 0
+				self.allmarked = False
+			else:
+				if self.marked_pos < (len(self.text)-1):
+					if self.text[self.marked_pos+1] == ':':
+						self.marked_pos += 2
+					else:
+						self.marked_pos += 1
+		elif key in KEY_NUMBERS:
+			owr = self.lastKey == getKeyNumber(key)
+			newChar = self.getKey(getKeyNumber(key))
+			self.insertChar(newChar, self.marked_pos, owr)
+		elif key == KEY_TIMEOUT:
+			self.timeout()
+			if self.help_window:
+				self.help_window.update(self)
+			if self.text[self.marked_pos] == ':':
+				self.marked_pos += 1
+			return
+
+		if self.help_window:
+			self.help_window.update(self)
+		self.validateMarker()
+		self.changed()
+
+	def nextFunc(self):
+		self.marked_pos += 1
+		self.validateMarker()
+		self.changed()
+
+	def getValue(self):
+		try:
+			return self.text.encode("utf-8")
+		except UnicodeDecodeError:
+			print "Broken UTF8!"
+			return self.text
+
+	def setValue(self, val):
+		try:
+			self.text = val.decode("utf-8")
+		except UnicodeDecodeError:
+			self.text = val.decode("utf-8", "ignore")
+			print "Broken UTF8!"
+
+	value = property(getValue, setValue)
+	_value = property(getValue, setValue)
+
+	def getText(self):
+		return self.text.encode("utf-8")
+
+	def getMulti(self, selected):
+		if self.visible_width:
+			if self.allmarked:
+				mark = range(0, min(self.visible_width, len(self.text)))
+			else:
+				mark = [self.marked_pos-self.offset]
+			return ("mtext"[1-selected:], self.text[self.offset:self.offset+self.visible_width].encode("utf-8")+" ", mark)
+		else:
+			if self.allmarked:
+				mark = range(0, len(self.text))
+			else:
+				mark = [self.marked_pos]
+			return ("mtext"[1-selected:], self.text.encode("utf-8")+" ", mark)
+
+	def onSelect(self, session):
+		self.allmarked = (self.value != "")
+		if session is not None:
+			from Screens.NumericalTextInputHelpDialog import NumericalTextInputHelpDialog
+			self.help_window = session.instantiateDialog(NumericalTextInputHelpDialog, self)
+			self.help_window.show()
+
+	def onDeselect(self, session):
+		self.marked_pos = 0
+		self.offset = 0
+		if self.help_window:
+			session.deleteDialog(self.help_window)
+			self.help_window = None
+		if not self.last_value == self.value:
+			self.changedFinal()
+			self.last_value = self.value
+
+	def getHTML(self, id):
+		return '<input type="text" name="' + id + '" value="' + self.value + '" /><br>\n'
+
+	def unsafeAssign(self, value):
+		self.value = str(value)
+
 class ConfigPosition(ConfigSequence):
 	def __init__(self, default, args):
 		ConfigSequence.__init__(self, seperator = ",", limits = [(0,args[0]),(0,args[1]),(0,args[2]),(0,args[3])], default = default)
@@ -1042,7 +1184,7 @@ class ConfigSelectionNumber(ConfigSelection):
 		while step <= max:
 			choices.append(str(step))
 			step += stepwidth
-		
+
 		ConfigSelection.__init__(self, choices, default)
 
 	def getValue(self):
@@ -1304,7 +1446,7 @@ class ConfigLocations(ConfigElement):
 		add = [x for x in value if not x in loc]
 		diff = add + [x for x in loc if not x in value]
 		locations = [x for x in locations if not x[0] in diff] + [[x, self.getMountpoint(x), True, True] for x in add]
-		locations.sort(key = lambda x: x[0])
+		#locations.sort(key = lambda x: x[0])
 		self.locations = locations
 		self.changed()
 
@@ -1655,7 +1797,7 @@ class Config(ConfigSubsection):
 			base[names[-1]] = val
 
 			if not base_file: # not the initial config file..
-				#update config.x.y.value when exist
+				#update config.x.y.getValue() when exist
 				try:
 					configEntry = eval(name)
 					if configEntry is not None:
@@ -1759,84 +1901,3 @@ def updateConfigElement(element, newelement):
 ##configfile.save()
 #config.save()
 #print config.pickle()
-
-cec_limits = [(0,15),(0,15),(0,15),(0,15)]
-class ConfigCECAddress(ConfigSequence):
-	def __init__(self, default, auto_jump = False):
-		ConfigSequence.__init__(self, seperator = ".", limits = cec_limits, default = default)
-		self.block_len = [len(str(x[1])) for x in self.limits]
-		self.marked_block = 0
-		self.overwrite = True
-		self.auto_jump = auto_jump
-
-	def handleKey(self, key):
-		if key == KEY_LEFT:
-			if self.marked_block > 0:
-				self.marked_block -= 1
-			self.overwrite = True
-
-		elif key == KEY_RIGHT:
-			if self.marked_block < len(self.limits)-1:
-				self.marked_block += 1
-			self.overwrite = True
-
-		elif key == KEY_HOME:
-			self.marked_block = 0
-			self.overwrite = True
-
-		elif key == KEY_END:
-			self.marked_block = len(self.limits)-1
-			self.overwrite = True
-
-		elif key in KEY_NUMBERS or key == KEY_ASCII:
-			if key == KEY_ASCII:
-				code = getPrevAsciiCode()
-				if code < 48 or code > 57:
-					return
-				number = code - 48
-			else:
-				number = getKeyNumber(key)
-			oldvalue = self._value[self.marked_block]
-
-			if self.overwrite:
-				self._value[self.marked_block] = number
-				self.overwrite = False
-			else:
-				oldvalue *= 10
-				newvalue = oldvalue + number
-				if self.auto_jump and newvalue > self.limits[self.marked_block][1] and self.marked_block < len(self.limits)-1:
-					self.handleKey(KEY_RIGHT)
-					self.handleKey(key)
-					return
-				else:
-					self._value[self.marked_block] = newvalue
-
-			if len(str(self._value[self.marked_block])) >= self.block_len[self.marked_block]:
-				self.handleKey(KEY_RIGHT)
-
-			self.validate()
-			self.changed()
-
-	def genText(self):
-		value = ""
-		block_strlen = []
-		for i in self._value:
-			block_strlen.append(len(str(i)))
-			if value:
-				value += self.seperator
-			value += str(i)
-		leftPos = sum(block_strlen[:(self.marked_block)])+self.marked_block
-		rightPos = sum(block_strlen[:(self.marked_block+1)])+self.marked_block
-		mBlock = range(leftPos, rightPos)
-		return (value, mBlock)
-
-	def getMulti(self, selected):
-		(value, mBlock) = self.genText()
-		if self.enabled:
-			return ("mtext"[1-selected:], value, mBlock)
-		else:
-			return ("text", value)
-
-	def getHTML(self, id):
-		# we definitely don't want leading zeros
-		return '.'.join(["%d" % d for d in self.value])

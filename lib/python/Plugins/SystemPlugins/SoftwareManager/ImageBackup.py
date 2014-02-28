@@ -4,8 +4,7 @@
 #					MAKES A FULLBACK-UP READY FOR FLASHING.						#
 #																				#
 #################################################################################
-from enigma import getBoxType, getImageVersionString, getBuildVersionString, getEnigmaVersionString
-from boxbranding import getMachineBrand, getMachineName, getDriverDate
+from enigma import getBoxType, getMachineBrand, getMachineName, getImageVersionString, getBuildVersionString, getDriverDateString, getEnigmaVersionString
 from Screens.Screen import Screen
 from Components.Button import Button
 from Components.Label import Label
@@ -153,23 +152,16 @@ class ImageBackup(Screen):
 		## TESTING WHICH KIND OF SATELLITE RECEIVER IS USED
 
 		## TESTING THE XTREND AND CLARK TECH MODELS
-		if self.MODEL.startswith("et") and not self.MODEL == "et10000":
+		if self.MODEL == "et9x00" or self.MODEL == "et5x00" or self.MODEL == "et6x00" or self.MODEL == "et6500" or self.MODEL == "et4x00":
 			self.TYPE = "ET"
+			if self.MODEL == "et6500":
+				self.MODEL = "et6x00"
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
-			self.SHOWNAME = "%s %s" %(self.MACHINEBRAND, self.MODEL)
+			self.SHOWNAME = "Xtrend %s" %self.MODEL
 			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
 			self.MAINDEST = "%s/%sx00" %(self.DIRECTORY, self.MODEL[:-3])
 			self.EXTRA = "%s/fullbackup_%sx00/%s" % (self.DIRECTORY, self.MODEL[:-3], self.DATE)
-			self.EXTRAOLD = "%s/fullbackup_%s/%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE, self.MODEL)
-		elif self.MODEL == "et10000":
-			self.TYPE = "ET"
-			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 8192"
-			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
-			self.SHOWNAME = "%s %s" %(self.MACHINEBRAND, self.MODEL)
-			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
-			self.MAINDEST = "%s/%s" %(self.DIRECTORY, self.MODEL)
-			self.EXTRA = "%s/fullbackup_%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE)
 			self.EXTRAOLD = "%s/fullbackup_%s/%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE, self.MODEL)
 		## TESTING THE Odin M9 Model
 		elif self.MODEL == "odinm9":
@@ -508,7 +500,6 @@ class ImageBackup(Screen):
 
 		if self.ROOTFSTYPE == "jffs2":
 			cmd1 = "%s --root=/tmp/bi/root --faketime --output=%s/root.jffs2 %s" % (self.MKFS, self.WORKDIR, self.JFFS2OPTIONS)
-			cmd2 = None
 		else:
 			f = open("%s/ubinize.cfg" %self.WORKDIR, "w")
 			f.write("[ubifs]\n")
@@ -740,7 +731,7 @@ class ImageBackup(Screen):
 	def imageInfo(self):
 		AboutText = _("Full Image Backup ")
 		AboutText += _("By openATV Image Team") + "\n"
-		AboutText += _("Support at") + " www.xtrend-alliance.com\n\n"
+		AboutText += _("Support at") + " www.opena.tv\n\n"
 		AboutText += _("[Image Info]\n")
 		AboutText += _("Model: %s %s\n") % (getMachineBrand(), getMachineName())
 		AboutText += _("Backup Date: %s\n") % strftime("%Y-%m-%d", localtime(self.START))
@@ -755,7 +746,7 @@ class ImageBackup(Screen):
 		AboutText += _("Build: %s") % getBuildVersionString() + "\n"
 		AboutText += _("Kernel: %s") % about.getKernelVersionString() + "\n"
 
-		string = getDriverDate()
+		string = getDriverDateString()
 		year = string[0:4]
 		month = string[4:6]
 		day = string[6:8]

@@ -35,7 +35,6 @@ public:
 	
 		/* get last added service */
 	void getLastServiceName(std::string &SWIG_OUTPUT);
-	void getLastServiceRef(std::string &SWIG_OUTPUT);
 	
 	int getError();
 	

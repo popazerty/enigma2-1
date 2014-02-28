@@ -1,12 +1,11 @@
-from Screen import Screen
+from Screens.Screen import Screen
 from Components.ServiceScan import ServiceScan as CScan
 from Components.ProgressBar import ProgressBar
 from Components.Label import Label
 from Components.ActionMap import ActionMap
 from Components.FIFOList import FIFOList
 from Components.Sources.FrontendInfo import FrontendInfo
-from Components.config import config
-from enigma import eServiceCenter, eServiceReference
+from enigma import eServiceCenter
 
 class ServiceScanSummary(Screen):
 	skin = """
@@ -32,35 +31,22 @@ class ServiceScanSummary(Screen):
 class ServiceScan(Screen):
 
 	def ok(self):
-		print "ok"
 		if self["scan"].isDone():
 			if self.currentInfobar.__class__.__name__ == "InfoBar":
-				selectedService = self["servicelist"].getCurrentSelection()
-				if selectedService and self.currentServiceList is not None:
+				if self.currentServiceList is not None:
 					self.currentServiceList.setTvMode()
 					bouquets = self.currentServiceList.getBouquetList()
-					last_scanned_bouquet = bouquets and next((x[1] for x in bouquets if x[0] == "Last Scanned"), None)
-					if last_scanned_bouquet:
-						self.currentServiceList.enterUserbouquet(last_scanned_bouquet)
-						self.currentServiceList.setCurrentSelection(eServiceReference(selectedService[1]))
-						service = self.currentServiceList.getCurrentSelection()
-						if not self.session.postScanService or service != self.session.postScanService:
-							self.session.postScanService = service
-							self.currentServiceList.addToHistory(service)
-						config.servicelist.lastmode.save()
-						self.currentServiceList.saveChannel(service)
-						self.doCloseRecursive()
-			self.cancel()
+					for x in bouquets:
+						if x[0] == 'Last Scanned':
+							self.currentServiceList.setRoot(x[1])
+							services = eServiceCenter.getInstance().list(self.currentServiceList.servicelist.getRoot())
+							channels = services and services.getContent("R", True)
+							if channels:
+								self.session.postScanService = channels[0]
+								self.currentServiceList.addToHistory(channels[0])
+			self.close()
 
 	def cancel(self):
-		self.exit(False)
-
-	def doCloseRecursive(self):
-		self.exit(True)
-
-	def exit(self, returnValue):
-		if self.currentInfobar.__class__.__name__ == "InfoBar":
-			self.close(returnValue)
 		self.close()
 
 	def __init__(self, session, scanList):
@@ -70,12 +56,13 @@ class ServiceScan(Screen):
 
 		if hasattr(session, 'infobar'):
 			self.currentInfobar = session.infobar
-			self.currentServiceList = self.currentInfobar.servicelist
-			if self.session.pipshown and self.currentServiceList:
-				if self.currentServiceList.dopipzap:
-					self.currentServiceList.togglePipzap()
-				del self.session.pip
-				self.session.pipshown = False
+			if self.currentInfobar:
+				self.currentServiceList = self.currentInfobar.servicelist
+				if self.session.pipshown and self.currentServiceList:
+					if self.currentServiceList.dopipzap:
+						self.currentServiceList.togglePipzap()
+					del self.session.pip
+					self.session.pipshown = False
 		else:
 			self.currentInfobar = None
 
@@ -87,25 +74,19 @@ class ServiceScan(Screen):
 		self["transponder"] = Label()
 
 		self["pass"] = Label("")
-		self["servicelist"] = FIFOList()
+		self["servicelist"] = FIFOList(len=10)
 		self["FrontendInfo"] = FrontendInfo()
-		self["key_red"] = Label(_("Cancel"))
-		self["key_green"] = Label(_("OK"))
 
-		self["actions"] = ActionMap(["SetupActions", "MenuActions"],
-		{
-			"ok": self.ok,
-			"save": self.ok,
-			"cancel": self.cancel,
-			"menu": self.doCloseRecursive
-		}, -2)
+		self["actions"] = ActionMap(["OkCancelActions"],
+			{
+				"ok": self.ok,
+				"cancel": self.cancel
+			})
 
 		self.onFirstExecBegin.append(self.doServiceScan)
 
 	def doServiceScan(self):
-		self["servicelist"].len = self["servicelist"].instance.size().height() / self["servicelist"].l.getItemSize().height()
 		self["scan"] = CScan(self["scan_progress"], self["scan_state"], self["servicelist"], self["pass"], self.scanList, self["network"], self["transponder"], self["FrontendInfo"], self.session.summary)
 
 	def createSummary(self):
-		print "ServiceScanCreateSummary"
 		return ServiceScanSummary

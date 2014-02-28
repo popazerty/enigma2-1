@@ -18,7 +18,7 @@ for line, str in enumerate(source):
 		while spacepos > 0 and str[spacepos] != ' ':
 			spacepos -= 1
 		tmpstr = str[spacepos:pos]
-		if '_enigma.' not in tmpstr:
+		if tmpstr.find('_enigma.') == -1:
 			str = str[:pos]+str[pos+6:]
 
 	if oldstr != str:

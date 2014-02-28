@@ -1,9 +1,10 @@
-from enigma import eRCInput, getPrevAsciiCode
+from enigma import getPrevAsciiCode
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Components.ActionMap import NumberActionMap
 from Components.Label import Label
 from Components.Input import Input
+from Components.config import config
 from Tools.BoundFunction import boundFunction
 from Tools.Notifications import AddPopup
 from time import time
@@ -18,7 +19,7 @@ class InputBox(Screen):
 		if useableChars is not None:
 			self["input"].setUseableChars(useableChars)
 
-		self["actions"] = NumberActionMap(["WizardActions", "InputBoxActions", "InputAsciiActions", "KeyboardInputActions"], 
+		self["actions"] = NumberActionMap(["WizardActions", "InputBoxActions", "InputAsciiActions", "KeyboardInputActions"],
 		{
 			"gotAsciiCode": self.gotAsciiCode,
 			"ok": self.go,
@@ -44,7 +45,10 @@ class InputBox(Screen):
 		}, -1)
 
 		if self["input"].type == Input.TEXT:
-			self.onExecBegin.append(self.setKeyboardModeAscii)
+			if config.misc.remotecontrol_text_support.getValue():
+				self.onExecBegin.append(self.setKeyboardModeNone)
+			else:
+				self.onExecBegin.append(self.setKeyboardModeAscii)
 		else:
 			self.onExecBegin.append(self.setKeyboardModeNone)
 
@@ -95,10 +99,10 @@ class PinInput(InputBox):
 
 		if service:
 			self.skinName = "PinInputPopup"
-		
+
 		if self.getTries() == 0:
-			if (self.triesEntry.time.value + (self.waitTime * 60)) > time():
-				remaining = (self.triesEntry.time.value + (self.waitTime * 60)) - time()
+			if (self.triesEntry.time.getValue() + (self.waitTime * 60)) > time():
+				remaining = (self.triesEntry.time.getValue() + (self.waitTime * 60)) - time()
 				remainingMinutes = int(remaining / 60)
 				remainingSeconds = int(remaining % 60)
 				messageText = _("You have to wait %s!") % (str(remainingMinutes) + " " + _("minutes") + ", " + str(remainingSeconds) + " " + _("seconds"))
@@ -126,14 +130,14 @@ class PinInput(InputBox):
 			self.go()
 		else:
 			InputBox.keyNumberGlobal(self, number)
-		
+
 	def checkPin(self, pin):
-		if pin is not None and " " not in pin and int(pin) in self.pinList:
+		if pin is not None and pin.find(" ") == -1 and int(pin) in self.pinList:
 			return True
 		return False
-		
+
 	def go(self):
-		self.triesEntry.time.value = int(time())
+		self.triesEntry.time.setValue(int(time()))
 		self.triesEntry.time.save()
 		if self.checkPin(self["input"].getText()):
 			self.setTries(3)
@@ -145,31 +149,31 @@ class PinInput(InputBox):
 				self.closePinWrong()
 			else:
 				pass
-	
+
 	def closePinWrong(self, *args):
 		print "args:", args
 		self.close(False)
-		
+
 	def closePinCorrect(self, *args):
 		self.setTries(3)
 		self.close(True)
-		
+
 	def closePinCancel(self, *args):
 		self.close(None)
-			
+
 	def cancel(self):
 		self.closePinCancel()
-		
+
 	def getTries(self):
-		return self.triesEntry.tries.value
+		return self.triesEntry.tries.getValue()
 
 	def decTries(self):
-		self.setTries(self.triesEntry.tries.value - 1)
+		self.setTries(self.triesEntry.tries.getValue() - 1)
 		self.showTries()
-		
+
 	def setTries(self, tries):
-		self.triesEntry.tries.value = tries
+		self.triesEntry.tries.setValue(tries)
 		self.triesEntry.tries.save()
-				
+
 	def showTries(self):
 		self["tries"].setText(_("Tries left:") + " " + str(self.getTries()))

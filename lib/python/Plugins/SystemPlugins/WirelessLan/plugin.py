@@ -12,7 +12,7 @@ from Components.Network import iNetwork
 from Components.Console import Console
 from Plugins.Plugin import PluginDescriptor
 from os import system, path as os_path, listdir
-from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_SKIN_IMAGE
+from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_ACTIVE_SKIN
 from Tools.LoadPixmap import LoadPixmap
 from Tools.HardwareInfo import HardwareInfo
 from Wlan import iWlan, wpaSupplicant, iStatus, getWlanConfigName
@@ -61,26 +61,26 @@ class WlanStatus(Screen):
 			<widget source="signal" render="Label" position="220,180" size="330,25" valign="center" font="Regular;20" transparent="1" foregroundColor="#FFFFFF" />
 			<widget source="bitrate" render="Label" position="220,220" size="330,25" valign="center" font="Regular;20" transparent="1" foregroundColor="#FFFFFF" />
 			<widget source="enc" render="Label" position="220,260" size="330,25" valign="center" font="Regular;20" transparent="1" foregroundColor="#FFFFFF" />
-	
-			<ePixmap pixmap="skin_default/div-h.png" position="0,350" zPosition="1" size="560,2" />		
+
+			<ePixmap pixmap="skin_default/div-h.png" position="0,350" zPosition="1" size="560,2" />
 			<widget source="IFtext" render="Label" position="10,355" size="120,21" zPosition="10" font="Regular;20" halign="left" backgroundColor="#25062748" transparent="1" />
 			<widget source="IF" render="Label" position="120,355" size="400,21" zPosition="10" font="Regular;20" halign="left" backgroundColor="#25062748" transparent="1" />
 			<widget source="Statustext" render="Label" position="10,375" size="115,21" zPosition="10" font="Regular;20" halign="left" backgroundColor="#25062748" transparent="1"/>
 			<widget name="statuspic" pixmaps="skin_default/buttons/button_green.png,skin_default/buttons/button_green_off.png" position="130,380" zPosition="10" size="15,16" transparent="1" alphatest="on"/>
 		</screen>"""
-	
+
 	def __init__(self, session, iface):
 		Screen.__init__(self, session)
 		self.session = session
 		self.iface = iface
-				    
+
 		self["LabelBSSID"] = StaticText(_('Accesspoint:'))
 		self["LabelESSID"] = StaticText(_('SSID:'))
 		self["LabelQuality"] = StaticText(_('Link quality:'))
 		self["LabelSignal"] = StaticText(_('Signal strength:'))
 		self["LabelBitrate"] = StaticText(_('Bitrate:'))
 		self["LabelEnc"] = StaticText(_('Encryption:'))
-			
+
 		self["BSSID"] = StaticText()
 		self["ESSID"] = StaticText()
 		self["quality"] = StaticText()
@@ -97,7 +97,7 @@ class WlanStatus(Screen):
 
 		self.resetList()
 		self.updateStatusbar()
-		
+
 		self["actions"] = NumberActionMap(["WizardActions", "InputActions", "EPGSelectActions", "ShortcutActions"],
 		{
 			"ok": self.exit,
@@ -105,20 +105,20 @@ class WlanStatus(Screen):
 			"red": self.exit,
 		}, -1)
 		self.timer = eTimer()
-		self.timer.timeout.get().append(self.resetList) 
+		self.timer.timeout.get().append(self.resetList)
 		self.onShown.append(lambda: self.timer.start(8000))
 		self.onLayoutFinish.append(self.layoutFinished)
 		self.onClose.append(self.cleanup)
 
 	def cleanup(self):
 		iStatus.stopWlanConsole()
-		
+
 	def layoutFinished(self):
 		self.setTitle(_("Wireless network state"))
-		
+
 	def resetList(self):
 		iStatus.getDataForInterface(self.iface,self.getInfoCB)
-		
+
 	def getInfoCB(self,data,status):
 		if data is not None:
 			if data is True:
@@ -140,14 +140,14 @@ class WlanStatus(Screen):
 					quality = status[self.iface]["quality"]
 					if self.has_key("quality"):
 						self["quality"].setText(quality)
-						
+
 					if status[self.iface]["bitrate"] == '0':
 						bitrate = _("Unsupported")
 					else:
 						bitrate = str(status[self.iface]["bitrate"]) + " Mb/s"
 					if self.has_key("bitrate"):
-						self["bitrate"].setText(bitrate)					
-					
+						self["bitrate"].setText(bitrate)
+
 					signal = status[self.iface]["signal"]
 					if self.has_key("signal"):
 						self["signal"].setText(signal)
@@ -156,7 +156,7 @@ class WlanStatus(Screen):
 						if accesspoint == "Not-Associated":
 							encryption = _("Disabled")
 						else:
-							encryption = _("Unsupported")
+							encryption = _("off or wpa2 on")
 					else:
 						encryption = _("Enabled")
 					if self.has_key("enc"):
@@ -185,7 +185,7 @@ class WlanStatus(Screen):
 				self["statuspic"].setPixmapNum(1)
 			else:
 				self["statuspic"].setPixmapNum(0)
-			self["statuspic"].show()		
+			self["statuspic"].show()
 
 
 class WlanScan(Screen):
@@ -212,7 +212,7 @@ class WlanScan(Screen):
 					}
 				</convert>
 			</widget>
-			<ePixmap pixmap="skin_default/div-h.png" position="0,340" zPosition="1" size="560,2" />		
+			<ePixmap pixmap="skin_default/div-h.png" position="0,340" zPosition="1" size="560,2" />
 			<widget source="info" render="Label" position="0,350" size="560,50" font="Regular;24" halign="center" valign="center" backgroundColor="#25062748" transparent="1" />
 		</screen>"""
 
@@ -228,26 +228,26 @@ class WlanScan(Screen):
 		self.cleanList = None
 		self.oldlist = {}
 		self.listLength = None
-		self.divpng = LoadPixmap(path=resolveFilename(SCOPE_SKIN_IMAGE, "skin_default/div-h.png"))
+		self.divpng = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
 
 		self.rescanTimer = eTimer()
 		self.rescanTimer.callback.append(self.rescanTimerFired)
-		
+
 		self["info"] = StaticText()
-		
+
 		self.list = []
 		self["list"] = List(self.list)
-		
+
 		self["key_red"] = StaticText(_("Close"))
 		self["key_green"] = StaticText(_("Connect"))
 		self["key_yellow"] = StaticText()
-			
+
 		self["actions"] = NumberActionMap(["WizardActions", "InputActions", "EPGSelectActions"],
 		{
 			"ok": self.select,
 			"back": self.cancel,
 		}, -1)
-		
+
 		self["shortcuts"] = ActionMap(["ShortcutActions"],
 		{
 			"red": self.cancel,
@@ -257,10 +257,10 @@ class WlanScan(Screen):
 		self.w = iWlan.getInterface()
 		self.onLayoutFinish.append(self.layoutFinished)
 		self.getAccessPoints(refresh = False)
-		
+
 	def layoutFinished(self):
 		self.setTitle(_("Select a wireless network"))
-	
+
 	def select(self):
 		cur = self["list"].getCurrent()
 		if cur is not None:
@@ -276,7 +276,7 @@ class WlanScan(Screen):
 			self.rescanTimer.stop()
 			del self.rescanTimer
 			self.close(None)
-	
+
 	def cancel(self):
 		iWlan.stopGetNetworkList()
 		self.rescanTimer.stop()
@@ -293,7 +293,7 @@ class WlanScan(Screen):
 
 	def updateAPList(self):
 		newList = []
-		newList = self.getAccessPoints(refresh = True)	
+		newList = self.getAccessPoints(refresh = True)
 		self.newAPList = []
 		tmpList = []
 		newListIndex = None
@@ -308,7 +308,7 @@ class WlanScan(Screen):
 		if len(tmpList):
 			for entry in tmpList:
 				self.newAPList.append(self.buildEntryComponent( entry[0], entry[1], entry[2], entry[3], entry[4], entry[5] ))
-	
+
 			currentListEntry = self["list"].getCurrent()
 			if currentListEntry is not None:
 				idx = 0
@@ -349,10 +349,10 @@ class WlanScan(Screen):
 					self.oldlist[entry[0]] = { 'data': entry }
 				else:
 					self.oldlist[entry[0]]['data'] = entry
-		
+
 		for entry in self.cleanList:
 			self.APList.append(self.buildEntryComponent( entry[0], entry[1], entry[2], entry[3], entry[4], entry[5] ))
-		
+
 		if refresh is False:
 			self['list'].setList(self.APList)
 		self.listLength = len(self.APList)
@@ -373,7 +373,7 @@ class WlanScan(Screen):
 			self.WlanList.append( (entry[0], entry[0]) )
 
 	def getLength(self):
-		return self.listLength		
+		return self.listLength
 
 	def getWlanList(self):
 		if self.WlanList is None:
@@ -394,8 +394,8 @@ def callFunction(iface):
 def configStrings(iface):
 	driver = iNetwork.detectWlanModule(iface)
 	ret = ""
-	if driver == 'madwifi' and config.plugins.wlan.hiddenessid.value:
-		ret += "\tpre-up iwconfig " + iface + " essid \"" + re_escape(config.plugins.wlan.essid.value) + "\" || true\n"
+	if driver == 'madwifi' and config.plugins.wlan.hiddenessid.getValue():
+		ret += "\tpre-up iwconfig " + iface + " essid \"" + re_escape(config.plugins.wlan.essid.getValue()) + "\" || true\n"
 	ret += "\tpre-up wpa_supplicant -i" + iface + " -c" + getWlanConfigName(iface) + " -B -dd -D" + driver + " || true\n"
 	ret += "\tpre-down wpa_cli -i" + iface + " terminate || true\n"
 	return ret

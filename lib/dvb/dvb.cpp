@@ -2,6 +2,7 @@
 #include <linux/dvb/dmx.h>
 #include <linux/dvb/version.h>
 
+#include <lib/base/cfile.h>
 #include <lib/base/eerror.h>
 #include <lib/base/filepush.h>
 #include <lib/base/wrappers.h>
@@ -109,12 +110,22 @@ eDVBResourceManager::eDVBResourceManager()
 		m_boxtype = DM8000;
 	else if (!strncmp(tmp, "dm800\n", rd))
 		m_boxtype = DM800;
+	else if (!strncmp(tmp, "dm800hd\n", rd))
+		m_boxtype = DM800;
 	else if (!strncmp(tmp, "dm500hd\n", rd))
 		m_boxtype = DM500HD;
 	else if (!strncmp(tmp, "dm800se\n", rd))
 		m_boxtype = DM800SE;
 	else if (!strncmp(tmp, "dm7020hd\n", rd))
 		m_boxtype = DM7020HD;
+	else if (!strncmp(tmp, "Gigablue\n", rd))
+		m_boxtype = GIGABLUE;
+	else if (!strncmp(tmp, "ebox5000\n", rd))
+		m_boxtype = DM800;
+	else if (!strncmp(tmp, "ebox5100\n", rd))
+		m_boxtype = DM800;
+	else if (!strncmp(tmp, "ebox7358\n", rd))
+		m_boxtype = DM800SE;		
 	else {
 		eDebug("boxtype detection via /proc/stb/info not possible... use fallback via demux count!\n");
 		if (m_demux.size() == 3)
@@ -271,26 +282,37 @@ eDVBUsbAdapter::eDVBUsbAdapter(int nr)
 	char filename[256];
 	char name[128] = {0};
 	int vtunerid = nr - 1;
+	char *line;
+	size_t line_size = 256;
 
 	pumpThread = 0;
 
 	int num_fe = 0;
-	while (1)
+	
+	demuxFd = vtunerFd = pipeFd[0] = pipeFd[1] = -1;
+
+	/* we need to know exactly what frontend is internal or initialized! */
+	CFile f("/proc/bus/nim_sockets", "r");
+	if (!f)
 	{
-		/*
-		 * Some frontend devices might have been just created, if
-		 * they are virtual (vtuner) frontends.
-		 * In that case, we cannot be sure the devicenodes are available yet.
-		 * So it is safer to scan for sys entries, than for device nodes
-		 */
-		snprintf(filename, sizeof(filename), "/sys/class/dvb/dvb0.frontend%d", num_fe);
-		if (::access(filename, X_OK) < 0) break;
-		num_fe++;
+		eDebug("Cannot open /proc/bus/nim_sockets");
+		goto error;
 	}
+	
+	line = (char*) malloc(line_size);
+	while (getline(&line, &line_size, f) != -1)
+	{
+		int num_fe_tmp;
+		if (sscanf(line, "%*[ \t]Frontend_Device: %d", &num_fe_tmp) == 1)
+		{
+			if (num_fe_tmp > num_fe)
+				num_fe = num_fe_tmp;
+		}
+	}
+	free(line);
+	num_fe++;
 	snprintf(filename, sizeof(filename), "/dev/dvb/adapter0/frontend%d", num_fe);
 	virtualFrontendName = filename;
-
-	demuxFd = vtunerFd = pipeFd[0] = pipeFd[1] = -1;
 
 	/* find the device name */
 	snprintf(filename, sizeof(filename), "/sys/class/dvb/dvb%d.frontend0/device/product", nr);
@@ -464,14 +486,6 @@ void *eDVBUsbAdapter::threadproc(void *arg)
 	return user->vtunerPump();
 }
 
-static bool exist_in_pidlist(unsigned short int* pidlist, unsigned short int value)
-{
-	for (int i=0; i<30; ++i)
-		if (pidlist[i] == value)
-			return true;
-	return false;
-}
-
 void *eDVBUsbAdapter::vtunerPump()
 {
 	int pidcount = 0;
@@ -529,6 +543,8 @@ void *eDVBUsbAdapter::vtunerPump()
 		{
 			if (FD_ISSET(vtunerFd, &xset))
 			{
+				int i, j;
+				int count = 0;
 				struct vtuner_message message;
 				memset(message.pidlist, 0xff, sizeof(message.pidlist));
 				::ioctl(vtunerFd, VTUNER_GET_MESSAGE, &message);
@@ -537,12 +553,20 @@ void *eDVBUsbAdapter::vtunerPump()
 				{
 				case MSG_PIDLIST:
 					/* remove old pids */
-					for (int i = 0; i < 30; i++)
+					for (i = 0; i < 30; i++)
 					{
-						if (pidList[i] == 0xffff)
-							continue;
-						if (exist_in_pidlist(message.pidlist, pidList[i]))
-							continue;
+						bool found = false;
+						if (pidList[i] == 0xffff) continue;
+						for (j = 0; j < 30; j++)
+						{
+							if (pidList[i] == message.pidlist[j])
+							{
+								found = true;
+								break;
+							}
+						}
+
+						if (found) continue;
 
 						if (pidcount > 1)
 						{
@@ -557,12 +581,20 @@ void *eDVBUsbAdapter::vtunerPump()
 					}
 
 					/* add new pids */
-					for (int i = 0; i < 30; i++)
+					for (i = 0; i < 30; i++)
 					{
-						if (message.pidlist[i] == 0xffff)
-							continue;
-						if (exist_in_pidlist(pidList, message.pidlist[i]))
-							continue;
+						bool found = false;
+						if (message.pidlist[i] == 0xffff) continue;
+						for (j = 0; j < 30; j++)
+						{
+							if (message.pidlist[i] == pidList[j])
+							{
+								found = true;
+								break;
+							}
+						}
+
+						if (found) continue;
 
 						if (pidcount)
 						{
@@ -586,8 +618,10 @@ void *eDVBUsbAdapter::vtunerPump()
 					}
 
 					/* copy pids */
-					memcpy(pidList, message.pidlist, sizeof(message.pidlist));
-
+					for (i = 0; i < 30; i++)
+					{
+						pidList[i] = message.pidlist[i];
+					}
 					break;
 				}
 			}
@@ -2199,7 +2233,6 @@ RESULT eDVBChannel::getCurrentPosition(iDVBDemux *decoding_demux, pts_t &pos, in
 		now = pos; /* fixup supplied */
 
 	m_tstools_lock.lock();
-	/* Interesting: the only place where iTSSource->offset() is ever used */
 	r = m_tstools.fixupPTS(m_source ? m_source->offset() : 0, now);
 	m_tstools_lock.unlock();
 	if (r)
