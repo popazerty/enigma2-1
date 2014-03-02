@@ -189,10 +189,13 @@
 
 	<map context="InfobarActions">
 		<key id="KEY_VIDEO" mapto="showMovies" flags="m" />
-		<key id="KEY_RADIO" mapto="showRadio" flags="m" />
-		<key id="KEY_TV" mapto="showTv" flags="m" />
+		<key id="KEY_RADIO" mapto="toogleTvRadio" flags="m" />
+		<key id="KEY_TV" mapto="toogleTvRadio" flags="m" />
+		<key id="KEY_FAVORITES" mapto="openBouquetList" flags="b" />
 		<key id="KEY_FILE" mapto="showMovies" flags="m" />
 		<key id="KEY_TEXT" mapto="showText" flags="m" />
+		<key id="KEY_MEDIA" mapto="showMovies" flags="m" />
+		<key id="KEY_LIST" mapto="showMediaPlayer" flags="b" />
 	</map>
 
 	<map context="InfobarAudioSelectionActions">
@@ -549,15 +552,6 @@
 		<key id="KEY_DOWN" mapto="downUp" flags="b" />
 	</map>
 	
-	<map context="AudioSelectionActions">
-		<key id="KEY_RED" mapto="red" flags="m" />
-		<key id="KEY_GREEN" mapto="green" flags="m" />
-		<key id="KEY_AUDIO" mapto="yellow" flags="m" />
-		<key id="KEY_SUBTITLE" mapto="yellow" flags="m" />
-		<key id="KEY_YELLOW" mapto="yellow" flags="m" />
-		<key id="KEY_BLUE" mapto="blue" flags="m" />
-	</map>
-
 	<map context="ColorActions">
 		<key id="KEY_RED" mapto="red" flags="m" />
 		<key id="KEY_GREEN" mapto="green" flags="m" />
@@ -580,6 +574,7 @@
 	
 	<map context="HelpActions">
 		<key id="KEY_HELP" mapto="displayHelp" flags="m" />
+		<key id="KEY_OPTION" mapto="displayHelp" flags="m" />
 	</map>
 
 	<map context="ShortcutActions">

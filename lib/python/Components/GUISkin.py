@@ -64,13 +64,11 @@ class GUISkin:
 		self.summaries.remove(summary)
 
 	def setTitle(self, title):
-		try:
-			if self.instance:
-				self.instance.setTitle(title)
-			self["Title"].text = title
-			self.summaries.setTitle(title)
-		except:
-			pass
+		if self.instance:
+			self.instance.setTitle(title)
+		self["Title"].text = title
+		self.summaries.setTitle(title)
+
 	def getTitle(self):
 		return self["Title"].text
 

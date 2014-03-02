@@ -1,4 +1,2 @@
-enigma2
-======
-
-opendroid team
+opendroid-gui
+==========

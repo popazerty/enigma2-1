@@ -6,43 +6,21 @@ from Components.Sources.StaticText import StaticText
 import enigma
 
 class ChoiceBox(Screen):
-	def __init__(self, session, title = "", list = [], keys = None, selection = 0, skin_name = [], text = ""):
+	def __init__(self, session, title = "", list = [], keys = None, selection = 0, skin_name = []):
 		Screen.__init__(self, session)
 
 		if isinstance(skin_name, str):
 			skin_name = [skin_name]
-		self.skinName = skin_name + ["ChoiceBox"]
-		self["text"] = Label()
-		if title:
-			title = _(title)
-			if len(title) < 55 and title.find('\n') == -1:
-				Screen.setTitle(self, title)
-			elif title.find('\n') != -1:
-				temptext = title.split('\n')
-				if len(temptext[0]) < 55:
-					Screen.setTitle(self, temptext[0])
-					count = 2
-					labeltext = ""
-					while len(temptext) >= count:
-						if labeltext:
-							labeltext = labeltext + '\n'
-						labeltext = labeltext + temptext[count-1]
-						count += 1
-						print 'count',count
-					self["text"].setText(labeltext)
-				else:
-					self["text"] = Label(title)
-			else:
-				self["text"] = Label(title)
-		elif text:
-			self["text"] = Label(_(text))
+		self.skinName = skin_name + ["ChoiceBox"] 
+
+		self["text"] = Label(title)
 		self.list = []
 		self.summarylist = []
 		if keys is None:
 			self.__keys = [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "red", "green", "yellow", "blue" ] + (len(list) - 10) * [""]
 		else:
 			self.__keys = keys + (len(list) - len(keys)) * [""]
-
+			
 		self.keymap = {}
 		pos = 0
 		for x in list:
@@ -50,16 +28,17 @@ class ChoiceBox(Screen):
 			self.list.append(ChoiceEntryComponent(key = strpos, text = x))
 			if self.__keys[pos] != "":
 				self.keymap[self.__keys[pos]] = list[pos]
-			self.summarylist.append((self.__keys[pos], x[0]))
+			self.summarylist.append((self.__keys[pos],x[0]))
 			pos += 1
 		self["list"] = ChoiceList(list = self.list, selection = selection)
 		self["summary_list"] = StaticText()
 		self["summary_selection"] = StaticText()
 		self.updateSummary(selection)
-
-		self["actions"] = NumberActionMap(["WizardActions", "InputActions", "ColorActions"],
+				
+		self["actions"] = NumberActionMap(["WizardActions", "InputActions", "ColorActions", "DirectionActions"], 
 		{
 			"ok": self.go,
+			"back": self.cancel,
 			"1": self.keyNumberGlobal,
 			"2": self.keyNumberGlobal,
 			"3": self.keyNumberGlobal,
@@ -75,68 +54,40 @@ class ChoiceBox(Screen):
 			"yellow": self.keyYellow,
 			"blue": self.keyBlue,
 			"up": self.up,
-			"down": self.down,
-			"left": self.left,
-			"right": self.right
-		}, -1)
-
-		self["cancelaction"] = NumberActionMap(["WizardActions", "InputActions", "ColorActions"],
-		{
-			"back": self.cancel,
+			"down": self.down
 		}, -1)
 
 	def autoResize(self):
-		desktop_w = enigma.getDesktop(0).size().width()
-		desktop_h = enigma.getDesktop(0).size().height()
+		orgwidth = self.instance.size().width()
+		orgpos = self.instance.position()
+		textsize = self["text"].getSize()
 		count = len(self.list)
-		if count > 15:
-			count = 15
-		if not self["text"].text:
-			# move list
-			textsize = (520, 0)
-			listsize = (520, 25*count)
-			self["list"].instance.move(enigma.ePoint(0, 0))
-			self["list"].instance.resize(enigma.eSize(*listsize))
-		else:
-			textsize = self["text"].getSize()
-			if textsize[0] < textsize[1]:
-				textsize = (textsize[1],textsize[0]+10)
-			if textsize[0] > 520:
-				textsize = (textsize[0], textsize[1]+25)
-			else:
-				textsize = (520, textsize[1]+25)
-			listsize = (textsize[0], 25*count)
-			# resize label
-			self["text"].instance.resize(enigma.eSize(*textsize))
-			self["text"].instance.move(enigma.ePoint(10, 10))
-			# move list
-			self["list"].instance.move(enigma.ePoint(0, textsize[1]))
-			self["list"].instance.resize(enigma.eSize(*listsize))
-
-		wsizex = textsize[0]
-		wsizey = textsize[1]+listsize[1]
+		if count > 10:
+			count = 10
+		offset = 25 * count
+		wsizex = textsize[0] + 60
+		wsizey = textsize[1] + offset
+		if (520 > wsizex):
+			wsizex = 520
 		wsize = (wsizex, wsizey)
+		# resize
 		self.instance.resize(enigma.eSize(*wsize))
-
+		# resize label
+		self["text"].instance.resize(enigma.eSize(*textsize))
+		# move list
+		listsize = (wsizex, 25 * count)
+		self["list"].instance.move(enigma.ePoint(0, textsize[1]))
+		self["list"].instance.resize(enigma.eSize(*listsize))
 		# center window
-		self.instance.move(enigma.ePoint((desktop_w-wsizex)/2, (desktop_h-wsizey)/2))
+		newwidth = wsize[0]
+		self.instance.move(enigma.ePoint((720-wsizex)/2, (576-wsizey)/(count > 7 and 2 or 3)))
 
-	def left(self):
-		if len(self["list"].list) > 0:
-			while 1:
-				self["list"].instance.moveSelection(self["list"].instance.pageUp)
-				self.updateSummary(self["list"].l.getCurrentSelectionIndex())
-				if self["list"].l.getCurrentSelection()[0][0] != "--" or self["list"].l.getCurrentSelectionIndex() == 0:
-					break
-
-	def right(self):
-		if len(self["list"].list) > 0:
-			while 1:
-				self["list"].instance.moveSelection(self["list"].instance.pageDown)
-				self.updateSummary(self["list"].l.getCurrentSelectionIndex())
-				if self["list"].l.getCurrentSelection()[0][0] != "--" or self["list"].l.getCurrentSelectionIndex() == 0:
-					break
-
+	def keyLeft(self):
+		pass
+	
+	def keyRight(self):
+		pass
+	
 	def up(self):
 		if len(self["list"].list) > 0:
 			while 1:
@@ -167,11 +118,10 @@ class ChoiceBox(Screen):
 
 	# runs a specific entry
 	def goEntry(self, entry):
-		if entry and len(entry) > 3 and isinstance(entry[1], str) and entry[1] == "CALLFUNC":
-			arg = entry[3]
+		if len(entry) > 2 and isinstance(entry[1], str) and entry[1] == "CALLFUNC":
+			# CALLFUNC wants to have the current selection as argument
+			arg = self["list"].l.getCurrentSelection()[0]
 			entry[2](arg)
-		elif entry and len(entry) > 2 and isinstance(entry[1], str) and entry[1] == "CALLFUNC":
-			entry[2](None)
 		else:
 			self.close(entry)
 

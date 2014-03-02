@@ -18,25 +18,14 @@ dist_pkgdata_DATA = \
 	unicable.xml
 
 if HAVE_TEXTLCD
-SUBDIRS += displaytext
+dist_pkgdata_DATA += skin_text.xml
+else
+if HAVE_COLORLCD
+dist_pkgdata_DATA += skin_display96.xml
+else
+dist_pkgdata_DATA += skin_display.xml
+endif
 endif
 
-if HAVE_COLORLCD2
-SUBDIRS += display96
-endif
-
-if HAVE_COLORLCD1
-SUBDIRS += display128
-endif
-
-if HAVE_COLORLCD220
-SUBDIRS += display220
-endif
-
-if HAVE_BWLCD255
-SUBDIRS += display255
-endif
-
-if HAVE_BWLCD140
-SUBDIRS += display140
-endif
+skin_display.xml: skin_display_default.xml
+	test -f skin_display_$(BOXTYPE).xml && cp skin_display_$(BOXTYPE).xml skin_display.xml || cp skin_display_default.xml skin_display.xml
