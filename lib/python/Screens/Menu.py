@@ -7,6 +7,7 @@ from Components.PluginComponent import plugins
 from Components.config import config
 from Components.SystemInfo import SystemInfo
 
+from Tools.BoundFunction import boundFunction
 from Tools.Directories import resolveFilename, SCOPE_SKIN
 
 import xml.etree.cElementTree
@@ -19,13 +20,6 @@ mainmenu = _("Main menu")
 file = open(resolveFilename(SCOPE_SKIN, 'menu.xml'), 'r')
 mdom = xml.etree.cElementTree.parse(file)
 file.close()
-
-class boundFunction:
-	def __init__(self, fnc, *args):
-		self.fnc = fnc
-		self.args = args
-	def __call__(self):
-		self.fnc(*self.args)
 
 class MenuUpdater:
 	def __init__(self):
@@ -150,6 +144,33 @@ class Menu(Screen):
 
 				destList.append((_(item_text or "??"), boundFunction(self.runScreen, (module, screen)), entryID, weight))
 				return
+			elif x.tag == 'plugin':
+				extensions = x.get("extensions")
+				system = x.get("system")
+				screen = x.get("screen")
+
+				if extensions:
+					module = extensions
+				elif system:
+					module = system
+
+				if screen is None:
+					screen = module
+
+				if extensions:
+					module = "Plugins.Extensions." + extensions + '.plugin'
+				elif system:
+					module = "Plugins.SystemPlugins." + system + '.plugin'
+				else:
+					module = ""
+
+				# check for arguments. they will be appended to the
+				# openDialog call
+				args = x.text or ""
+				screen += ", " + args
+
+				destList.append((_(item_text or "??"), boundFunction(self.runScreen, (module, screen)), entryID, weight))
+				return
 			elif x.tag == 'code':
 				destList.append((_(item_text or "??"), boundFunction(self.execText, x.text), entryID, weight))
 				return
@@ -202,7 +223,10 @@ class Menu(Screen):
 					if x[2] == plugin_menuid:
 						list.remove(x)
 						break
-				list.append((l[0], boundFunction(l[1], self.session), l[2], l[3] or 50))
+				if len(l) > 4 and l[4]:
+					list.append((l[0], boundFunction(l[1], self.session, self.close), l[2], l[3] or 50))
+				else:
+					list.append((l[0], boundFunction(l[1], self.session), l[2], l[3] or 50))
 
 		# for the skin: first try a menu_<menuID>, then Menu
 		self.skinName = [ ]

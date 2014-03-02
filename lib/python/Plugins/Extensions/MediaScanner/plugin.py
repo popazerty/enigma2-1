@@ -31,7 +31,7 @@ def mountpoint_choosen(option):
 			print "ignore", mountpoint, "because its not accessible"
 		return
 
-	session.openWithCallback(execute, ChoiceBox,
+	session.openWithCallback(execute, ChoiceBox, 
 		title = _("The following files were found..."),
 		list = list)
 
@@ -50,7 +50,7 @@ def menuEntry(*args):
 from Components.Harddisk import harddiskmanager
 
 def menuHook(menuid):
-	if menuid != "mainmenu":
+	if menuid != "mainmenu": 
 		return [ ]
 	from Tools.BoundFunction import boundFunction
 	return [(("%s (files)") % r.description, boundFunction(menuEntry, r.description, r.mountpoint), "hotplug_%s" % r.mountpoint, None) for r in harddiskmanager.getMountedPartitions(onlyhotplug = True)]
@@ -82,76 +82,10 @@ def autostart(reason, **kwargs):
 		harddiskmanager.on_partition_list_change.remove(partitionListChanged)
 		global_session = None
 
-def movielist_open(list, session, **kwargs):
-	from Components.config import config
-	if not list:
-		# sanity
-		return
-	from enigma import eServiceReference
-	from Screens.InfoBar import InfoBar
-	f = list[0]
-	if f.mimetype == "video/MP2T":
-		stype = 1
-	else:
-		stype = 4097
-	if InfoBar.instance:
-		path = os.path.split(f.path)[0]
-		if not path.endswith('/'):
-			path += '/'
-		config.movielist.last_videodir.value = path
-		try:
-			InfoBar.instance.showMovies(eServiceReference(stype, 0, f.path))
-		except:
-			pass
-
-def filescan(**kwargs):
-	from Components.Scanner import Scanner, ScanPath
-	return [
-		Scanner(mimetypes = ["video/mpeg", "video/MP2T", "video/x-msvideo", "video/mkv", "video/avi"],
-			paths_to_scan =
-				[
-					ScanPath(path = "", with_subdirs = False),
-					ScanPath(path = "movie", with_subdirs = False),
-				],
-			name = "Movie",
-			description = _("View Movies..."),
-			openfnc = movielist_open,
-		),
-		Scanner(mimetypes = ["video/x-vcd"],
-			paths_to_scan =
-				[
-					ScanPath(path = "mpegav", with_subdirs = False),
-					ScanPath(path = "MPEGAV", with_subdirs = False),
-				],
-			name = "Video CD",
-			description = _("View Video CD..."),
-			openfnc = movielist_open,
-		),
-		Scanner(mimetypes = ["audio/mpeg", "audio/x-wav", "application/ogg", "audio/x-flac"],
-			paths_to_scan =
-				[
-					ScanPath(path = "", with_subdirs = False),
-				],
-			name = "Music",
-			description = _("Play Music..."),
-			openfnc = movielist_open,
-		),
-		Scanner(mimetypes = ["audio/x-cda"],
-			paths_to_scan =
-				[
-					ScanPath(path = "", with_subdirs = False),
-				],
-			name = "Audio-CD",
-			description = _("Play Audio-CD..."),
-			openfnc = movielist_open,
-		),
-		]
-
 def Plugins(**kwargs):
 	return [
-		PluginDescriptor(name="Media scanner", description=_("Scan files..."), where = PluginDescriptor.WHERE_PLUGINMENU, needsRestart = True, fnc=main),
+		PluginDescriptor(name=_("Media scanner"), description=_("Scan files..."), where = PluginDescriptor.WHERE_PLUGINMENU, needsRestart = True, fnc=main),
 #		PluginDescriptor(where = PluginDescriptor.WHERE_MENU, fnc=menuHook),
-		PluginDescriptor(name=_("Media scanner"), where = PluginDescriptor.WHERE_FILESCAN, needsRestart = False, fnc = filescan),
 		PluginDescriptor(where = PluginDescriptor.WHERE_SESSIONSTART, needsRestart = True, fnc = sessionstart),
 		PluginDescriptor(where = PluginDescriptor.WHERE_AUTOSTART, needsRestart = True, fnc = autostart)
 		]

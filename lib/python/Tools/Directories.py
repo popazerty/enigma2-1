@@ -50,8 +50,8 @@ defaultPaths = {
 		SCOPE_SKIN: (eEnv.resolve("${datadir}/enigma2/"), PATH_DONTCREATE),
 		SCOPE_LCDSKIN: (eEnv.resolve("${datadir}/enigma2/display/"), PATH_DONTCREATE),
 		SCOPE_SKIN_IMAGE: (eEnv.resolve("${datadir}/enigma2/"), PATH_DONTCREATE),
-		SCOPE_HDD: ("/hdd/movie/", PATH_DONTCREATE),
-		SCOPE_TIMESHIFT: ("/hdd/timeshift/", PATH_DONTCREATE),
+		SCOPE_HDD: ("/media/hdd/movie/", PATH_DONTCREATE),
+		SCOPE_TIMESHIFT: ("/media/hdd/timeshift/", PATH_DONTCREATE),
 		SCOPE_MEDIA: ("/media/", PATH_DONTCREATE),
 		SCOPE_PLAYLIST: (eEnv.resolve("${sysconfdir}/enigma2/playlist/"), PATH_CREATE),
 
@@ -67,8 +67,8 @@ PATH_MOVE = 3 # move the fallback dir to the basedir (can be used for changes in
 fallbackPaths = {
 		SCOPE_CONFIG: [("/home/root/", FILE_MOVE),
 					   (eEnv.resolve("${datadir}/enigma2/defaults/"), FILE_COPY)],
-		SCOPE_HDD: [("/hdd/movies", PATH_MOVE)],
-		SCOPE_TIMESHIFT: [("/hdd/timeshift", PATH_MOVE)]
+		SCOPE_HDD: [("/media/hdd/movies", PATH_MOVE)],
+		SCOPE_TIMESHIFT: [("/media/hdd/timeshift", PATH_MOVE)]
 	}
 
 def resolveFilename(scope, base = "", path_prefix = None):
@@ -113,19 +113,19 @@ def resolveFilename(scope, base = "", path_prefix = None):
 			pos = config.skin.primary_skin.value.rfind('/')
 			if pos != -1:
 				tmpfile = tmp+config.skin.primary_skin.value[:pos+1] + base
-				if pathExists(tmpfile) or (tmpfile.find(':') != -1 and pathExists(tmpfile.split(':')[0])):
+				if pathExists(tmpfile) or (':' in tmpfile and pathExists(tmpfile.split(':')[0])):
 					path = tmp+config.skin.primary_skin.value[:pos+1]
-				elif pathExists(tmp + base) or (base.find(':') != -1 and pathExists(tmp + base.split(':')[0])):
+				elif pathExists(tmp + base) or (':' in base and pathExists(tmp + base.split(':')[0])):
 					path = tmp
 				else:
-					if tmp.find('skin_default') == -1:
+					if 'skin_default' not in tmp:
 						path = tmp + 'skin_default/'
 					else:
 						path = tmp
 			else:
 				if pathExists(tmp + base):
 					path = tmp
-				elif tmp.find('skin_default') == -1:
+				elif 'skin_default' not in tmp:
 					path = tmp + 'skin_default/'
 				else:
 					path = tmp
@@ -146,12 +146,12 @@ def resolveFilename(scope, base = "", path_prefix = None):
 				if pathExists(tmpfile):
 					path = tmp+config.skin.display_skin.getValue()[:pos+1]
 				else:
-					if tmp.find('skin_default') == -1:
+					if 'skin_default' not in tmp:
 						path = tmp + 'skin_default/'
 					else:
 						path = tmp
 			else:
-				if tmp.find('skin_default') == -1:
+				if 'skin_default' not in tmp:
 					path = tmp + 'skin_default/'
 				else:
 					path = tmp
@@ -296,6 +296,9 @@ def getRecordingFilename(basename, dirname = None):
 		if c in non_allowed_characters or ord(c) < 32:
 			c = "_"
 		filename += c
+
+	# max filename length for ext4 is 255 (minus 8 characters for .ts.meta)
+	filename = filename[:247]
 
 	if dirname is not None:
 		if not dirname.startswith('/'):

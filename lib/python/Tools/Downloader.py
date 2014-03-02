@@ -1,11 +1,10 @@
 from twisted.web import client
 from twisted.internet import reactor, defer
 from twisted.python import failure
-from enigma import getMachineBrand, getMachineName
 
 class HTTPProgressDownloader(client.HTTPDownloader):
 	def __init__(self, url, outfile, headers=None):
-		client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent="%s %s HTTP Downloader" % (getMachineBrand(), getMachineName()))
+		client.HTTPDownloader.__init__(self, url, outfile, headers=headers, agent="STB HTTP Downloader")
 		self.status = None
 		self.progress_callback = None
 		self.deferred = defer.Deferred()

@@ -36,8 +36,11 @@ def InitUsageConfig():
 
 	config.usage.service_icon_enable = ConfigYesNo(default = False)
 	config.usage.service_icon_enable.addNotifier(refreshServiceList)
-
-	config.usage.servicelist_keep_service = ConfigYesNo(default = True)
+	config.usage.servicelist_cursor_behavior = ConfigSelection(default = "keep", choices = [
+		("standard", _("Standard")),
+		("keep", _("Keep service")),
+		("reverseB", _("Reverse bouquet buttons")),
+		("keep reverseB", _("Keep service") + " + " + _("Reverse bouquet buttons"))])
 	config.usage.multiepg_ask_bouquet = ConfigYesNo(default = False)
 	config.usage.showpicon = ConfigYesNo(default = True)
 	config.usage.show_dvdplayer = ConfigYesNo(default = False)
@@ -65,7 +68,7 @@ def InitUsageConfig():
 			SystemInfo["InfoBarEpg"] = False
 	config.usage.show_second_infobar.addNotifier(showsecondinfobarChanged, immediate_feedback = True)
 
-	config.usage.show_picon_bkgrn = ConfigSelection(default = "transparent", choices = [("transparent", _("Transparent")), ("blue", _("Blue")), ("red", _("Red")), ("black", _("Black")), ("white", _("White")), ("lightgrey", _("Light Grey")), ("grey", _("Grey"))])
+	config.usage.show_picon_bkgrn = ConfigSelection(default = "transparent", choices = [("none", _("Disabled")), ("transparent", _("Transparent")), ("blue", _("Blue")), ("red", _("Red")), ("black", _("Black")), ("white", _("White")), ("lightgrey", _("Light Grey")), ("grey", _("Grey"))])
 
 	config.usage.show_spinner = ConfigYesNo(default = True)
 	config.usage.enable_tt_caching = ConfigYesNo(default = True)
@@ -653,7 +656,7 @@ def InitUsageConfig():
 					("2", _("with exit button")),
 					("3", _("with left/right buttons"))])
 
-	if getBoxType() == 'dm800' or getBoxType() == 'ixussone' or getBoxType() == 'ixusszero' or getBoxType() == 'ixussduo' or getBoxType() == 'dm800se' or getBoxType() == 'dm500hd' or getBoxType() == 'azboxminime'  or getBoxType() == 'azboxhd':				
+	if getBoxType() == 'dm800' or getBoxType() == 'dm800se' or getBoxType() == 'dm500hd' or getBoxType() == 'azboxminime'  or getBoxType() == 'azboxhd':				
 		config.plisettings.PLIEPG_mode = ConfigSelection(default="pliepg", choices = [
 					("pliepg", _("Show Graphical EPG")),
 					("single", _("Show Single EPG")),

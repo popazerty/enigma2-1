@@ -212,7 +212,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 
 	def showMovies(self, defaultRef=None):
 		self.lastservice = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-		if self.lastservice and self.lastservice.toString().find(':0:/') != -1:
+		if self.lastservice and ':0:/' in self.lastservice.toString():
 			self.lastservice = enigma.eServiceReference(config.movielist.curentlyplayingservice.getValue())
 		self.session.openWithCallback(self.movieSelected, Screens.MovieSelection.MovieSelection, defaultRef, timeshiftEnabled = self.timeshiftEnabled())
 
@@ -346,7 +346,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 		self.session.open(PluginBrowser)
 		
 	def showBoxPortal(self):
-		if enigma.getMachineBrand() == 'GI' or enigma.getBoxType().startswith('azbox'):
+		if enigma.getMachineBrand() == 'GI' or enigma.getBoxType().startswith('azbox') or enigma.getBoxType().startswith('ini') or enigma.getBoxType().startswith('venton'):
 			from Screens.BoxPortal import BoxPortal
 			self.session.open(BoxPortal)
 		else:
@@ -625,7 +625,7 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 
 	def showMovies(self):
 		ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-		if ref and ref.toString().find(':0:/') == -1:
+		if ref and ':0:/' not in ref.toString():
 			self.playingservice = ref # movie list may change the currently playing
 		else:
 			self.playingservice = enigma.eServiceReference(config.movielist.curentlyplayingservice.getValue())

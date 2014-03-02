@@ -46,7 +46,7 @@ profile("LOAD:skin")
 from skin import readSkin
 
 profile("LOAD:Tools")
-from Tools.Directories import InitFallbackFiles, resolveFilename, SCOPE_PLUGINS, SCOPE_ACTIVE_SKIN, SCOPE_CURRENT_SKIN
+from Tools.Directories import InitFallbackFiles, resolveFilename, SCOPE_PLUGINS, SCOPE_CURRENT_SKIN
 from Components.config import config, configfile, ConfigText, ConfigYesNo, ConfigInteger, ConfigSelection, NoSave, ConfigNumber
 InitFallbackFiles()
 
@@ -505,7 +505,8 @@ def runScreenTest():
 	plugins.readPluginList(resolveFilename(SCOPE_PLUGINS))
 
 	profile("Init:Session")
-	nav = Navigation(config.misc.isNextRecordTimerAfterEventActionAuto.getValue(), config.misc.isNextPowerTimerAfterEventActionAuto.getValue())
+# nav = Navigation(config.misc.isNextRecordTimerAfterEventActionAuto.getValue(), config.misc.isNextPowerTimerAfterEventActionAuto.getValue())
+	nav = Navigation()
 	session = Session(desktop = enigma.getDesktop(0), summary_desktop = enigma.getDesktop(1), navigation = nav)
 
 	CiHandler.setSession(session)
@@ -557,6 +558,10 @@ def runScreenTest():
 	import Tools.Trashcan
 	Tools.Trashcan.init(session)
 
+	profile("Init:AutoVideoMode")
+	import Screens.VideoMode
+	Screens.VideoMode.autostart(session)
+
 	profile("RunReactor")
 	profile_final()
 
@@ -607,8 +612,9 @@ def runScreenTest():
 	wakeupList = [
 		x for x in ((session.nav.RecordTimer.getNextRecordingTime(), 0, session.nav.RecordTimer.isNextRecordAfterEventActionAuto()),
 					(session.nav.RecordTimer.getNextZapTime(), 1),
-					(plugins.getNextWakeupTime(), 2),
-					(session.nav.PowerTimer.getNextPowerManagerTime(), 3, session.nav.PowerTimer.isNextPowerManagerAfterEventActionAuto()))
+					(plugins.getNextWakeupTime(), 2))
+#					(plugins.getNextWakeupTime(), 2),
+#					(session.nav.PowerTimer.getNextPowerManagerTime(), 3, session.nav.PowerTimer.isNextPowerManagerAfterEventActionAuto()))
 		if x[0] != -1
 	]
 	wakeupList.sort()
@@ -683,6 +689,7 @@ Components.SetupDevices.InitSetupDevices()
 profile("AVSwitch")
 import Components.AVSwitch
 Components.AVSwitch.InitAVSwitch()
+Components.AVSwitch.InitiVideomodeHotplug()
 
 profile("RecordingConfig")
 import Components.RecordingConfig

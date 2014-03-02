@@ -960,6 +960,7 @@ class InfoBarNumberZap:
 				self.servicelist.enterPath(bouquet)
 			self.servicelist.setCurrentSelection(service) #select the service in servicelist
 			self.servicelist.zap(enable_pipzap = True)
+			self.servicelist.correctChannelNumber()
 			self.servicelist.startRoot = None
 
 	def zapToNumber(self, number):
@@ -1073,7 +1074,7 @@ class InfoBarChannelSelection:
 
 	def switchChannelUp(self):
 		if not config.usage.show_bouquetalways.getValue():
-			if not config.usage.servicelist_keep_service.getValue():
+			if "keep" not in config.usage.servicelist_cursor_behavior.getValue():
 				self.servicelist.moveUp()
 			self.session.execDialog(self.servicelist)
 		else:
@@ -1082,7 +1083,7 @@ class InfoBarChannelSelection:
 
 	def switchChannelDown(self):
 		if not config.usage.show_bouquetalways.getValue():
-			if not config.usage.servicelist_keep_service.getValue():
+			if "keep" not in config.usage.servicelist_cursor_behavior.getValue():
 				self.servicelist.moveDown()
 			self.session.execDialog(self.servicelist)
 		else:
@@ -2856,7 +2857,6 @@ class InfoBarPiP:
 			currentServicePath = self.servicelist.getCurrentServicePath()
 			self.servicelist.setCurrentServicePath(self.session.pip.servicePath)
 			self.session.pip.playService(swapservice)
-			self.session.nav.stopService() # stop portal
 			self.session.nav.playService(pipref) # start subservice
 			self.session.pip.servicePath = currentServicePath
 			if self.servicelist.dopipzap:
