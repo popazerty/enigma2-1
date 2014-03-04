@@ -1,4 +1,4 @@
-installdir = $(pkgdatadir)/rc_models/odinm9
+installdir = $(pkgdatadir)/rc_models/dmm2
 
 dist_install_DATA = \
 	rc.png \

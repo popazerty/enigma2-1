@@ -57,49 +57,85 @@ AC_DEFINE_UNQUOTED(BOXTYPE,"$BOXTYPE",[box type])
 
 AC_ARG_WITH(distro,
 	[  --with-distro=NAME distro name [[openvix,openaaf,...]]],
-	[DISTRO="$withval"],[DISTRO="opendroid"])
+	[DISTRO="$withval"],[DISTRO="openvix"])
 AC_SUBST(DISTRO)
 AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
 
 AC_ARG_WITH(machinebrand,
-	[  --with-machinebrand=NAME brand name [[Vu,Xtrend,...]]],
-	[MACHINE_BRAND="$withval"],[MACHINE_BRAND="Vu+"])
+       [  --with-machinebrand=NAME brand name [[Vu,Xtrend,...]]],
+       [MACHINE_BRAND="$withval"],[MACHINE_BRAND="Vu+"])
 AC_SUBST(MACHINE_BRAND)
 AC_DEFINE_UNQUOTED(MACHINE_BRAND,"$MACHINE_BRAND",[machine brand])
 
 AC_ARG_WITH(machinename,
-	[  --with-machinename=NAME machine name [[Solo,Ultimo,...]]],
-	[MACHINE_NAME="$withval"],[MACHINE_NAME="Ultimo"])
+       [  --with-machinename=NAME machine name [[Solo,Ultimo,...]]],
+       [MACHINE_NAME="$withval"],[MACHINE_NAME="Ultimo"])
 AC_SUBST(MACHINE_NAME)
 AC_DEFINE_UNQUOTED(MACHINE_NAME,"$MACHINE_NAME",[machine name])
 
+
+
 AC_ARG_WITH(imageversion,
-	[  --with-imageversion=NAME version number [[2.0]]],
+	[  --with-imageversion=NAME version number [[3.0]]],
 	[IMAGEVERSION="$withval"],[IMAGEVERSION=""])
 AC_SUBST(IMAGEVERSION)
 AC_DEFINE_UNQUOTED(IMAGEVERSION,"$IMAGEVERSION",[version number])
 
 AC_ARG_WITH(imagebuild,
-	[  --with-imagebuild=NAME build number [[5]]],
+	[  --with-imagebuild=NAME build number [[628]]],
 	[IMAGEBUILD="$withval"],[IMAGEBUILD=""])
 AC_SUBST(IMAGEBUILD)
 AC_DEFINE_UNQUOTED(IMAGEBUILD,"$IMAGEBUILD",[build number])
 
 AC_ARG_WITH(driverdate,
-	[  --with-driverdate=NAME driver date [[5]]],
+	[  --with-driverdate=NAME driver date [[628]]],
 	[DRIVERDATE="$withval"],[DRIVERDATE=""])
 AC_SUBST(DRIVERDATE)
 AC_DEFINE_UNQUOTED(DRIVERDATE,"$DRIVERDATE",[driver date])
 
+AM_CONDITIONAL(DREAMBOX, test `echo "$BOXTYPE" | cut -b 1-2` == "dm")
+AM_CONDITIONAL(VUPLUS, test `echo "$BOXTYPE" | cut -b 1-2` == "vu")
+AM_CONDITIONAL(XTREND, test `echo "$BOXTYPE" | cut -b 1-2` == "et")
+AM_CONDITIONAL(TECHNOMATE, test `echo "$BOXTYPE" | cut -b 1-2` == "tm")
+AM_CONDITIONAL(IQON, test `echo "$BOXTYPE" | cut -b 1-4` == "iqon")
+AM_CONDITIONAL(GIGABLUE, test `echo "$BOXTYPE" | cut -b 1-2` == "gb")
+AM_CONDITIONAL(ODIN, test `echo "$BOXTYPE" | cut -b 1-4` == "odin")
+AM_CONDITIONAL(VENTON, test `echo "$BOXTYPE" | cut -b 1-6` == "venton")
+AM_CONDITIONAL(DM8000, test "$BOXTYPE" == dm8000)
+AM_CONDITIONAL(DM7020HD, test "$BOXTYPE" == dm7020hd)
+AM_CONDITIONAL(DM800, test "$BOXTYPE" == dm800)
+AM_CONDITIONAL(DM800HD, test "$BOXTYPE" == dm800hd)
+AM_CONDITIONAL(DM800SE, test "$BOXTYPE" == dm800se)
+AM_CONDITIONAL(DM800HD, test "$BOXTYPE" == dm800hd)
+AM_CONDITIONAL(EBOX5000, test "$BOXTYPE" == ebox5000)
+AM_CONDITIONAL(ET4X00, test "$BOXTYPE" == et4x00)
+AM_CONDITIONAL(ET5X00, test "$BOXTYPE" == et5x00)
+AM_CONDITIONAL(ET6X00, test "$BOXTYPE" == et6x00)
+AM_CONDITIONAL(ET9X00, test "$BOXTYPE" == et9x00)
+AM_CONDITIONAL(GB800SOLO, test "$BOXTYPE" == gb800solo)
+AM_CONDITIONAL(GB800SE, test "$BOXTYPE" == gb800se)
+AM_CONDITIONAL(GB800UE, test "$BOXTYPE" == gb800ue)
+AM_CONDITIONAL(GB800SOLO, test "$BOXTYPE" == gb800solo)
+AM_CONDITIONAL(GBQUAD, test "$BOXTYPE" == gbquad)
 AM_CONDITIONAL(DREAMBOX, test `echo "$BOXTYPE" | cut -b 1-2` == "dm")
 AM_CONDITIONAL(HAVE_TEMPFANCONTROL, test "$BOXTYPE" == dm8000 -o "$BOXTYPE" == dm800se -o "$BOXTYPE" == dm500hd)
 if test `echo "$BOXTYPE" | cut -b 1-2` == "dm"; then
 	AC_DEFINE(DREAMBOX, 1, [Dreambox hardware])
 	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
 fi
-if test "$BOXTYPE" == "vusolo2" -o "$BOXTYPE" == "vuduo2"; then
-	AC_DEFINE(VUPLUS_RC_WORKAROUND, 1, [workaround for problem with vusolo2/vuduo2 event/rc driver])
+if test `echo "$BOXTYPE" | cut -b 1-5` == "gb800"; then
+	AC_DEFINE(HAVE_GIGABLUE_TEXTLCD, 1, [Define when using gigablue ascii based lcd device])
 fi
+if test "$BOXTYPE" == ventonhdx; then
+	AC_DEFINE(HAVE_VENTON_TEXTLCD, 1, [Define when using venton ascii based lcd device])
+fi
+
+AC_ARG_WITH(distro,
+        [  --with-distro=NAME distro name [[openvix,openaaf,...]]],
+        [DISTRO="$withval"],[DISTRO="openisif"])
+AC_SUBST(DISTRO)
+AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
+
 
 AC_ARG_WITH(textlcd,
 	AC_HELP_STRING([--with-textlcd], [use ascii based lcd, yes or no]),
@@ -121,6 +157,15 @@ if test x"$withcolorlcd" != xno ; then
 fi
 AM_CONDITIONAL(HAVE_COLORLCD, test x"$withcolorlcd" != xno)
 
+AC_ARG_WITH(gigabluelcd,
+	AC_HELP_STRING([--with-gigabluelcd], [use 220x176 16bpp color display, yes or no]),
+	[[withgigabluelcd=$withval]],
+	[[withgigabluelcd=no]]
+)
+if test x"$withgigabluelcd" != xno ; then
+	AC_DEFINE(HAVE_GIGABLUELCD, 1,[Define when using a 220x176 color display device])
+fi
+AM_CONDITIONAL(HAVE_GIGABLUELCD, test x"$withgigabluelcd" != xno)
 
 AC_ARG_WITH(oldpvr,
 	AC_HELP_STRING([--with-oldpvr], [use /dev/misc/pvr instead of /dev/dvb/adapterX/dvrX, yes or no]),
@@ -132,10 +177,23 @@ if test x"$witholdpvr" != xno ; then
 fi
 AM_CONDITIONAL(HAVE_OLDPVR, test x"$witholdpvr" != xno)
 
-if test `echo "$BOXTYPE" | cut -b 1-2` == "vu"; then
+if test x"$BOXTYPE" == "xdm8000" -o x"$BOXTYPE" == "xdm7020hd" -o x"$BOXTYPE" == "xmaram9" ; then
+	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
+fi
+
+if test x"$BOXTYPE" == "xvuduo" -o x"$BOXTYPE" == "xvusolo" -o x"$BOXTYPE" == "xvuuno" -o x"$BOXTYPE" == "xvuultimo"; then
 	AC_DEFINE(FORCE_NO_BLENDING_ACCELERATION, 1,[define when the framebuffer acceleration does not have alphablending support, though the autodetection might indicate that it does])
 	AC_DEFINE(FORCE_NO_FILL_ACCELERATION, 1,[define when the framebuffer acceleration does not have fill support])
 	AC_DEFINE(FORCE_ADVANCED_REMOTE, 1,[define to fixup the input device identification when the remote control is actually an 'advanced' remote (with play/forward/rewind keys)])
+fi
+
+if test x"$BOXTYPE" == "xgb800se" -o x"$BOXTYPE" == "xgb800solo" -o x"$BOXTYPE" == "xgb800ue" -o x"$BOXTYPE" == "xgbquad" ; then
+	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
+	AC_DEFINE(KEY_GUIDE_TO_KEY_EPG, 1,[define when rc sends a KEY_HELP event for its KEY_EPG key])
+fi
+
+if test x"$BOXTYPE" == "xgb800se" -o x"$BOXTYPE" == "xgb800solo" -o x"$BOXTYPE" == "xgb800ue" ; then
+	AC_DEFINE(HAVE_NORTC, 1,[define when the box haven't an RTC])
 fi
 
 AC_ARG_WITH(libsdl,
@@ -198,18 +256,33 @@ data/fonts/Makefile
 data/countries/Makefile
 data/extensions/Makefile
 data/keymaps/Makefile
+data/lcd/Makefile
 data/rc_models/Makefile
+data/rc_models/dmm0/Makefile
+data/rc_models/dmm1/Makefile
+data/rc_models/dmm2/Makefile
+data/rc_models/et4x00/Makefile
+data/rc_models/et6500/Makefile
 data/rc_models/et6x00/Makefile
 data/rc_models/et9500/Makefile
 data/rc_models/et9x00/Makefile
+data/rc_models/gb/Makefile
+data/rc_models/ini3000/Makefile
+data/rc_models/ini5000/Makefile
+data/rc_models/ini7000/Makefile
+data/rc_models/odin/Makefile
+data/rc_models/tm/Makefile
 data/rc_models/vu/Makefile
-data/rc_models/odinm9/Makefile
-data/rc_models/odinm7/Makefile
+data/rc_models/vu2/Makefile
+data/rc_models/xp1000/Makefile
 data/skin_default/Makefile
 data/skin_default/menu/Makefile
 data/skin_default/icons/Makefile
 data/skin_default/buttons/Makefile
 data/skin_default/spinner/Makefile
+data/skin_default/sifteam_daemons/Makefile
+data/skin_default/sifteam_panel/Makefile
+data/skin_default/sifteam_others/Makefile
 include/Makefile
 lib/Makefile
 lib/base/eenv.cpp
@@ -226,6 +299,9 @@ lib/python/Plugins/SystemPlugins/OSDPositionSetup/Makefile
 lib/python/Plugins/SystemPlugins/OSD3DSetup/Makefile
 lib/python/Plugins/SystemPlugins/HdmiCEC/Makefile
 lib/python/Plugins/SystemPlugins/VideoClippingSetup/Makefile
+lib/python/Plugins/DemoPlugins/Makefile
+lib/python/Plugins/DemoPlugins/TPMDemo/Makefile
+lib/python/Plugins/DemoPlugins/TestPlugin/Makefile
 lib/python/Plugins/Extensions/CutListEditor/Makefile
 lib/python/Plugins/Extensions/CutListEditor/meta/Makefile
 lib/python/Plugins/Extensions/DVDBurn/Makefile
@@ -284,7 +360,16 @@ lib/python/Plugins/SystemPlugins/Videomode/Makefile
 lib/python/Plugins/SystemPlugins/Videomode/meta/Makefile
 lib/python/Plugins/SystemPlugins/WirelessLan/Makefile
 lib/python/Plugins/SystemPlugins/WirelessLan/meta/Makefile
+lib/python/Plugins/SystemPlugins/VFDGiga/Makefile
+lib/python/Plugins/SystemPlugins/IniFanSetup/Makefile
+lib/python/Plugins/SystemPlugins/IniVFD/Makefile
 lib/python/Tools/Makefile
+lib/python/SIFTeam/Makefile
+lib/python/SIFTeam/Daemons/Makefile
+lib/python/SIFTeam/Extra/Makefile
+lib/python/SIFTeam/SoftwareManager/Makefile
+lib/python/SIFTeam/Settings/Makefile
+lib/python/SIFTeam/Cloud/Makefile
 po/Makefile
 main/Makefile
 tools/Makefile
