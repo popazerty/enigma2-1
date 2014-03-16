@@ -410,7 +410,9 @@ void gPixmap::blit(const gPixmap &src, const eRect &_pos, const gRegion &clip, i
 
 //		eDebug("srcarea after scale: %d %d %d %d",
 //			srcarea.x(), srcarea.y(), srcarea.width(), srcarea.height());
-
+#ifdef FORCE_NO_ACCELNEVER
+		accel = false;
+#else
 		if (accel)
 		{
 			/* we have hardware acceleration for this blit operation */
@@ -436,7 +438,7 @@ void gPixmap::blit(const gPixmap &src, const eRect &_pos, const gRegion &clip, i
 				}
 			}
 		}
-
+#endif
 #ifdef GPIXMAP_DEBUG
 		Stopwatch s;
 #endif
@@ -834,9 +836,9 @@ void gPixmap::line(const gRegion &clip, ePoint start, ePoint dst, gColor color)
 	if (surface->bpp == 16)
 	{
 #if BYTE_ORDER == LITTLE_ENDIAN
-		col = bswap_16(((col & 0xFF) >> 3) << 11 | ((col & 0xFF00) >> 10) << 5 | (col & 0xFF0000) >> 19);
+		return bswap_16(((col & 0xFF) >> 3) << 11 | ((col & 0xFF00) >> 10) << 5 | (col & 0xFF0000) >> 19);
 #else
-		col = ((col & 0xFF) >> 3) << 11 | ((col & 0xFF00) >> 10) << 5 | (col & 0xFF0000) >> 19;
+		return ((col & 0xFF) >> 3) << 11 | ((col & 0xFF00) >> 10) << 5 | (col & 0xFF0000) >> 19;
 #endif
 	}
 	line(clip, start, dst, col);

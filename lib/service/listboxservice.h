@@ -80,7 +80,6 @@ public:
 
 	int getItemHeight() { return m_itemheight; }
 	void setItemHeight(int height);
-	void setHideNumberMarker(bool doHide);
 	void setServiceTypeIconMode(int mode);
 	static void setGetPiconNameFunc(SWIG_PYOBJECT(ePyObject) func);
 
@@ -108,7 +107,7 @@ protected:
 	int cursorMove(int count=1);
 	int cursorValid();
 	int cursorSet(int n);
-	int cursorResolve(int);
+	int cursorResolve(int cursor_position);
 	int cursorGet();
 	int currentCursorSelectable();
 
@@ -150,12 +149,10 @@ private:
 
 		/* support for movemode */
 	bool m_current_marked;
-	void swapServices(list::iterator, list::iterator);
 
 	eServiceReference m_is_playable_ignore;
 
 	int m_itemheight;
-	bool m_hide_number_marker;
 	int m_servicetype_icon_mode;
 };
 

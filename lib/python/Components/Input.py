@@ -11,19 +11,19 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 	PIN = 1
 	NUMBER = 2
 
-	def __init__(self, text="", maxSize=False, visible_width=False, type=TEXT, currPos=0, allMarked=True):
+	def __init__(self, text="", maxSize = False, visible_width = False, type = TEXT):
 		NumericalTextInput.__init__(self, self.right)
 		GUIComponent.__init__(self)
 		VariableText.__init__(self)
 		self.type = type
-		self.allmarked = allMarked and (text != "") and (type != self.PIN)
+		self.allmarked = (text != "") and (type != self.PIN)
 		self.maxSize = maxSize
-		self.currPos = currPos
+		self.currPos = 0
 		self.visible_width = visible_width
 		self.offset = 0
 		self.overwrite = maxSize
 		self.setText(text)
-		
+
 	def __len__(self):
 		return len(self.text)
 
@@ -82,10 +82,6 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 		s = self.instance.calculateSize()
 		return (s.width(), s.height())
 
-	def markAll(self):
-		self.allmarked = True
-		self.update()
-	
 	def innerright(self):
 		if self.allmarked:
 			self.currPos = 0
@@ -137,14 +133,14 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 			newNumber = str(int(self.Text[self.currPos]) - 1)
 		self.Text = self.Text[0:self.currPos] + newNumber + self.Text[self.currPos + 1:]
 		self.update()
-		
+
 	def home(self):
 		self.allmarked = False
 		if self.type == self.TEXT:
 			self.timeout()
 		self.currPos = 0
 		self.update()
-	
+
 	def end(self):
 		self.allmarked = False
 		if self.type == self.TEXT:
@@ -155,9 +151,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 			self.currPos = len(self.Text)
 		self.update()
 
-	def insertChar(self, ch, pos=False, owr=False, ins=False):
-		if not pos:
-			pos = self.currPos
+	def insertChar(self, ch, pos, owr, ins):
 		if ins and not self.maxSize:
 			self.Text = self.Text[0:pos] + ch + self.Text[pos:]
 		elif owr or self.overwrite:
@@ -248,12 +242,4 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 		self.insertChar(newChar, self.currPos, owr, False);
 		if self.type == self.PIN or self.type == self.NUMBER:
 			self.innerright()
-		self.update()
-
-	def char(self, char):
-		if self.allmarked:
-			self.deleteAllChars()
-			self.allmarked = False
-		self.insertChar(char)
-		self.innerright()
 		self.update()

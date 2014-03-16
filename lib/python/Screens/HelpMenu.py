@@ -1,5 +1,4 @@
-from Screen import Screen
-from Components.Pixmap import Pixmap, MovingPixmap
+from Screens.Screen import Screen
 from Components.Label import Label
 from Components.ActionMap import ActionMap
 from Components.HelpMenuList import HelpMenuList
@@ -14,7 +13,7 @@ class HelpMenu(Screen, Rc):
 		Rc.__init__(self)
 		self["long_key"] = Label("")
 
-		self["actions"] = ActionMap(["WizardActions"], 
+		self["actions"] = ActionMap(["WizardActions"],
 		{
 			"ok": self["list"].ok,
 			"back": self.close,
@@ -53,6 +52,11 @@ class HelpableScreen:
 			})
 
 	def showHelp(self):
+		try:
+			if self.secondInfoBarScreen and self.secondInfoBarScreen.shown:
+				self.secondInfoBarScreen.hide()
+		except:
+			pass
 		self.session.openWithCallback(self.callHelpAction, HelpMenu, self.helpList)
 
 	def callHelpAction(self, *args):

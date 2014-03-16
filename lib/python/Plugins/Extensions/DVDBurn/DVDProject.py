@@ -3,6 +3,7 @@ from Components.config import config, ConfigSubsection, ConfigInteger, ConfigTex
 import DVDTitle
 import xml.dom.minidom
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_FONTS
+from enigma import getMachineBrand, getMachineName
 
 class ConfigColor(ConfigSequence):
 	def __init__(self, default = [128,128,128]):
@@ -22,7 +23,7 @@ class ConfigFilename(ConfigText):
 		else:
 			mark = [filename]
 		return ("mtext"[1-selected:], filename, mark)
-	
+
 class DVDProject:
 	MAX_SL = 4480
 	MAX_DL = 8150
@@ -31,7 +32,7 @@ class DVDProject:
 		self.target = None
 		self.settings = ConfigSubsection()
 		self.settings.name = ConfigText(fixed_size = False, visible_width = 40)
-		self.settings.authormode = ConfigSelection(choices = [("menu_linked", _("Linked titles with a DVD menu")), ("just_linked", _("Direct playback of linked titles without menu")), ("menu_seperate", _("Separate titles with a main menu")), ("data_ts", _("special format data DVD (HDTV compatible)"))])
+		self.settings.authormode = ConfigSelection(choices = [("menu_linked", _("Linked titles with a DVD menu")), ("just_linked", _("Direct playback of linked titles without menu")), ("menu_seperate", _("Seperate titles with a main menu")), ("data_ts", _("%s %s format data DVD (HDTV compatible)") % (getMachineBrand(), getMachineName()))])
 		self.settings.titlesetmode = ConfigSelection(choices = [("single", _("Simple titleset (compatibility for legacy players)")), ("multi", _("Complex (allows mixing audio tracks and aspects)"))], default="multi")
 		self.settings.output = ConfigSelection(choices = [("iso", _("Create DVD-ISO")), ("dvd", _("Burn DVD"))])
 		self.settings.isopath = ConfigText(fixed_size = False, visible_width = 40)
@@ -90,7 +91,7 @@ class DVDProject:
 		while fileExists(filename):
 			i = i+1
 			filename = path + name + str(i).zfill(3) + ".ddvdp.xml"
-		try:	
+		try:
 			file = open(filename, "w")
 			for x in list:
 				file.write(x)
@@ -122,7 +123,7 @@ class DVDProject:
 				self.xmlAttributesToConfig(node, self.settings)
 			    elif node.tagName == 'titles':
 				self.xmlGetTitleNodeRecursive(node)
-				
+
 			for key in self.filekeys:
 				val = self.settings.dict()[key].getValue()
 				if not fileExists(val):

@@ -32,28 +32,24 @@ class ConfigElement(object):
 		self.save_forced = False
 		self.last_value = None
 		self.save_disabled = False
-		self.__notifiers = None
-		self.__notifiers_final = None
+		self.__notifiers = { }
+		self.__notifiers_final = { }
 		self.enabled = True
 		self.callNotifiersOnSaveAndCancel = False
 
 	def getNotifiers(self):
-		if self.__notifiers is None:
-			self.__notifiers = [ ]
-		return self.__notifiers
+		return [func for (func, val, call_on_save_and_cancel) in self.__notifiers.itervalues()]
 
 	def setNotifiers(self, val):
-		self.__notifiers = val
+		print "just readonly access to notifiers is allowed! append/remove doesnt work anymore! please use addNotifier, removeNotifier, clearNotifiers"
 
 	notifiers = property(getNotifiers, setNotifiers)
 
 	def getNotifiersFinal(self):
-		if self.__notifiers_final is None:
-			self.__notifiers_final = [ ]
-		return self.__notifiers_final
+		return [func for (func, val, call_on_save_and_cancel) in self.__notifiers_final.itervalues()]
 
 	def setNotifiersFinal(self, val):
-		self.__notifiers_final = val
+		print "just readonly access to notifiers_final is allowed! append/remove doesnt work anymore! please use addNotifier, removeNotifier, clearNotifiers"
 
 	notifiers_final = property(getNotifiersFinal, setNotifiersFinal)
 
@@ -112,12 +108,15 @@ class ConfigElement(object):
 			for x in self.notifiers_final:
 				x(self)
 
-	def addNotifier(self, notifier, initial_call = True, immediate_feedback = True):
+	# immediate_feedback = True means call notifier on every value CHANGE
+	# immediate_feedback = False means call notifier on leave the config element (up/down) when value have CHANGED
+	# call_on_save_or_cancel = True means call notifier always on save/cancel.. even when value have not changed
+	def addNotifier(self, notifier, initial_call = True, immediate_feedback = True, call_on_save_or_cancel = False):
 		assert callable(notifier), "notifiers must be callable"
 		if immediate_feedback:
-			self.notifiers.append(notifier)
+			self.__notifiers[str(notifier)] = (notifier, self.value, call_on_save_or_cancel)
 		else:
-			self.notifiers_final.append(notifier)
+			self.__notifiers_final[str(notifier)] = (notifier, self.value, call_on_save_or_cancel)
 		# CHECKME:
 		# do we want to call the notifier
 		#  - at all when adding it? (yes, though optional)
@@ -128,6 +127,16 @@ class ConfigElement(object):
 		#     the entry could just be new.)
 		if initial_call:
 			notifier(self)
+
+
+	def removeNotifier(self, notifier):
+		try:
+			del self.__notifiers[str(notifier)]
+		except:
+			pass
+			
+	def clearNotifiers(self):
+		self.__notifiers = { }
 
 	def disableSave(self):
 		self.save_disabled = True
@@ -1042,7 +1051,7 @@ class ConfigSelectionNumber(ConfigSelection):
 		while step <= max:
 			choices.append(str(step))
 			step += stepwidth
-		
+
 		ConfigSelection.__init__(self, choices, default)
 
 	def getValue(self):
@@ -1304,7 +1313,7 @@ class ConfigLocations(ConfigElement):
 		add = [x for x in value if not x in loc]
 		diff = add + [x for x in loc if not x in value]
 		locations = [x for x in locations if not x[0] in diff] + [[x, self.getMountpoint(x), True, True] for x in add]
-		locations.sort(key = lambda x: x[0])
+		#locations.sort(key = lambda x: x[0])
 		self.locations = locations
 		self.changed()
 
@@ -1655,7 +1664,7 @@ class Config(ConfigSubsection):
 			base[names[-1]] = val
 
 			if not base_file: # not the initial config file..
-				#update config.x.y.value when exist
+				#update config.x.y.getValue() when exist
 				try:
 					configEntry = eval(name)
 					if configEntry is not None:
@@ -1759,84 +1768,3 @@ def updateConfigElement(element, newelement):
 ##configfile.save()
 #config.save()
 #print config.pickle()
-
-cec_limits = [(0,15),(0,15),(0,15),(0,15)]
-class ConfigCECAddress(ConfigSequence):
-	def __init__(self, default, auto_jump = False):
-		ConfigSequence.__init__(self, seperator = ".", limits = cec_limits, default = default)
-		self.block_len = [len(str(x[1])) for x in self.limits]
-		self.marked_block = 0
-		self.overwrite = True
-		self.auto_jump = auto_jump
-
-	def handleKey(self, key):
-		if key == KEY_LEFT:
-			if self.marked_block > 0:
-				self.marked_block -= 1
-			self.overwrite = True
-
-		elif key == KEY_RIGHT:
-			if self.marked_block < len(self.limits)-1:
-				self.marked_block += 1
-			self.overwrite = True
-
-		elif key == KEY_HOME:
-			self.marked_block = 0
-			self.overwrite = True
-
-		elif key == KEY_END:
-			self.marked_block = len(self.limits)-1
-			self.overwrite = True
-
-		elif key in KEY_NUMBERS or key == KEY_ASCII:
-			if key == KEY_ASCII:
-				code = getPrevAsciiCode()
-				if code < 48 or code > 57:
-					return
-				number = code - 48
-			else:
-				number = getKeyNumber(key)
-			oldvalue = self._value[self.marked_block]
-
-			if self.overwrite:
-				self._value[self.marked_block] = number
-				self.overwrite = False
-			else:
-				oldvalue *= 10
-				newvalue = oldvalue + number
-				if self.auto_jump and newvalue > self.limits[self.marked_block][1] and self.marked_block < len(self.limits)-1:
-					self.handleKey(KEY_RIGHT)
-					self.handleKey(key)
-					return
-				else:
-					self._value[self.marked_block] = newvalue
-
-			if len(str(self._value[self.marked_block])) >= self.block_len[self.marked_block]:
-				self.handleKey(KEY_RIGHT)
-
-			self.validate()
-			self.changed()
-
-	def genText(self):
-		value = ""
-		block_strlen = []
-		for i in self._value:
-			block_strlen.append(len(str(i)))
-			if value:
-				value += self.seperator
-			value += str(i)
-		leftPos = sum(block_strlen[:(self.marked_block)])+self.marked_block
-		rightPos = sum(block_strlen[:(self.marked_block+1)])+self.marked_block
-		mBlock = range(leftPos, rightPos)
-		return (value, mBlock)
-
-	def getMulti(self, selected):
-		(value, mBlock) = self.genText()
-		if self.enabled:
-			return ("mtext"[1-selected:], value, mBlock)
-		else:
-			return ("text", value)
-
-	def getHTML(self, id):
-		# we definitely don't want leading zeros
-		return '.'.join(["%d" % d for d in self.value])

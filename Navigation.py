@@ -1,20 +1,21 @@
-from enigma import eServiceCenter, eServiceReference, eTimer, pNavigation, getBestPlayableServiceReference, iPlayableService, eActionMap
+from enigma import eServiceCenter, eServiceReference, eTimer, pNavigation, getBestPlayableServiceReference, iPlayableService
 from Components.ParentalControl import parentalControl
 from Components.config import config
 from Tools.BoundFunction import boundFunction
 from Tools.StbHardware import setFPWakeuptime, getFPWakeuptime, getFPWasTimerWakeup
-from Tools import Notifications
-from time import time, localtime
+from time import time
 import RecordTimer
+import PowerTimer
 import Screens.Standby
 import NavigationInstance
 import ServiceReference
-from Screens.InfoBar import InfoBar
-from sys import maxint
+from Screens.InfoBar import InfoBar, MoviePlayer
+from os import path
+from enigma import getBoxType
 
 # TODO: remove pNavgation, eNavigation and rewrite this stuff in python.
 class Navigation:
-	def __init__(self):
+	def __init__(self, nextRecordTimerAfterEventActionAuto=False, nextPowerManagerAfterEventActionAuto=False):
 		if NavigationInstance.instance is not None:
 			raise NavigationInstance.instance
 
@@ -33,12 +34,96 @@ class Navigation:
 		self.currentlyPlayingServiceOrGroup = None
 		self.currentlyPlayingService = None
 		self.RecordTimer = RecordTimer.RecordTimer()
-		self.__wasTimerWakeup = getFPWasTimerWakeup()
-		if self.__wasTimerWakeup:
-			RecordTimer.RecordTimerEntry.setWasInDeepStandby()
+		self.PowerTimer = PowerTimer.PowerTimer()
+		self.nextRecordTimerAfterEventActionAuto = nextRecordTimerAfterEventActionAuto
+		self.__wasTimerWakeup = False
+		self.__wasRecTimerWakeup = False
+		self.__wasPowerTimerWakeup = False
+		self.syncCount = 0
+
+		wasTimerWakeup = getFPWasTimerWakeup()
+		thisBox = getBoxType()
+		if thisBox == 'gbquad' or thisBox == 'xp1000' or thisBox == 'ixussone' or thisBox == 'ventonhdx' or thisBox.startswith("tm") or thisBox.startswith("iqon") or thisBox.startswith("azbox") or thisBox.startswith("ebox"):
+			config.workaround.deeprecord.setValue(True)
+			config.workaround.deeprecord.save()
+			config.save()
+			print"[NAVIGATION] USE DEEPSTAND-WORKAROUND FOR THIS BOXTYPE (%s) !!" %thisBox
+		if not wasTimerWakeup and config.workaround.deeprecord.getValue(): #work-around for boxes where driver not sent was_timer_wakeup signal to e2
+			print"[NAVIGATION] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
+			print"[NAVIGATION] current Time=%s" % time()
+			print"[NAVIGATION] timediff=%s" % abs(self.RecordTimer.getNextRecordingTime() - time())
+
+			if time() <= 31536000: # check for NTP-time sync, if no sync, wait for transponder time
+				self.timesynctimer = eTimer()
+				self.timesynctimer.callback.append(self.TimeSynctimer)
+				self.timesynctimer.start(5000, True)
+				print"[NAVIGATION] wait for time sync"
+				
+			elif abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360: # if there is a recording sheduled in the next 5 mins, set the wasTimerWakeup flag
+				wasTimerWakeup = True
+				f = open("/tmp/was_timer_wakeup_workaround.txt", "w")
+				file = f.write(str(wasTimerWakeup))
+				f.close()
+
+		print"[NAVIGATION] wasTimerWakeup = %s" % wasTimerWakeup
+
+		if wasTimerWakeup:
+			self.__wasTimerWakeup = True
+			if nextRecordTimerAfterEventActionAuto and abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
+				self.__wasRecTimerWakeup = True
+				print 'RECTIMER: wakeup to standby detected.'
+				f = open("/tmp/was_rectimer_wakeup", "w")
+				f.write('1')
+				f.close()
+				# as we woke the box to record, place the box in standby.
+				self.standbytimer = eTimer()
+				self.standbytimer.callback.append(self.gotostandby)
+				self.standbytimer.start(15000, True)
+
+			elif nextPowerManagerAfterEventActionAuto:
+				self.__wasPowerTimerWakeup = True
+				print 'POWERTIMER: wakeup to standby detected.'
+				f = open("/tmp/was_powertimer_wakeup", "w")
+				f.write('1')
+				f.close()
+				# as a PowerTimer WakeToStandby was actiond to it.
+				self.standbytimer = eTimer()
+				self.standbytimer.callback.append(self.gotostandby)
+				self.standbytimer.start(15000, True)
 
 	def wasTimerWakeup(self):
 		return self.__wasTimerWakeup
+
+	def wasRecTimerWakeup(self):
+		return self.__wasRecTimerWakeup
+
+	def wasPowerTimerWakeup(self):
+		return self.__wasPowerTimerWakeup
+
+	def TimeSynctimer(self):
+		self.syncCount += 1
+		if self.nextRecordTimerAfterEventActionAuto and abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
+			self.__wasRecTimerWakeup = True
+			print 'RECTIMER: wakeup to standby detected.'
+			print"[NAVIGATION] [work-around] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
+			print"[NAVIGATION] [work-around] current Time=%s" % time()
+			print"[NAVIGATION] [work-around] timediff=%s" % abs(self.RecordTimer.getNextRecordingTime() - time())
+			f = open("/tmp/was_rectimer_wakeup", "w")
+			f.write('1')
+			f.close()
+			self.gotostandby()
+		else:
+			if self.syncCount <= 24 and time() <= 31536000: # max 2 mins or when time is in sync
+				self.timesynctimer.start(5000, True)
+			else:
+				print"[NAVIGATION] [work-around] No Recordings found, end work-around"
+
+		print"[NAVIGATION] [work-around] wasTimerWakeup after time sync = %s, sync time = %s sec." % (self.__wasRecTimerWakeup, self.syncCount * 5)
+
+	def gotostandby(self):
+		print 'TIMER: now entering standby'
+		from Tools import Notifications
+		Notifications.AddNotification(Screens.Standby.Standby)
 
 	def dispatchEvent(self, i):
 		for x in self.event:
@@ -59,6 +144,24 @@ class Navigation:
 			print "ignore request to play already running service(1)"
 			return 0
 		print "playing", ref and ref.toString()
+		if path.exists("/proc/stb/lcd/symbol_signal") and config.lcd.mode.getValue() == '1':
+			try:
+				if ref.toString().find('0:0:0:0:0:0:0:0:0') == -1:
+					signal = 1
+				else:
+					signal = 0
+				f = open("/proc/stb/lcd/symbol_signal", "w")
+				f.write(str(signal))
+				f.close()
+			except:
+				f = open("/proc/stb/lcd/symbol_signal", "w")
+				f.write("0")
+				f.close()
+		elif path.exists("/proc/stb/lcd/symbol_signal") and config.lcd.mode.getValue() == '0':
+			f = open("/proc/stb/lcd/symbol_signal", "w")
+			f.write("0")
+			f.close()
+
 		if ref is None:
 			self.stopService()
 			return 0
@@ -98,6 +201,13 @@ class Navigation:
 	def getCurrentlyPlayingServiceOrGroup(self):
 		return self.currentlyPlayingServiceOrGroup
 
+	def isMovieplayerActive(self):
+		MoviePlayerInstance = MoviePlayer.instance
+		if MoviePlayerInstance is not None and self.currentlyPlayingServiceReference.toString().find('0:0:0:0:0:0:0:0:0') != -1:
+			from Screens.InfoBarGenerics import setResumePoint
+			setResumePoint(MoviePlayer.instance.session)
+			MoviePlayerInstance.close()
+
 	def recordService(self, ref, simulate=False):
 		service = None
 		if not simulate: print "recording service: %s" % (str(ref))
@@ -128,12 +238,17 @@ class Navigation:
 			self.pnav.stopService()
 		self.currentlyPlayingServiceReference = None
 		self.currentlyPlayingServiceOrGroup = None
+		if path.exists("/proc/stb/lcd/symbol_signal"):
+			f = open("/proc/stb/lcd/symbol_signal", "w")
+			f.write("0")
+			f.close()
 
 	def pause(self, p):
 		return self.pnav and self.pnav.pause(p)
 
 	def shutdown(self):
 		self.RecordTimer.shutdown()
+		self.PowerTimer.shutdown()
 		self.ServiceHandler = None
 		self.pnav = None
 

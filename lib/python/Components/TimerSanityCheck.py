@@ -118,7 +118,7 @@ class TimerSanityCheck:
 			weeks = (interval_end - offset_0) / 604800
 			if ((interval_end - offset_0) % 604800):
 				weeks += 1
-			for cnt in range(weeks):
+			for cnt in range(int(weeks)):
 				for event in self.rep_eventlist:
 					if event[1] == -1: # -1 is the identifier of the changed timer
 						event_begin = self.newtimer.begin
@@ -194,7 +194,7 @@ class TimerSanityCheck:
 							for ref in serviceList.getContent("R"): # iterate over all group service references
 								type = getServiceType(ref)
 								if not type in tunerType: # just add single time
-									tunerType.append(type) 
+									tunerType.append(type)
 					else:
 						tunerType.append(getServiceType(ref))
 
