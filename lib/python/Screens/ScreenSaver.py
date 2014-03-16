@@ -7,6 +7,13 @@ import os
 
 class Screensaver(Screen):
 	def __init__(self, session):
+
+		self.skin = """
+			<screen name="Screensaver" position="fill" flags="wfNoBorder">
+				<eLabel position="fill" backgroundColor="#54111112" zPosition="0"/>
+				<widget name="picture" pixmap="PLi-HD/logos/pli.png" position="0,0" size="120,34" alphatest="on" zPosition="1"/>
+			</screen>"""	
+
 		Screen.__init__(self, session)
 		
 		self.moveLogoTimer = eTimer()

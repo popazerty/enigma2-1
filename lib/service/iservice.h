@@ -43,7 +43,7 @@ public:
 		isMarker=64,			// Marker
 		isGroup=128,			// is a group of services
 		isNumberedMarker=256, //use together with isMarker, to force the marker to be numbered
-		isInvisible=512 // use together with isMarker and isNumberedMarker, to force an empty number
+		isInvisible=512 // use to make services or markers in a list invisable
 	};
 	int flags; // flags will NOT be compared.
 
@@ -91,6 +91,7 @@ public:
 	std::string getName() const { return name; }
 	void setName( const std::string &n ) { name=n; }
 	int getChannelNum() const { return number; }
+	void setChannelNum(const int n) { number = n; }
 
 	eServiceReference()
 		: type(idInvalid), flags(0)
@@ -419,6 +420,7 @@ public:
 	virtual std::string getInfoString(int w);
 	virtual ePtr<iServiceInfoContainer> getInfoObject(int w);
 	virtual ePtr<iDVBTransponderData> getTransponderData();
+	virtual void getAITApplications(std::map<int, std::string> &aitlist) {};
 	virtual void getCaIds(std::vector<int> &caids, std::vector<int> &ecmpids);
 	virtual long long getFileSize();
 

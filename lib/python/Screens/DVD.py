@@ -7,10 +7,12 @@ from Screens.HelpMenu import HelpableScreen
 from Screens.InfoBarGenerics import InfoBarSeek, InfoBarPVRState, InfoBarCueSheetSupport, InfoBarShowHide, InfoBarNotifications, InfoBarAudioSelection, InfoBarSubtitleSupport
 from Components.ActionMap import ActionMap, NumberActionMap, HelpableActionMap
 from Components.Label import Label
+from Components.Sources.StaticText import StaticText
 from Components.Pixmap import Pixmap
+from Components.MenuList import MenuList
 from Components.ServiceEventTracker import ServiceEventTracker, InfoBarBase
 from Components.config import config
-from Tools.Directories import pathExists
+from Tools.Directories import pathExists, fileExists
 from Components.Harddisk import harddiskmanager
 
 lastpath = ""
@@ -44,7 +46,7 @@ class ChapterZap(Screen):
 		<widget name="chapter" position="35,15" size="110,25" font="Regular;23" />
 		<widget name="number" position="145,15" size="80,25" halign="right" font="Regular;23" />
 	</screen>"""
-
+	
 	def quit(self):
 		self.Timer.stop()
 		self.close(0)
@@ -91,14 +93,54 @@ class ChapterZap(Screen):
 class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarPVRState, InfoBarShowHide, HelpableScreen, InfoBarCueSheetSupport, InfoBarAudioSelection, InfoBarSubtitleSupport):
 	ALLOW_SUSPEND = Screen.SUSPEND_PAUSES
 	ENABLE_RESUME_SUPPORT = True
+	
+	skin = """
+	<screen name="DVDPlayer" flags="wfNoBorder" position="0,380" size="720,160" title="Info bar" backgroundColor="transparent" >
+		<!-- Background -->
+		<ePixmap position="0,0" zPosition="-2" size="720,160" pixmap="skin_default/info-bg_mp.png" alphatest="off" />
+		<ePixmap position="29,40" zPosition="0" size="665,104" pixmap="skin_default/screws_mp.png" alphatest="on" transparent="1" />
+		<!-- colorbuttons -->
+		<ePixmap position="48,70" zPosition="0" size="108,13" pixmap="skin_default/icons/mp_buttons.png" alphatest="on" />
+		<!-- Servicename -->
+		<ePixmap pixmap="skin_default/icons/icon_event.png" position="207,78" zPosition="1" size="15,10" alphatest="on" />
+		<widget source="session.CurrentService" render="Label" position="230,73" size="300,22" font="Regular;20" backgroundColor="#263c59" shadowColor="#1d354c" shadowOffset="-1,-1" transparent="1" noWrap="1">
+			<convert type="ServiceName">Name</convert>
+		</widget>
+		<!-- Chapter info -->
+		<widget name="chapterLabel" position="230,96" size="360,22" font="Regular;20" foregroundColor="#c3c3c9" backgroundColor="#263c59" transparent="1" />
+		<!-- Audio track info -->
+		<ePixmap pixmap="skin_default/icons/icon_dolby.png" position="540,60" zPosition="1" size="26,16" alphatest="on"/>
+		<widget name="audioLabel" position="570,60" size="130,22" font="Regular;18" backgroundColor="#263c59" shadowColor="#1d354c" shadowOffset="-1,-1" transparent="1" />
+		<!-- Subtitle track info -->
+		<widget source="session.CurrentService" render="Pixmap" pixmap="skin_default/icons/icon_txt.png" position="540,83" zPosition="1" size="26,16" alphatest="on" >
+			<convert type="ServiceInfo">HasTelext</convert>
+			<convert type="ConditionalShowHide" />
+		</widget>
+		<widget name="subtitleLabel" position="570,83" size="130,22" font="Regular;18" backgroundColor="#263c59" shadowColor="#1d354c" shadowOffset="-1,-1" transparent="1" />
+		<!-- Angle info -->
+		<widget name="anglePix" pixmap="skin_default/icons/icon_view.png" position="540,106" size="26,16" alphatest="on" />
+		<widget name="angleLabel" position="570,106" size="130,22" font="Regular;18" backgroundColor="#263c59" shadowColor="#1d354c" shadowOffset="-1,-1" transparent="1" />
+		<!-- Elapsed time -->
+		<widget source="session.CurrentService" render="Label" position="205,129" size="100,20" font="Regular;18" halign="center" valign="center" backgroundColor="#06224f" shadowColor="#1d354c" shadowOffset="-1,-1" transparent="1" >
+			<convert type="ServicePosition">Position,ShowHours</convert>
+		</widget>
+		<!-- Progressbar (movie position)-->
+		<widget source="session.CurrentService" render="PositionGauge" position="300,133" size="270,10" zPosition="2" pointer="skin_default/position_pointer.png:540,0" transparent="1" >
+			<convert type="ServicePosition">Gauge</convert>
+		</widget>
+		<!-- Remaining time -->
+		<widget source="session.CurrentService" render="Label" position="576,129" size="100,20" font="Regular;18" halign="center" valign="center" backgroundColor="#06224f" shadowColor="#1d354c" shadowOffset="-1,-1" transparent="1" >
+			<convert type="ServicePosition">Remaining,Negate,ShowHours</convert>
+		</widget>
+	</screen>"""
 
 	def save_infobar_seek_config(self):
-		self.saved_config_speeds_forward = config.seek.speeds_forward.getValue()
-		self.saved_config_speeds_backward = config.seek.speeds_backward.getValue()
-		self.saved_config_enter_forward = config.seek.enter_forward.getValue()
-		self.saved_config_enter_backward = config.seek.enter_backward.getValue()
-		self.saved_config_seek_on_pause = config.seek.on_pause.getValue()
-		self.saved_config_seek_speeds_slowmotion = config.seek.speeds_slowmotion.getValue()
+		self.saved_config_speeds_forward = config.seek.speeds_forward.value
+		self.saved_config_speeds_backward = config.seek.speeds_backward.value
+		self.saved_config_enter_forward = config.seek.enter_forward.value
+		self.saved_config_enter_backward = config.seek.enter_backward.value
+		self.saved_config_seek_on_pause = config.seek.on_pause.value
+		self.saved_config_seek_speeds_slowmotion = config.seek.speeds_slowmotion.value
 
 	def change_infobar_seek_config(self):
 		config.seek.speeds_forward.value = [2, 4, 6, 8, 16, 32, 64]
@@ -208,7 +250,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 				"nextAngle": (self.nextAngle, _("switch to the next angle")),
 				"seekBeginning": self.seekBeginning,
 			}, -2)
-
+			
 		self["NumberActions"] = NumberActionMap( [ "NumberActions"],
 			{
 				"1": self.keyNumberGlobal,
@@ -230,7 +272,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 			hotplugNotifier.append(self.hotplugCB)
 		except:
 			pass
-
+		
 		self.autoplay = dvd_device or dvd_filelist
 
 		if dvd_device:
@@ -329,7 +371,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 		audioTuple = info and info.getInfoObject(iServiceInformation.sUser+6)
 		print "AudioInfoAvail ", repr(audioTuple)
 		if audioTuple:
-			audioString = "%d: %s (%s)" % (audioTuple[0], audioTuple[1],audioTuple[2])
+			audioString = "%d: %s (%s)" % (audioTuple[0],audioTuple[1],audioTuple[2])
 			self["audioLabel"].setText(audioString)
 			if audioTuple != self.last_audioTuple and not self.in_menu:
 				self.doShow()
@@ -342,12 +384,12 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 		if subtitleTuple:
 			subtitleString = ""
 			if subtitleTuple[0] is not 0:
-				subtitleString = "%d: %s" % (subtitleTuple[0], subtitleTuple[1])
+				subtitleString = "%d: %s" % (subtitleTuple[0],subtitleTuple[1])
 			self["subtitleLabel"].setText(subtitleString)
 			if subtitleTuple != self.last_subtitleTuple and not self.in_menu:
 				self.doShow()
 		self.last_subtitleTuple = subtitleTuple
-
+	
 	def __osdAngleInfoAvail(self):
 		info = self.getServiceInterface("info")
 		angleTuple = info and info.getInfoObject(iServiceInformation.sUser+8)
@@ -355,7 +397,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 		if angleTuple:
 			angleString = ""
 			if angleTuple[1] > 1:
-				angleString = "%d / %d" % (angleTuple[0], angleTuple[1])
+				angleString = "%d / %d" % (angleTuple[0],angleTuple[1])
 				self["anglePix"].show()
 			else:
 				self["anglePix"].hide()
@@ -381,7 +423,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 			print "__titleUpdated: %d/%d" % (self.currentTitle, self.totalTitles)
 			if not self.in_menu:
 				self.doShow()
-
+		
 	def askLeavePlayer(self):
 		if self.autoplay:
 			self.exitCB((None,"exit"))
@@ -390,7 +432,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 		if self.physicalDVD:
 			cur = self.session.nav.getCurrentlyPlayingServiceOrGroup()
 			if cur and not cur.toString().endswith(harddiskmanager.getAutofsMountpoint(harddiskmanager.getCD())):
-				choices.insert(0,(_("Play DVD"), "playPhysical" ))
+			    choices.insert(0,(_("Play DVD"), "playPhysical" ))
 		self.session.openWithCallback(self.exitCB, ChoiceBox, title=_("Leave DVD player?"), list = choices)
 
 	def sendKey(self, key):
@@ -425,7 +467,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 
 	def enterDVDMenu(self):
 		self.sendKey(iServiceKeys.keyUser+7)
-
+	
 	def nextAngle(self):
 		self.sendKey(iServiceKeys.keyUser+8)
 
@@ -506,7 +548,7 @@ class DVDPlayer(Screen, InfoBarBase, InfoBarNotifications, InfoBarSeek, InfoBarP
 				for name in files:
 					(status, isNTSC, isLowResolution) = self.readVideoAtributes( ifofilename, name )
 					if status:
-						break
+						 break
 				height = getDesktop(0).size().height()
 				print "[DVD] height:", height
 				if isNTSC:
