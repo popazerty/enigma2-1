@@ -3,14 +3,22 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
+# start softcam
+emu=`cat /etc/enigma2/settings | grep config.softcam.actCam=  | cut -d = -f2`	
 
+if [ -e /etc/.nhd2 ] && [ -e @bindir@/$emu ]; then
+	@bindir@/$emu &
+fi
+############################################################################
 if [ -x @bindir@/showiframe ]; then
 	if [ -f @sysconfdir@/enigma2/backdrop.mvi ]; then
 		@bindir@/showiframe @sysconfdir@/enigma2/backdrop.mvi
-	elif [ -f @sysconfdir@/enigma2/bootlogo.mvi ]; then
-		@bindir@/showiframe @sysconfdir@/enigma2/bootlogo.mvi
-	elif [ -f @datadir@/bootlogo.mvi ]; then
-		@bindir@/showiframe @datadir@/bootlogo.mvi
+	elif [ -f @datadir@/backdrop.mvi ]; then
+		if [ -e /etc/.nhd2 ]; then
+			@bindir@/showiframe @datadir@/backdrop1.mvi
+		else 
+			@bindir@/showiframe @datadir@/backdrop.mvi
+		fi
 	fi
 fi
 
@@ -23,11 +31,26 @@ if [ -d /home/root ]; then
 	cd /home/root
 fi
 
-LIBS=@libdir@/libopen.so.0.0.0
+#check for sundtek tuner helper lib
+if [ -e /opt/lib/libmediaclient.so ]; then
+	LIBS="/opt/lib/libmediaclient.so /usr/lib/libopen.so.0.0.0"
+else
+	LIBS="/usr/lib/libopen.so.0.0.0"
+fi
+
+#check for receiver specific passthrough helper lib
+if [ -e @libdir@/libpassthrough.so ]; then
+	LIBS="$LIBS @libdir@/libpassthrough.so"
+fi
 
 sync
-LD_PRELOAD=$LIBS @bindir@/enigma2
-
+# boot enigma2 or neutrino
+if [ -e /etc/.e2 ]; then
+	LD_PRELOAD=$LIBS @bindir@/enigma2
+elif [ -e /etc/.nhd2 ]; then
+	LD_PRELOAD=$LIBS @bindir@/neutrino
+ 
+fi
 # enigma2 exit codes:
 #
 # 1 - halt
@@ -56,10 +79,14 @@ case $ret in
 		/sbin/reboot
 		;;
 	42)
-		# bind the console (when available)
-		[ -f /sys/class/vtconsole/vtcon1/bind ] && echo 1 > /sys/class/vtconsole/vtcon1/bind
-		opkg upgrade 2>&1 | tee /home/root/ipkgupgrade.log
-		/sbin/reboot
+		python /usr/lib/enigma2/python/upgrade.pyo
+		;;
+	43)
+		init 1
+		;;
+	44)
+		# little hack but it will be fixed soon in drivers
+		/usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/wait.mvi && echo fpupload > /dev/dbox/oled0 && sleep 3 && cat /tmp/micom.bin > /dev/mcu && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/reboot.mvi && sleep 200000
 		;;
 	*)
 		;;

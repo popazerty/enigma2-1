@@ -1,23 +1,25 @@
-from Screen import Screen
+from Screens.Screen import Screen
 from Screens.TimerEdit import TimerSanityConflict
 from Screens.MessageBox import MessageBox
 from Components.ActionMap import ActionMap
 from Components.Button import Button
 from Components.Label import Label
+from Components.Sources.StaticText import StaticText
 from Components.ScrollLabel import ScrollLabel
 from Components.PluginComponent import plugins
 from Components.MenuList import MenuList
-from Components.TimerList import TimerList
 from Components.UsageConfig import preferredTimerPath
+from Components.Pixmap import Pixmap
 from Components.Sources.ServiceEvent import ServiceEvent
 from Components.Sources.Event import Event
-from enigma import eEPGCache, eTimer, eServiceReference
 from RecordTimer import RecordTimerEntry, parseEvent, AFTEREVENT
-from TimerEntry import TimerEntry
+from Screens.TimerEntry import TimerEntry
 from Plugins.Plugin import PluginDescriptor
+from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
 from Tools.BoundFunction import boundFunction
-from time import localtime
-from Components.config import config
+from time import localtime, mktime, time, strftime
+from os import path
+from enigma import eEPGCache, eTimer, eServiceReference
 
 class EventViewContextMenu(Screen):
 	def __init__(self, session, service, event):
@@ -40,10 +42,6 @@ class EventViewContextMenu(Screen):
 				menu.append((p.name, boundFunction(self.runPlugin, p)))
 
 		self["menu"] = MenuList(menu)
-		self.onLayoutFinish.append(self.layoutFinished)
-
-	def layoutFinished(self):
-		self.setTitle(_(self.title))
 
 	def okbuttonClick(self):
 		self["menu"].getCurrent() and self["menu"].getCurrent()[1]()
@@ -55,35 +53,29 @@ class EventViewContextMenu(Screen):
 		plugin(session=self.session, service=self.service, event=self.event, eventName=self.eventname)
 
 class EventViewBase:
-	ADD_TIMER = 0
-	REMOVE_TIMER = 1
-	
-	def __init__(self, event, Ref, callback=None, similarEPGCB=None):
+	ADD_TIMER = 1
+	REMOVE_TIMER = 2
+
+	def __init__(self, event, ref, callback=None, similarEPGCB=None):
 		self.similarEPGCB = similarEPGCB
 		self.cbFunc = callback
-		self.currentService=Ref
-		self.isRecording = (not Ref.ref.flags & eServiceReference.isGroup) and Ref.ref.getPath()
+		self.currentService = ref
+		self.isRecording = (not ref.ref.flags & eServiceReference.isGroup) and ref.ref.getPath()
 		self.event = event
 		self["Service"] = ServiceEvent()
 		self["Event"] = Event()
 		self["epg_description"] = ScrollLabel()
 		self["FullDescription"] = ScrollLabel()
+		self["summary_description"] = StaticText()
 		self["datetime"] = Label()
 		self["channel"] = Label()
 		self["duration"] = Label()
-		self["key_red"] = Button("")
 		if similarEPGCB is not None:
+			self["key_red"] = Button("")
 			self.SimilarBroadcastTimer = eTimer()
 			self.SimilarBroadcastTimer.callback.append(self.getSimilarEvents)
 		else:
 			self.SimilarBroadcastTimer = None
-		self.key_green_choice = self.ADD_TIMER
-		if self.isRecording:
-			self["key_green"] = Button("")
-		else:
-			self["key_green"] = Button(_("Add timer"))
-		self["key_yellow"] = Button("")
-		self["key_blue"] = Button("")
 		self["actions"] = ActionMap(["OkCancelActions", "EventViewActions"],
 			{
 				"cancel": self.close,
@@ -92,11 +84,9 @@ class EventViewBase:
 				"pageDown": self.pageDown,
 				"prevEvent": self.prevEvent,
 				"nextEvent": self.nextEvent,
-				"timerAdd": self.timerAdd,
-				"openSimilarList": self.openSimilarList,
 				"contextMenu": self.doContext,
 			})
-		self.onShown.append(self.onCreate)
+		self.onLayoutFinish.append(self.onCreate)
 
 	def onCreate(self):
 		self.setService(self.currentService)
@@ -115,7 +105,7 @@ class EventViewBase:
 		self.session.nav.RecordTimer.removeEntry(timer)
 		self["key_green"].setText(_("Add timer"))
 		self.key_green_choice = self.ADD_TIMER
-	
+
 	def timerAdd(self):
 		if self.isRecording:
 			return
@@ -151,7 +141,7 @@ class EventViewBase:
 		else:
 			self["key_green"].setText(_("Add timer"))
 			self.key_green_choice = self.ADD_TIMER
-			print "Timeredit aborted"		
+			print "Timeredit aborted"
 
 	def finishSanityCorrection(self, answer):
 		self.finishedAdd(answer)
@@ -177,32 +167,44 @@ class EventViewBase:
 			return 1
 
 	def setEvent(self, event):
-		self.event = event
-		self["Event"].newEvent(event)
-		if event is None:
+		if event is None or not hasattr(event, 'getEventName'):
 			return
+
+		self["Event"].newEvent(event)
+		self.event = event
 		text = event.getEventName()
+		self.setTitle(text)
+
 		short = event.getShortDescription()
-		ext = event.getExtendedDescription()
+		extended = event.getExtendedDescription()
+
 		if short == text:
 			short = ""
-		if short and ext:
-			ext = short + "\n\n" + ext
+
+		if short and extended:
+			extended = short + '\n' + extended
 		elif short:
-			ext = short
+			extended = short
 
-		if text and ext:
+		if text and extended:
 			text += "\n\n"
-		text += ext
-
-		self.setTitle(event.getEventName())
+		text += extended
 		self["epg_description"].setText(text)
-		self["FullDescription"].setText(ext)
-		self["datetime"].setText(event.getBeginTimeString())
+		self["FullDescription"].setText(extended)
+
+		self["summary_description"].setText(extended)
+
+		begintime = event.getBeginTimeString().split(', ')[1].split(':')
+		begindate = event.getBeginTimeString().split(', ')[0].split('.')
+		nowt = time()
+		now = localtime(nowt)
+		test = int(mktime((now.tm_year, int(begindate[1]), int(begindate[0]), int(begintime[0]), int(begintime[1]), 0, now.tm_wday, now.tm_yday, now.tm_isdst)))
+		endtime = int(mktime((now.tm_year, int(begindate[1]), int(begindate[0]), int(begintime[0]), int(begintime[1]), 0, now.tm_wday, now.tm_yday, now.tm_isdst))) + event.getDuration()
+		endtime = localtime(endtime)
+		self["datetime"].setText(event.getBeginTimeString() + ' - ' + strftime(_("%-H:%M"), endtime))
 		self["duration"].setText(_("%d min")%(event.getDuration()/60))
-		self["key_red"].setText("")
 		if self.SimilarBroadcastTimer is not None:
-			self.SimilarBroadcastTimer.start(400,True)
+			self.SimilarBroadcastTimer.start(400, True)
 
 		serviceref = self.currentService
 		eventid = self.event.getEventId()
@@ -212,10 +214,10 @@ class EventViewBase:
 			if timer.eit == eventid and timer.service_ref.ref.toString() == refstr:
 				isRecordEvent = True
 				break
-		if isRecordEvent and self.key_green_choice != self.REMOVE_TIMER:
+		if isRecordEvent and self.key_green_choice and self.key_green_choice != self.REMOVE_TIMER:
 			self["key_green"].setText(_("Remove timer"))
 			self.key_green_choice = self.REMOVE_TIMER
-		elif not isRecordEvent and self.key_green_choice != self.ADD_TIMER:
+		elif not isRecordEvent and self.key_green_choice and self.key_green_choice != self.ADD_TIMER:
 			self["key_green"].setText(_("Add timer"))
 			self.key_green_choice = self.ADD_TIMER
 
@@ -260,20 +262,54 @@ class EventViewBase:
 			self.session.open(EventViewContextMenu, self.currentService, self.event)
 
 class EventViewSimple(Screen, EventViewBase):
-	def __init__(self, session, Event, Ref, callback=None, similarEPGCB=None):
+	def __init__(self, session, event, ref, callback=None, singleEPGCB=None, multiEPGCB=None, similarEPGCB=None, skin='EventViewSimple'):
 		Screen.__init__(self, session)
-		self.skinName = "EventView"
-		EventViewBase.__init__(self, Event, Ref, callback, similarEPGCB)
+		self.skinName = [skin,"EventView"]
+		EventViewBase.__init__(self, event, ref, callback, similarEPGCB)
+		self.key_green_choice = None
 
 class EventViewEPGSelect(Screen, EventViewBase):
-	def __init__(self, session, Event, Ref, callback=None, singleEPGCB=None, multiEPGCB=None, similarEPGCB=None):
+	def __init__(self, session, event, ref, callback=None, singleEPGCB=None, multiEPGCB=None, similarEPGCB=None):
 		Screen.__init__(self, session)
 		self.skinName = "EventView"
-		EventViewBase.__init__(self, Event, Ref, callback, similarEPGCB)
-		self["key_yellow"].setText(_("Single EPG"))
-		self["key_blue"].setText(_("Multi EPG"))
-		self["epgactions"] = ActionMap(["EventViewEPGActions"],
+		EventViewBase.__init__(self, event, ref, callback, similarEPGCB)
+		self.key_green_choice = self.ADD_TIMER
+
+		# Background for Buttons
+		self["red"] = Pixmap()
+		self["green"] = Pixmap()
+		self["yellow"] = Pixmap()
+		self["blue"] = Pixmap()
+
+		self["epgactions1"] = ActionMap(["OkCancelActions", "EventViewActions"],
 			{
-				"openSingleServiceEPG": singleEPGCB,
-				"openMultiServiceEPG": multiEPGCB,
+
+				"timerAdd": self.timerAdd,
+				"openSimilarList": self.openSimilarList,
+
 			})
+		if self.isRecording:
+			self["key_green"] = Button("")
+		else:
+			self["key_green"] = Button(_("Add timer"))
+
+		if singleEPGCB:
+			self["key_yellow"] = Button(_("Single EPG"))
+			self["epgactions2"] = ActionMap(["EventViewEPGActions"],
+				{
+					"openSingleServiceEPG": singleEPGCB,
+				})
+		else:
+			self["key_yellow"] = Button("")
+			self["yellow"].hide()
+			
+		if multiEPGCB:
+			self["key_blue"] = Button(_("Multi EPG"))
+			self["epgactions3"] = ActionMap(["EventViewEPGActions"],
+				{
+
+					"openMultiServiceEPG": multiEPGCB,
+				})
+		else:
+			self["key_blue"] = Button("")
+			self["blue"].hide()

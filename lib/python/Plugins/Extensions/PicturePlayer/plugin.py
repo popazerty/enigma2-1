@@ -14,6 +14,11 @@ def main(session, **kwargs):
 	from ui import picshow
 	session.open(picshow)
 
+def menu(menuid, **kwargs):
+	if menuid == "mainmenu":
+		return [(_("Picture player"), main, "picture_player", 1)]
+	return []
+      
 def filescan_open(list, session, **kwargs):
 	# Recreate List as expected by PicView
 	filelist = [((file.path, False), None) for file in list]
@@ -31,17 +36,18 @@ def filescan(**kwargs):
 
 	return \
 		LocalScanner(mimetypes = ["image/jpeg", "image/png", "image/gif", "image/bmp"],
-			paths_to_scan = 
+			paths_to_scan =
 				[
 					ScanPath(path = "DCIM", with_subdirs = True),
 					ScanPath(path = "", with_subdirs = False),
 				],
-			name = "Pictures", 
+			name = "Pictures",
 			description = _("View photos..."),
 			openfnc = filescan_open,
 		)
 
 def Plugins(**kwargs):
 	return \
-		[PluginDescriptor(name=_("Picture player"), description=_("fileformats (BMP, PNG, JPG, GIF)"), icon="pictureplayer.png", where = PluginDescriptor.WHERE_PLUGINMENU, needsRestart = False, fnc=main),
-		 PluginDescriptor(name=_("Picture player"), where = PluginDescriptor.WHERE_FILESCAN, needsRestart = False, fnc = filescan)]
+		[PluginDescriptor(name =_("PicturePlayer"), description =_("fileformats (BMP, PNG, JPG, GIF)"), where = PluginDescriptor.WHERE_MENU, needsRestart = False, fnc = menu),
+		 PluginDescriptor(name=_("PicturePlayer"), where = PluginDescriptor.WHERE_FILESCAN, needsRestart = False, fnc = filescan)]
+

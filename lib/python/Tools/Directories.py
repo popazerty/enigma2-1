@@ -32,6 +32,10 @@ SCOPE_PLAYLIST = 11
 SCOPE_CURRENT_SKIN = 12
 SCOPE_METADIR = 16
 SCOPE_CURRENT_PLUGIN = 17
+SCOPE_TIMESHIFT = 18
+SCOPE_ACTIVE_SKIN = 19
+SCOPE_LCDSKIN = 20
+SCOPE_ACTIVE_LCDSKIN = 21
 
 PATH_CREATE = 0
 PATH_DONTCREATE = 1
@@ -46,8 +50,10 @@ defaultPaths = {
 		SCOPE_LANGUAGE: (eEnv.resolve("${datadir}/enigma2/po/"), PATH_DONTCREATE),
 
 		SCOPE_SKIN: (eEnv.resolve("${datadir}/enigma2/"), PATH_DONTCREATE),
+		SCOPE_LCDSKIN: (eEnv.resolve("${datadir}/enigma2/display/"), PATH_DONTCREATE),
 		SCOPE_SKIN_IMAGE: (eEnv.resolve("${datadir}/enigma2/"), PATH_DONTCREATE),
 		SCOPE_HDD: ("/hdd/movie/", PATH_DONTCREATE),
+		SCOPE_TIMESHIFT: ("/hdd/timeshift/", PATH_DONTCREATE),
 		SCOPE_MEDIA: ("/media/", PATH_DONTCREATE),
 		SCOPE_PLAYLIST: (eEnv.resolve("${sysconfdir}/enigma2/playlist/"), PATH_CREATE),
 
@@ -63,7 +69,8 @@ PATH_MOVE = 3 # move the fallback dir to the basedir (can be used for changes in
 fallbackPaths = {
 		SCOPE_CONFIG: [("/home/root/", FILE_MOVE),
 					   (eEnv.resolve("${datadir}/enigma2/defaults/"), FILE_COPY)],
-		SCOPE_HDD: [("/hdd/movies", PATH_MOVE)]
+		SCOPE_HDD: [("/hdd/movies", PATH_MOVE)],
+		SCOPE_TIMESHIFT: [("/hdd/timeshift", PATH_MOVE)]
 	}
 
 def resolveFilename(scope, base = "", path_prefix = None):
@@ -94,6 +101,62 @@ def resolveFilename(scope, base = "", path_prefix = None):
 					path = tmp
 			else:
 				path = tmp
+
+	elif scope == SCOPE_ACTIVE_SKIN:
+		from Components.config import config
+		# allow files in the config directory to replace skin files
+		tmp = defaultPaths[SCOPE_CONFIG][0]
+		if base and pathExists(tmp + base):
+			path = tmp
+		elif base and pathExists(defaultPaths[SCOPE_SKIN][0] + base):
+			path = defaultPaths[SCOPE_SKIN][0]
+		else:
+			tmp = defaultPaths[SCOPE_SKIN][0]
+			pos = config.skin.primary_skin.value.rfind('/')
+			if pos != -1:
+				tmpfile = tmp+config.skin.primary_skin.value[:pos+1] + base
+				if pathExists(tmpfile) or (tmpfile.find(':') != -1 and pathExists(tmpfile.split(':')[0])):
+					path = tmp+config.skin.primary_skin.value[:pos+1]
+				elif pathExists(tmp + base) or (base.find(':') != -1 and pathExists(tmp + base.split(':')[0])):
+					path = tmp
+				else:
+					if tmp.find('skin_default') == -1:
+						path = tmp + 'skin_default/'
+					else:
+						path = tmp
+			else:
+				if pathExists(tmp + base):
+					path = tmp
+				elif tmp.find('skin_default') == -1:
+					path = tmp + 'skin_default/'
+				else:
+					path = tmp
+
+	elif scope == SCOPE_ACTIVE_LCDSKIN:
+		from Components.config import config
+		# allow files in the config directory to replace skin files
+		tmp = defaultPaths[SCOPE_CONFIG][0]
+		if base and pathExists(tmp + base):
+			path = tmp
+		elif base and pathExists(defaultPaths[SCOPE_LCDSKIN][0] + base):
+			path = defaultPaths[SCOPE_SKIN][0]
+		else:
+			tmp = defaultPaths[SCOPE_LCDSKIN][0]
+			pos = config.skin.display_skin.getValue().rfind('/')
+			if pos != -1:
+				tmpfile = tmp+config.skin.display_skin.getValue()[:pos+1] + base
+				if pathExists(tmpfile):
+					path = tmp+config.skin.display_skin.getValue()[:pos+1]
+				else:
+					if tmp.find('skin_default') == -1:
+						path = tmp + 'skin_default/'
+					else:
+						path = tmp
+			else:
+				if tmp.find('skin_default') == -1:
+					path = tmp + 'skin_default/'
+				else:
+					path = tmp
 
 	elif scope == SCOPE_CURRENT_PLUGIN:
 		tmp = defaultPaths[SCOPE_PLUGINS]
@@ -159,43 +222,6 @@ def resolveFilename(scope, base = "", path_prefix = None):
 pathExists = os.path.exists
 isMount = os.path.ismount
 
-def defaultRecordingLocation(candidate=None):
-	if candidate and os.path.exists(candidate):
-		return candidate
-	# First, try whatever /hdd points to, or /media/hdd
-	try:
-		path = os.readlink('/hdd')
-	except:
-		path = '/media/hdd'
-	if not os.path.exists(path):
-		path = ''
-		# Find the largest local disk
-		from Components import Harddisk
-		mounts = [m for m in Harddisk.getProcMounts() if m[1].startswith('/media/')]
-		biggest = 0
-		havelocal = False
-		for candidate in mounts:
-			try:
-				islocal = candidate[1].startswith('/dev/') # Good enough
-				stat = os.statvfs(candidate[1])
-				# Free space counts double
-				size = (stat.f_blocks + stat.f_bavail) * stat.f_bsize
-				if (islocal and not havelocal) or ((islocal or not havelocal) and (size > biggest)):
-					path = candidate[1]
-					havelocal = islocal
-					biggest = size
-			except Exception, e:
-				print "[DRL]", e
-	if path:
-		# If there's a movie subdir, we'd probably want to use that.
-		movie = os.path.join(path, 'movie')
-		if os.path.isdir(movie):
-			path = movie
-		if not path.endswith('/'):
-			path += '/' # Bad habits die hard, old code relies on this
-	return path
-	
-
 def createDir(path, makeParents = False):
 	try:
 		if makeParents:
@@ -236,19 +262,17 @@ def getRecordingFilename(basename, dirname = None):
 			c = "_"
 		filename += c
 
-	# max filename length for ext4 is 255 (minus 8 characters for .ts.meta)
-	filename = filename[:247]
-
 	if dirname is not None:
-		if not dirname.startswith('/'):
-			dirname = os.path.join(defaultRecordingLocation(), dirname)
-	else:
-		dirname = defaultRecordingLocation()
-	filename = os.path.join(dirname, filename)
+		filename = os.path.join(dirname, filename)
+
+	while len(filename) > 240:
+		filename = filename.decode('UTF-8')
+		filename = filename[:-1]
+		filename = filename.encode('UTF-8')
 
 	i = 0
 	while True:
-		path = filename
+		path = resolveFilename(SCOPE_HDD, filename)
 		if i > 0:
 			path += "_%03d" % i
 		try:
@@ -341,8 +365,8 @@ def moveFiles(fileList):
 		except OSError, e:
 			if e.errno == 18:
 				print "[Directories] cannot rename across devices, trying slow move"
-				import Screens.CopyFiles
-				Screens.CopyFiles.moveFiles(fileList, item[0])
+				import Tools.CopyFiles
+				Tools.CopyFiles.moveFiles(fileList, item[0])
 				print "[Directories] Moving in background..."
 			else:
 				raise

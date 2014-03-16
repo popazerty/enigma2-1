@@ -1,6 +1,6 @@
 from Components.HTMLComponent import HTMLComponent
 from Components.GUIComponent import GUIComponent
-from Screen import Screen
+from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from ServiceReference import ServiceReference
@@ -64,6 +64,7 @@ TYPE_TRANSPONDER_INFO = 2
 class ServiceInfo(Screen):
 	def __init__(self, session, serviceref=None):
 		Screen.__init__(self, session)
+		Screen.setTitle(self, _("Service Information"))
 
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
 		{
@@ -123,7 +124,7 @@ class ServiceInfo(Screen):
 			if width != -1 and height != -1:
 				resolution = "%dx%d" % (width,height)
 				resolution += ("i", "p", "")[self.info.getInfo(iServiceInformation.sProgressive)]
-				resolution += str((self.info.getInfo(iServiceInformation.sFrameRate) + 500) / 1000)
+				resolution += " (" + str((self.info.getInfo(iServiceInformation.sFrameRate) + 500) / 1000) + " fps)"
 			else:
 				resolution = "-"
 				aspect = "-"

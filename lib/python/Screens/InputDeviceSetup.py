@@ -1,4 +1,4 @@
-from Screen import Screen
+from Screens.Screen import Screen
 from Screens.HelpMenu import HelpableScreen
 from Screens.MessageBox import MessageBox
 from Components.InputDevice import iInputDevices, iRcTypeControl
@@ -7,41 +7,16 @@ from Components.Sources.List import List
 from Components.config import config, ConfigYesNo, getConfigListEntry, ConfigSelection
 from Components.ConfigList import ConfigListScreen
 from Components.ActionMap import ActionMap, HelpableActionMap
-from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN
+from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
 from Tools.LoadPixmap import LoadPixmap
+from enigma import getMachineBrand, getMachineName
 
-class InputDeviceSelection(Screen,HelpableScreen):
-	skin = """
-	<screen name="InputDeviceSelection" position="center,center" size="560,400" title="Select input device">
-		<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on"/>
-		<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on"/>
-		<ePixmap pixmap="skin_default/buttons/yellow.png" position="280,0" size="140,40" alphatest="on"/>
-		<ePixmap pixmap="skin_default/buttons/blue.png" position="420,0" size="140,40" alphatest="on"/>
-		<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1"/>
-		<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" transparent="1"/>
-		<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" transparent="1"/>
-		<widget source="key_blue" render="Label" position="420,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" transparent="1"/>
-		<widget source="list" render="Listbox" position="5,50" size="550,280" zPosition="10" scrollbarMode="showOnDemand">
-			<convert type="TemplatedMultiContent">
-			<!--  device, description, devicepng, divpng  -->
-							{"template": [
-									MultiContentEntryPixmapAlphaTest(pos = (2, 8), size = (54, 54), png = 2), # index 3 is the interface pixmap
-									MultiContentEntryText(pos = (65, 6), size = (450, 54), font=0, flags = RT_HALIGN_LEFT|RT_VALIGN_CENTER|RT_WRAP, text = 1), # index 1 is the interfacename
-								],
-							"fonts": [gFont("Regular", 28),gFont("Regular", 20)],
-							"itemHeight": 70
-							}
-			</convert>
-		</widget>
-		<ePixmap pixmap="skin_default/div-h.png" position="0,340" zPosition="1" size="560,2"/>
-		<widget source="introduction" render="Label" position="0,350" size="560,50" zPosition="10" font="Regular;21" halign="center" valign="center" backgroundColor="#25062748" transparent="1"/>
-	</screen>"""
-
-
+class InputDeviceSelection(Screen, HelpableScreen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
 		HelpableScreen.__init__(self)
 
+		self.setTitle(_("Select input device"))
 		self.edittext = _("Press OK to edit the settings.")
 
 		self["key_red"] = StaticText(_("Close"))
@@ -79,34 +54,34 @@ class InputDeviceSelection(Screen,HelpableScreen):
 		self.currentIndex = 0
 
 	def buildInterfaceList(self, device, description, type, isinputdevice = True):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
 		activepng = None
 		devicepng = None
 		enabled = iInputDevices.getDeviceAttribute(device, 'enabled')
 
 		if type == 'remote':
-			if config.misc.rcused.value == 0:
+			if config.misc.rcused.getValue() == 0:
 				if enabled:
-					devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_rcnew-configured.png"))
+					devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_rcnew-configured.png"))
 				else:
-					devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_rcnew.png"))
+					devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_rcnew.png"))
 			else:
 				if enabled:
-					devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_rcold-configured.png"))
+					devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_rcold-configured.png"))
 				else:
-					devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_rcold.png"))
+					devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_rcold.png"))
 		elif type == 'keyboard':
 			if enabled:
-				devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_keyboard-configured.png"))
+				devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_keyboard-configured.png"))
 			else:
-				devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_keyboard.png"))
+				devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_keyboard.png"))
 		elif type == 'mouse':
 			if enabled:
-				devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_mouse-configured.png"))
+				devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_mouse-configured.png"))
 			else:
-				devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_mouse.png"))
+				devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_mouse.png"))
 		elif isinputdevice:
-			devicepng = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/input_rcnew.png"))
+			devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_rcnew.png"))
 		return ((device, description, devicepng, divpng))
 
 	def updateList(self):
@@ -136,22 +111,6 @@ class InputDeviceSelection(Screen,HelpableScreen):
 
 
 class InputDeviceSetup(Screen, ConfigListScreen):
-
-	skin = """
-		<screen name="InputDeviceSetup" position="center,center" size="560,440" title="Input device setup">
-			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="skin_default/buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="skin_default/buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
-			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
-			<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
-			<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" transparent="1" />
-			<widget source="key_blue" render="Label" position="420,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" transparent="1" />
-			<widget name="config" position="5,50" size="550,350" scrollbarMode="showOnDemand" />
-			<ePixmap pixmap="skin_default/div-h.png" position="0,400" zPosition="1" size="560,2" />
-			<widget source="introduction" render="Label" position="5,410" size="550,30" zPosition="10" font="Regular;21" halign="center" valign="center" backgroundColor="#25062748" transparent="1" />
-		</screen>"""
-
 	def __init__(self, session, device):
 		Screen.__init__(self, session)
 		self.inputDevice = device
@@ -180,6 +139,9 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 		self["key_yellow"] = StaticText()
 		self["key_blue"] = StaticText()
 		self["introduction"] = StaticText()
+
+		# for generating strings into .po only
+		devicenames = [_("%s %s front panel") % (getMachineBrand(), getMachineName()),_("%s %s front panel") % (getMachineBrand(), getMachineName()),_("%s %s remote control (native)") % (getMachineBrand(), getMachineName()),_("%s %s advanced remote control (native)") % (getMachineBrand(), getMachineName()),_("%s %s ir keyboard") % (getMachineBrand(), getMachineName()),_("%s %s ir mouse") % (getMachineBrand(), getMachineName())]
 
 		self.createSetup()
 		self.onLayoutFinish.append(self.layoutFinished)
@@ -211,7 +173,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 
 		self.list.append(self.enableEntry)
 		if self.enableConfigEntry:
-			if self.enableConfigEntry.value is True:
+			if self.enableConfigEntry.getValue() is True:
 				self.list.append(self.repeatEntry)
 				self.list.append(self.delayEntry)
 			else:
@@ -223,7 +185,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 				self["config"].invalidate(self.nameEntry)
 
 		self["config"].list = self.list
-		self["config"].l.setSeperation(600)
+		self["config"].l.setSeperation(400)
 		self["config"].l.setList(self.list)
 		if not self.selectionChanged in self["config"].onSelectionChanged:
 			self["config"].onSelectionChanged.append(self.selectionChanged)
@@ -233,7 +195,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 		if self["config"].getCurrent() == self.enableEntry:
 			self["introduction"].setText(_("Current device: ") + str(iInputDevices.getDeviceAttribute(self.inputDevice, 'name')) )
 		else:
-			self["introduction"].setText(_("Current value: ") + self.getCurrentValue() + _(" ms"))
+			self["introduction"].setText(_("Current value: ") + self.getCurrentValue() + ' ' + _("ms"))
 
 	def newConfig(self):
 		current = self["config"].getCurrent()
@@ -271,7 +233,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 
 	def keyCancel(self):
 		if self["config"].isChanged():
-			self.session.openWithCallback(self.cancelConfirm, MessageBox, _("Really close without saving settings?"), MessageBox.TYPE_YESNO, timeout = 20, default = True)
+			self.session.openWithCallback(self.cancelConfirm, MessageBox, _("Really close without saving settings?"), MessageBox.TYPE_YESNO, timeout = 20, default = False)
 		else:
 			self.close()
 	# for summary:
@@ -284,7 +246,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 		return self["config"].getCurrent()[0]
 
 	def getCurrentValue(self):
-		return str(self["config"].getCurrent()[1].value)
+		return str(self["config"].getCurrent()[1].getValue())
 
 	def createSummary(self):
 		from Screens.Setup import SetupSummary
@@ -327,7 +289,7 @@ class RemoteControlType(Screen, ConfigListScreen):
 		self.list = []
 		ConfigListScreen.__init__(self, self.list, session = self.session)
 
-		rctype = config.plugins.remotecontroltype.rctype.value
+		rctype = config.plugins.remotecontroltype.rctype.getValue()
 		self.rctype = ConfigSelection(choices = self.rcList, default = str(rctype))
 		self.list.append(getConfigListEntry(_("Remote control type"), self.rctype))
 		self["config"].list = self.list
@@ -346,7 +308,7 @@ class RemoteControlType(Screen, ConfigListScreen):
 		iRcTypeControl.writeRcType(self.defaultRcType)
 
 	def keySave(self):
-		if config.plugins.remotecontroltype.rctype.value == int(self.rctype.value):
+		if config.plugins.remotecontroltype.rctype.getValue() == int(self.rctype.getValue()):
 			self.close()
 		else:
 			self.setNewSetting()
@@ -356,21 +318,21 @@ class RemoteControlType(Screen, ConfigListScreen):
 		if answer is False:
 			self.restoreOldSetting()
 		else:
-			config.plugins.remotecontroltype.rctype.value = int(self.rctype.value)
+			config.plugins.remotecontroltype.rctype.value = int(self.rctype.getValue())
 			config.plugins.remotecontroltype.save()
 			self.close()
 
 	def restoreOldSetting(self):
-		if config.plugins.remotecontroltype.rctype.value == 0:
+		if config.plugins.remotecontroltype.rctype.getValue() == 0:
 			self.setDefaultRcType()
 		else:
-			iRcTypeControl.writeRcType(config.plugins.remotecontroltype.rctype.value)
+			iRcTypeControl.writeRcType(config.plugins.remotecontroltype.rctype.getValue())
 
 	def setNewSetting(self):
-		if int(self.rctype.value) == 0:
+		if int(self.rctype.getValue()) == 0:
 			self.setDefaultRcType()
 		else:
-			iRcTypeControl.writeRcType(int(self.rctype.value))
+			iRcTypeControl.writeRcType(int(self.rctype.getValue()))
 
 	def keyCancel(self):
 		self.restoreOldSetting()

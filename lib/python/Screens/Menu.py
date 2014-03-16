@@ -1,4 +1,4 @@
-from Screen import Screen
+from Screens.Screen import Screen
 from Components.Sources.List import List
 from Components.ActionMap import NumberActionMap
 from Components.Sources.StaticText import StaticText
@@ -13,8 +13,17 @@ import xml.etree.cElementTree
 
 from Screens.Setup import Setup, getSetupTitle
 
+#		<item text="TV-Mode">self.setModeTV()</item>
+#		<item text="Radio-Mode">self.setModeRadio()</item>
+#		<item text="File-Mode">self.setModeFile()</item>
+#			<item text="Sleep Timer"></item>
+mainmenu = _("Main Menu")
+menutitle_string = ""
+
 # read the menu
-mdom = xml.etree.cElementTree.parse(resolveFilename(SCOPE_SKIN, 'menu.xml'))
+file = open(resolveFilename(SCOPE_SKIN, 'menu.xml'), 'r')
+mdom = xml.etree.cElementTree.parse(file)
+file.close()
 
 class boundFunction:
 	def __init__(self, fnc, *args):
@@ -22,22 +31,22 @@ class boundFunction:
 		self.args = args
 	def __call__(self):
 		self.fnc(*self.args)
-		
+
 class MenuUpdater:
 	def __init__(self):
 		self.updatedMenuItems = {}
-	
-	def addMenuItem(self, id, pos, text, module, screen, weight):
+
+	def addMenuItem(self, id, pos, text, module, screen, weight, endtext = '>'):
 		if not self.updatedMenuAvailable(id):
 			self.updatedMenuItems[id] = []
-		self.updatedMenuItems[id].append([text, pos, module, screen, weight])
-	
-	def delMenuItem(self, id, pos, text, module, screen, weight):
-		self.updatedMenuItems[id].remove([text, pos, module, screen, weight])
-	
+		self.updatedMenuItems[id].append([text, pos, module, screen, weight, endtext])
+
+	def delMenuItem(self, id, pos, text, module, screen, weight, endtext = '>'):
+		self.updatedMenuItems[id].remove([text, pos, module, screen, weight, endtext])
+
 	def updatedMenuAvailable(self, id):
 		return self.updatedMenuItems.has_key(id)
-	
+
 	def getUpdatedMenu(self, id):
 		return self.updatedMenuItems[id]
 
@@ -60,9 +69,9 @@ class Menu(Screen):
 
 	def runScreen(self, arg):
 		# arg[0] is the module (as string)
-		# arg[1] is Screen inside this module 
-		#        plus possible arguments, as 
-		#        string (as we want to reference 
+		# arg[1] is Screen inside this module
+		#        plus possible arguments, as
+		#        string (as we want to reference
 		#        stuff which is just imported)
 		# FIXME. somehow
 		if arg[0] != "":
@@ -90,13 +99,14 @@ class Menu(Screen):
 		MenuTitle = _(node.get("text", "??").encode("UTF-8"))
 		entryID = node.get("entryID", "undefined")
 		weight = node.get("weight", 50)
+		end_text = node.get("endtext", ">").encode('UTF-8')
 		x = node.get("flushConfigOnClose")
 		if x:
 			a = boundFunction(self.session.openWithCallback, self.menuClosedWithConfigFlush, Menu, node)
 		else:
 			a = boundFunction(self.session.openWithCallback, self.menuClosed, Menu, node)
 		#TODO add check if !empty(node.childNodes)
-		destList.append((MenuTitle, a, entryID, weight))
+		destList.append((MenuTitle, a, entryID, weight, end_text))
 
 	def menuClosedWithConfigFlush(self, *res):
 		configfile.save()
@@ -114,12 +124,10 @@ class Menu(Screen):
 					return
 			elif not SystemInfo.get(requires, False):
 				return
-		configCondition = node.get("configcondition")
-		if configCondition and not eval(configCondition + ".value"):
-			return
 		item_text = node.get("text", "").encode("UTF-8")
 		entryID = node.get("entryID", "undefined")
 		weight = node.get("weight", 50)
+		end_text = node.get('endtext', '>').encode('UTF-8')
 		for x in node:
 			if x.tag == 'screen':
 				module = x.get("module")
@@ -139,10 +147,10 @@ class Menu(Screen):
 				args = x.text or ""
 				screen += ", " + args
 
-				destList.append((_(item_text or "??"), boundFunction(self.runScreen, (module, screen)), entryID, weight))
+				destList.append((_(item_text or "??"), boundFunction(self.runScreen, (module, screen)), entryID, weight, end_text))
 				return
 			elif x.tag == 'code':
-				destList.append((_(item_text or "??"), boundFunction(self.execText, x.text), entryID, weight))
+				destList.append((_(item_text or "??"), boundFunction(self.execText, x.text), entryID, weight, end_text))
 				return
 			elif x.tag == 'setup':
 				id = x.get("id")
@@ -150,15 +158,16 @@ class Menu(Screen):
 					item_text = _(getSetupTitle(id))
 				else:
 					item_text = _(item_text)
-				destList.append((item_text, boundFunction(self.openSetup, id), entryID, weight))
+				destList.append((item_text, boundFunction(self.openSetup, id), entryID, weight, end_text))
 				return
-		destList.append((item_text, self.nothing, entryID, weight))
+		destList.append((item_text, self.nothing, entryID, weight, end_text))
 
 
-	def __init__(self, session, parent):
+	def __init__(self, session, parent, endtext = '>'):
 		Screen.__init__(self, session)
-		
+
 		list = []
+		self.endtext = endtext
 		
 		menuID = None
 		for x in parent:						#walk through the actual nodelist
@@ -174,6 +183,7 @@ class Menu(Screen):
 				count += 1
 			elif x.tag == "id":
 				menuID = x.get("val")
+				self.endtext = str(x.get('endtext', '>'))
 				count = 0
 
 			if menuID is not None:
@@ -181,7 +191,7 @@ class Menu(Screen):
 				if menuupdater.updatedMenuAvailable(menuID):
 					for x in menuupdater.getUpdatedMenu(menuID):
 						if x[1] == count:
-							list.append((x[0], boundFunction(self.runScreen, (x[2], x[3] + ", ")), x[4]))
+							list.append((x[0], boundFunction(self.runScreen, (x[2], x[3] + ", ")), x[4], '>'))
 							count += 1
 
 		if menuID is not None:
@@ -193,7 +203,7 @@ class Menu(Screen):
 					if x[2] == plugin_menuid:
 						list.remove(x)
 						break
-				list.append((l[0], boundFunction(l[1], self.session), l[2], l[3] or 50))
+				list.append((l[0], boundFunction(l[1], self.session), l[2], l[3] or 50, ">"))
 
 		# for the skin: first try a menu_<menuID>, then Menu
 		self.skinName = [ ]
@@ -202,7 +212,10 @@ class Menu(Screen):
 		self.skinName.append("Menu")
 
 		# Sort by Weight
-		list.sort(key=lambda x: int(x[3]))
+		if config.usage.sort_menus.getValue():
+			list.sort()
+		else:
+			list.sort(key=lambda x: int(x[3]))
 
 		self["menu"] = List(list)
 
@@ -226,7 +239,15 @@ class Menu(Screen):
 		a = a and _(a)
 		if a is None:
 			a = _(parent.get("text", "").encode("UTF-8"))
+		global menutitle_string
+		if _(a) == _("Main menu"):
+		  menutitle_string += a 
+		else:
+		  menutitle_string += " ---> " + a
+		#self["title"] = StaticText(menutitle_string)
 		self["title"] = StaticText(a)
+
+		Screen.setTitle(self, a)
 		self.menu_title = a
 
 	def keyNumberGlobal(self, number):
@@ -239,9 +260,11 @@ class Menu(Screen):
 			self.okbuttonClick()
 
 	def closeNonRecursive(self):
+		menutitle_string = ""
 		self.close(False)
 
 	def closeRecursive(self):
+		menutitle_string = ""
 		self.close(True)
 
 	def createSummary(self):
@@ -249,7 +272,9 @@ class Menu(Screen):
 
 class MainMenu(Menu):
 	#add file load functions for the xml-file
-	
+
 	def __init__(self, *x):
 		self.skinName = "Menu"
+		global menutitle_string
+		menutitle_string = ""
 		Menu.__init__(self, *x)

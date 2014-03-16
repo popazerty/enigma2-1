@@ -108,7 +108,7 @@ class CutListContextMenu(FixedMenu):
 
 class CutListEditor(Screen, InfoBarBase, InfoBarSeek, InfoBarCueSheetSupport, HelpableScreen):
 	skin = """
-	<screen position="0,0" size="720,576" title="Cutlist editor" flags="wfNoBorder">
+	<screen position="0,0" size="720,576" flags="wfNoBorder">
 		<eLabel text="Cutlist editor" position="65,60" size="300,25" font="Regular;20" />
 		<widget source="global.CurrentTime" render="Label" position="268,60" size="394,20" font="Regular;20" halign="right">
 			<convert type="ClockToText">Format:%A %B %d, %H:%M</convert>
@@ -135,13 +135,14 @@ class CutListEditor(Screen, InfoBarBase, InfoBarSeek, InfoBarCueSheetSupport, He
 				}
 			</convert>
 		</widget>
-		<widget name="Timeline" position="50,485" size="615,20" backgroundColor="#505555" pointer="skin_default/position_arrow.png:3,5" foregroundColor="black" />
-		<ePixmap pixmap="skin_default/icons/mp_buttons.png" position="305,515" size="109,13" alphatest="on" />
+		<widget name="Timeline" position="50,485" size="615,20" backgroundColor="#505555" pointer="position_arrow.png:3,5" foregroundColor="black" />
+		<ePixmap pixmap="icons/mp_buttons.png" position="305,515" size="109,13" alphatest="on" />
 	</screen>"""
 
 	def __init__(self, session, service):
 		self.skin = CutListEditor.skin
 		Screen.__init__(self, session)
+		Screen.setTitle(self, _("Cutlist editor"))
 		InfoBarSeek.__init__(self, actionmap = "CutlistSeekActions")
 		InfoBarCueSheetSupport.__init__(self)
 		InfoBarBase.__init__(self, steal_current_service = True)
