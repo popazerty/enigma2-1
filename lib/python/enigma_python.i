@@ -68,6 +68,7 @@ is usually caused by not marking PSignals as immutable.
 #include <lib/gui/ewidgetanimation.h>
 #include <lib/gui/eslider.h>
 #include <lib/gui/epositiongauge.h>
+#include <lib/gui/egauge.h>
 #include <lib/gui/evideo.h>
 #include <lib/gui/ecanvas.h>
 #include <lib/python/connections.h>
@@ -101,6 +102,7 @@ is usually caused by not marking PSignals as immutable.
 #include <lib/driver/rfmod.h>
 #include <lib/driver/misc_options.h>
 #include <lib/driver/etimezone.h>
+#include <lib/driver/vfd.h>
 #include <lib/gdi/lcd.h>
 #include <lib/mmi/mmi_ui.h>
 #include <lib/dvb_ci/dvbci.h>
@@ -209,6 +211,7 @@ typedef long time_t;
 %include <lib/gui/ewindow.h>
 %include <lib/gui/eslider.h>
 %include <lib/gui/epositiongauge.h>
+%include <lib/gui/egauge.h>
 %include <lib/gui/ewidgetdesktop.h>
 %include <lib/gui/elistbox.h>
 %include <lib/gui/elistboxcontent.h>
@@ -242,6 +245,7 @@ typedef long time_t;
 %include <lib/driver/rfmod.h>
 %include <lib/driver/misc_options.h>
 %include <lib/driver/etimezone.h>
+%include <lib/driver/vfd.h>
 %include <lib/gdi/lcd.h>
 %include <lib/mmi/mmi_ui.h>
 %include <lib/dvb_ci/dvbci.h>
@@ -406,9 +410,9 @@ extern int getPrevAsciiCode();
 extern void addFont(const char *filename, const char *alias, int scale_factor, int is_replacement, int renderflags = 0);
 extern const char *getEnigmaVersionString();
 extern const char *getBoxType();
-extern const char *getDistro();
 extern const char *getMachineBrand();
 extern const char *getMachineName();
+extern const char *getDistro();
 extern const char *getImageVersionString();
 extern const char *getBuildVersionString();
 extern const char *getDriverDateString();
@@ -422,9 +426,9 @@ extern void quitMainloop(int exit_code);
 extern eApplication *getApplication();
 extern const char *getEnigmaVersionString();
 extern const char *getBoxType();
-extern const char *getDistro();
 extern const char *getMachineBrand();
 extern const char *getMachineName();
+extern const char *getDistro();
 extern const char *getImageVersionString();
 extern const char *getBuildVersionString();
 extern const char *getDriverDateString();

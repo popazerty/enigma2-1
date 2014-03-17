@@ -120,7 +120,6 @@ public:
 	int getProgramInfo(program &program);
 	int getDataDemux(ePtr<iDVBDemux> &demux);
 	int getDecodeDemux(ePtr<iDVBDemux> &demux);
-	void getAITApplications(std::map<int, std::string> &aitlist);
 	void getCaIds(std::vector<int> &caids, std::vector<int> &ecmpids);
 	
 	int getPVRChannel(ePtr<iDVBPVRChannel> &pvr_channel);
@@ -159,14 +158,6 @@ private:
 	bool m_have_cached_program;
 	program m_cached_program;
 	serviceType m_service_type;
-	
-	struct aitInfo
-	{
-		int id;
-		std::string url;
-		std::string name;
-	};
-	std::vector<struct aitInfo> m_aitInfoList;
 #endif
 };
 

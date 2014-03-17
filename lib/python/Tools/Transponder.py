@@ -53,6 +53,8 @@ def ConvertToHumanReadable(tp, type = None):
 				eDVBFrontendParametersSatellite.Pilot_Unknown : _("Auto"),
 				eDVBFrontendParametersSatellite.Pilot_On : _("On"),
 				eDVBFrontendParametersSatellite.Pilot_Off : _("Off")}.get(tp.get("pilot"))
+		ret["frequency"] = (tp.get("frequency") and str(tp.get("frequency")/1000) + ' Mhz') or '0 Mhz'
+		ret["symbol_rate"] = (tp.get("symbol_rate") and tp.get("symbol_rate")/1000) or 0
 	elif type == "DVB-C":
 		ret["tuner_type"] = _("Cable")
 		ret["modulation"] = {
@@ -79,6 +81,7 @@ def ConvertToHumanReadable(tp, type = None):
 		ret["system"] = {
 			eDVBFrontendParametersCable.System_DVB_C_ANNEX_A : "DVB-C",
 			eDVBFrontendParametersCable.System_DVB_C_ANNEX_C : "DVB-C ANNEX C"}.get(tp.get("system"))
+		ret["frequency"] = (tp.get("frequency") and str(tp.get("frequency")/1000) + ' Mhz') or '0 Mhz'
 	elif type == "DVB-T":
 		ret["tuner_type"] = _("Terrestrial")
 		ret["bandwidth"] = {
@@ -115,17 +118,11 @@ def ConvertToHumanReadable(tp, type = None):
 			eDVBFrontendParametersTerrestrial.Modulation_QAM256 : "QAM256"}.get(tp.get("constellation"))
 		ret["transmission_mode"] = {
 			eDVBFrontendParametersTerrestrial.TransmissionMode_Auto : _("Auto"),
-			eDVBFrontendParametersTerrestrial.TransmissionMode_1k : "1k",
 			eDVBFrontendParametersTerrestrial.TransmissionMode_2k : "2k",
 			eDVBFrontendParametersTerrestrial.TransmissionMode_4k : "4k",
-			eDVBFrontendParametersTerrestrial.TransmissionMode_8k : "8k",
-			eDVBFrontendParametersTerrestrial.TransmissionMode_16k : "16k",
-			eDVBFrontendParametersTerrestrial.TransmissionMode_32k : "32k"}.get(tp.get("transmission_mode"))
+			eDVBFrontendParametersTerrestrial.TransmissionMode_8k : "8k"}.get(tp.get("transmission_mode"))
 		ret["guard_interval"] = {
 			eDVBFrontendParametersTerrestrial.GuardInterval_Auto : _("Auto"),
-			eDVBFrontendParametersTerrestrial.GuardInterval_19_256 : "19/256",
-			eDVBFrontendParametersTerrestrial.GuardInterval_19_128 : "19/128",
-			eDVBFrontendParametersTerrestrial.GuardInterval_1_128 : "1/128",
 			eDVBFrontendParametersTerrestrial.GuardInterval_1_32 : "1/32",
 			eDVBFrontendParametersTerrestrial.GuardInterval_1_16 : "1/16",
 			eDVBFrontendParametersTerrestrial.GuardInterval_1_8 : "1/8",
@@ -143,6 +140,7 @@ def ConvertToHumanReadable(tp, type = None):
 		ret["system"] = {
 			eDVBFrontendParametersTerrestrial.System_DVB_T : "DVB-T",
 			eDVBFrontendParametersTerrestrial.System_DVB_T2 : "DVB-T2"}.get(tp.get("system"))
+		ret["frequency"] = (tp.get("frequency") and str(tp.get("frequency")/1000000) + ' Mhz') or '0 Mhz'
 	elif type == "ATSC":
 		ret["tuner_type"] = "ATSC"
 		ret["modulation"] = {

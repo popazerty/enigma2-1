@@ -19,7 +19,7 @@
 #include <gst/pbutils/missing-plugins.h>
 #include <sys/stat.h>
 
-#define HTTP_TIMEOUT 30
+#define HTTP_TIMEOUT 10
 
 typedef enum
 {
@@ -56,8 +56,6 @@ eServiceFactoryMP3::eServiceFactoryMP3()
 		extensions.push_back("mp2");
 		extensions.push_back("mp3");
 		extensions.push_back("ogg");
-		extensions.push_back("ogm");
-		extensions.push_back("ogv");
 		extensions.push_back("mpg");
 		extensions.push_back("vob");
 		extensions.push_back("wav");
@@ -393,11 +391,6 @@ eServiceMP3::eServiceMP3(eServiceReference ref)
 	else if ( strcasecmp(ext, ".mkv") == 0 )
 	{
 		m_sourceinfo.containertype = ctMKV;
-		m_sourceinfo.is_video = TRUE;
-	}
-	else if ( strcasecmp(ext, ".ogm") == 0 || strcasecmp(ext, ".ogv") == 0)
-	{
-		m_sourceinfo.containertype = ctOGG;
 		m_sourceinfo.is_video = TRUE;
 	}
 	else if ( strcasecmp(ext, ".avi") == 0 || strcasecmp(ext, ".divx") == 0)

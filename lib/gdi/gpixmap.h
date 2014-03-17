@@ -8,30 +8,23 @@
 #include <lib/base/elock.h>
 #include <lib/gdi/erect.h>
 #include <lib/gdi/fb.h>
-#include <byteswap.h>
 
 struct gRGB
 {
-	union {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		struct {
-			unsigned char b, g, r, a;
-		};
-#else
-		struct {
-			unsigned char a, r, g, b;
-		};
-#endif
-		unsigned long value;
-	};
+	unsigned char b, g, r, a;
 	gRGB(int r, int g, int b, int a=0): b(b), g(g), r(r), a(a)
 	{
 	}
-	gRGB(unsigned long val): value(val)
+	gRGB(unsigned long val)
 	{
-	}
-	gRGB(const gRGB& other): value(other.value)
-	{
+		if (val)
+		{
+			set(val);
+		}
+		else
+		{
+			b = g = r = a = 0;
+		}
 	}
 	gRGB(const char *colorstring)
 	{
@@ -45,55 +38,58 @@ struct gRGB
 				val |= (colorstring[i]) & 0x0f;
 			}
 		}
-		value = val;
+		set(val);
 	}
-	gRGB(): value(0)
+	gRGB(): b(0), g(0), r(0), a(0)
 	{
 	}
 
 	unsigned long argb() const
 	{
-		return value;
+		return (a<<24)|(r<<16)|(g<<8)|b;
 	}
 
 	void set(unsigned long val)
 	{
-		value = val;
+		b = val&0xFF;
+		g = (val>>8)&0xFF;
+		r = (val>>16)&0xFF;
+		a = (val>>24)&0xFF;
 	}
 
 	void operator=(unsigned long val)
 	{
-		value = val;
+		set(val);
 	}
 	bool operator < (const gRGB &c) const
 	{
 		if (b < c.b)
-			return true;
+			return 1;
 		if (b == c.b)
 		{
 			if (g < c.g)
-				return true;
+				return 1;
 			if (g == c.g)
 			{
 				if (r < c.r)
-					return true;
+					return 1;
 				if (r == c.r)
 					return a < c.a;
 			}
 		}
-		return false;
+		return 0;
 	}
 	bool operator==(const gRGB &c) const
 	{
-		return c.value == value;
+		return (b == c.b) && (g == c.g) && (r == c.r) && (a == c.a);
 	}
 	bool operator != (const gRGB &c) const
 	{
-		return c.value != value;
+		return (b != c.b) || (g != c.g) || (r != c.r) || (a != c.a);
 	}
 	operator const std::string () const
 	{
-		unsigned long val = value;
+		unsigned long val = argb();
 		std::string escapecolor = "\\c";
 		escapecolor.resize(10);
 		for (int i = 9; i >= 2; i--)
@@ -102,15 +98,6 @@ struct gRGB
 			val >>= 4;
 		}
 		return escapecolor;
-	}
-	void alpha_blend(const gRGB other)
-	{
-#define BLEND(x, y, a) (y + (((x-y) * a)>>8))
-		b = BLEND(other.b, b, other.a);
-		g = BLEND(other.g, g, other.a);
-		r = BLEND(other.r, r, other.a);
-		a = BLEND(0xFF, a, other.a);
-#undef BLEND
 	}
 };
 
@@ -132,9 +119,7 @@ struct gPalette
 {
 	int start, colors;
 	gRGB *data;
-	unsigned long data_phys;
-	gColor findColor(const gRGB rgb) const;
-	gPalette():	start(0), colors(0), data(0), data_phys(0) {}
+	gColor findColor(const gRGB &rgb) const;
 };
 
 struct gLookup
@@ -153,15 +138,16 @@ struct gUnmanagedSurface
 	gPalette clut;
 	void *data;
 	int data_phys;
-
+	int offset; // only for backbuffers (TODO: get rid of it then!)
+	
 	gUnmanagedSurface();
-	gUnmanagedSurface(int width, int height, int bpp);
+	gUnmanagedSurface(eSize size, int bpp);
 };
 
 struct gSurface: gUnmanagedSurface
 {
 	gSurface(): gUnmanagedSurface() {}
-	gSurface(int width, int height, int bpp, int accel);
+	gSurface(eSize size, int bpp, int accel);
 	~gSurface();
 private:
 	gSurface(const gSurface&); /* Copying managed gSurface is not allowed */
@@ -176,39 +162,30 @@ class gPixmap: public iObject
 {
 	DECLARE_REF(gPixmap);
 public:
-#ifdef SWIG
-	gPixmap();
-#else
+#ifndef SWIG
 	enum
 	{
 		blitAlphaTest=1,
 		blitAlphaBlend=2,
-		blitScale=4,
-		blitKeepAspectRatio=8
+		blitScale=4
 	};
-	
-	enum {
-		accelNever = -1,
-		accelAuto = 0,
-		accelAlways = 1,
-	};
-
-	typedef void (*gPixmapDisposeCallback)(gPixmap* pixmap);
 
 	gPixmap(gUnmanagedSurface *surface);
 	gPixmap(eSize, int bpp, int accel = 0);
-	gPixmap(int width, int height, int bpp, gPixmapDisposeCallback on_dispose, int accel = accelAuto);
 
 	gUnmanagedSurface *surface;
-
+	
+	eLock contentlock;
+	int final;
+	
+	gPixmap *lock();
+	void unlock();
 	inline bool needClut() const { return surface && surface->bpp <= 8; }
 #endif
 	virtual ~gPixmap();
 	eSize size() const { return eSize(surface->x, surface->y); }
-
 private:
-	gPixmapDisposeCallback on_dispose;
-
+	bool must_delete_surface;
 	friend class gDC;
 	void fill(const gRegion &clip, const gColor &color);
 	void fill(const gRegion &clip, const gRGB &color);
@@ -219,6 +196,9 @@ private:
 	void line(const gRegion &clip, ePoint start, ePoint end, gColor color);
 	void line(const gRegion &clip, ePoint start, ePoint end, gRGB color);
 	void line(const gRegion &clip, ePoint start, ePoint end, unsigned int color);
+#ifdef SWIG
+	gPixmap();
+#endif
 };
 SWIG_TEMPLATE_TYPEDEF(ePtr<gPixmap>, gPixmapPtr);
 

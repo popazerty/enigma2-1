@@ -16,10 +16,11 @@ class ClockToText(Converter, object):
 	VFD = 10
 	AS_LENGTHHOURS = 11
 	AS_LENGTHSECONDS = 12
-	
+	FULL_DATE = 13
+
 	# add: date, date as string, weekday, ...
 	# (whatever you need!)
-	
+
 	def __init__(self, type):
 		Converter.__init__(self, type)
 		if type == "WithSeconds":
@@ -34,7 +35,7 @@ class ClockToText(Converter, object):
 			self.type = self.AS_LENGTHHOURS
 		elif type == "AsLengthSeconds":
 			self.type = self.AS_LENGTHSECONDS
-		elif type == "Timestamp":	
+		elif type == "Timestamp":
 			self.type = self.TIMESTAMP
 		elif type == "Full":
 			self.type = self.FULL
@@ -42,6 +43,8 @@ class ClockToText(Converter, object):
 			self.type = self.SHORT_DATE
 		elif type == "LongDate":
 			self.type = self.LONG_DATE
+		elif type == "FullDate":
+			self.type = self.FULL_DATE
 		elif type == "VFD":
 			self.type = self.VFD
 		elif "Format" in type:
@@ -58,7 +61,7 @@ class ClockToText(Converter, object):
 
 		# handle durations
 		if self.type == self.IN_MINUTES:
-			return "%d min" % (time / 60)
+			return ngettext("%d Min", "%d Mins", (time / 60)) % (time / 60)
 		elif self.type == self.AS_LENGTH:
 			if time < 0:
 				return ""
@@ -74,9 +77,9 @@ class ClockToText(Converter, object):
 			 % (time / 3600, time / 60 % 60, time % 60)
 		elif self.type == self.TIMESTAMP:
 			return str(time)
-		
+
 		t = localtime(time)
-		
+
 		if self.type == self.WITH_SECONDS:
 			# TRANSLATORS: full time representation hour:minute:seconds 
 			return _("%2d:%02d:%02d") % (t.tm_hour, t.tm_min, t.tm_sec)
@@ -95,6 +98,9 @@ class ClockToText(Converter, object):
 		elif self.type == self.LONG_DATE:
 			# TRANSLATORS: long date representations dayname daynum monthname in strftime() format! See 'man strftime'
 			d = _("%A %e %B")
+		elif self.type == self.FULL_DATE:
+			# TRANSLATORS: full date representations sort dayname daynum monthname long year in strftime() format! See 'man strftime'
+			d = _("%a %e %B %Y")
 		elif self.type == self.VFD:
 			# TRANSLATORS: VFD hour:minute daynum short monthname in strftime() format! See 'man strftime'
 			d = _("%k:%M %e/%m")
