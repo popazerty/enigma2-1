@@ -102,6 +102,15 @@ void eRCDeviceInputDev::handleCode(long rccode)
 		ev->code = KEY_TEXT;
 		
 	}
+#endif
+
+#if KEY_F2_TO_KEY_F6
+	if (ev->code == KEY_F2)
+	{
+		/* Gigablue New Remote rc has a KEY_PIP key, which sends KEY_F2 events. Correct this, so we do not have to place hacks in the keymaps. */
+		ev->code = KEY_F6;
+		
+	}
 #endif		
 
 #if KEY_TV_TO_KEY_MODE
@@ -181,6 +190,15 @@ void eRCDeviceInputDev::handleCode(long rccode)
 	{
 		/* Venton ini2 remote has a KEY_MEDIA key we need KEY_Bookmark. Correct this, so we do not have to place hacks in the keymaps. */
 		ev->code = KEY_BOOKMARKS;
+		
+	}
+#endif
+
+#if KEY_MEDIA_TO_KEY_OPEN
+	if (ev->code == KEY_MEDIA)
+	{
+		/* Venton ini2 remote has a KEY_MEDIA key we need KEY_OPEN. Correct this, so we do not have to place hacks in the keymaps. */
+		ev->code = KEY_OPEN;
 		
 	}
 #endif

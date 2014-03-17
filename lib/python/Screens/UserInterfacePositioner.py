@@ -11,7 +11,7 @@ from enigma import getDesktop, getBoxType
 from os import access, R_OK
 
 def InitOsd():
-	SystemInfo["CanChange3DOsd"] = (access('/proc/stb/fb/3dmode', R_OK) or access('/proc/stb/fb/primary/3d', R_OK)) and True or False
+	SystemInfo["CanChange3DOsd"] = access('/proc/stb/fb/3dmode', R_OK) and True or False
 	SystemInfo["CanChangeOsdAlpha"] = access('/proc/stb/video/alpha', R_OK) and True or False
 	SystemInfo["CanChangeOsdPosition"] = access('/proc/stb/fb/dst_left', R_OK) and True or False
 	SystemInfo["OsdSetup"] = SystemInfo["CanChangeOsdPosition"]
@@ -61,17 +61,23 @@ def InitOsd():
 	def set3DMode(configElement):
 		if SystemInfo["CanChange3DOsd"]:
 			print 'Setting 3D mode:',configElement.getValue()
-			f = open("/proc/stb/fb/3dmode", "w")
-			f.write(configElement.getValue())
-			f.close()
+			try:
+				f = open("/proc/stb/fb/3dmode", "w")
+				f.write(configElement.getValue())
+				f.close()
+			except:
+				pass
 	config.osd.threeDmode.addNotifier(set3DMode)
 
 	def set3DZnorm(configElement):
 		if SystemInfo["CanChange3DOsd"]:
 			print 'Setting 3D depth:',configElement.getValue()
-			f = open("/proc/stb/fb/znorm", "w")
-			f.write('%d' % int(configElement.getValue()))
-			f.close()
+			try:
+				f = open("/proc/stb/fb/znorm", "w")
+				f.write('%d' % int(configElement.getValue()))
+				f.close()
+			except:
+				pass	
 	config.osd.threeDznorm.addNotifier(set3DZnorm)
 	
 class UserInterfacePositioner2(Screen, ConfigListScreen):
@@ -325,9 +331,6 @@ class UserInterfacePositioner(Screen, ConfigListScreen):
 		self["key_green"] = StaticText(_("save"))
 		self["key_yellow"] = StaticText(_("Defaults"))
 		
-		self["title"] = StaticText(_("OSD Adjustment"))
-		self["info1"] = StaticText(_("Use arrows Up/Down to select"))
-		self["info2"] = StaticText(_("Use arrows Left/Right to adjust"))
 
 		self["actions"] = ActionMap(["SetupActions", "ColorActions"],
 			{

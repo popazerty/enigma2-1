@@ -73,12 +73,8 @@ l_moviesort = [(str(MovieList.SORT_RECORDED), _("by date"), '03/02/01'),
 def defaultMoviePath():
 	result = config.usage.default_path.getValue()
 	if not os.path.isdir(result):
-		for mount in Components.Harddisk.getProcMounts():
-			if mount[1].startswith('/media/'):
-				result = mount[1]
-				if not result.endswith('/'):
-					result += '/'
-				break
+		from Tools import Directories
+		return Directories.defaultRecordingLocation()
 	return result
 
 def setPreferredTagEditor(te):
@@ -453,6 +449,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		self.filePlayingTimer = eTimer()
 		self.filePlayingTimer.timeout.get().append(self.FilePlaying)
 
+		self.playingInForeground = None
 		# create optional description border and hide immediately
 		self["DescriptionBorder"] = Pixmap()
 		self["DescriptionBorder"].hide()
@@ -983,23 +980,20 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 					from Screens.InfoBarGenerics import setResumePoint
 					setResumePoint(MoviePlayer.instance.session)
 				self.session.nav.stopService()
-				if playInBackground and playInBackground != current:
+				if playInBackground != current:
 					# come back to play the new one
 					self.callLater(self.preview)
-				if config.movielist.show_live_tv_in_movielist.getValue():
-					self.LivePlayTimer.start(100)
-				self.filePlayingTimer.start(100)
-			elif self.list.playInForeground:
+			elif playInForeground:
+				self.playingInForeground = playInForeground
+				self.list.playInForeground = None
 				from Screens.InfoBar import MoviePlayer
 				MoviePlayerInstance = MoviePlayer.instance
 				if MoviePlayerInstance is not None:
 					from Screens.InfoBarGenerics import setResumePoint
 					setResumePoint(MoviePlayer.instance.session)
-					MoviePlayerInstance.close()
 				self.session.nav.stopService()
-				if config.movielist.show_live_tv_in_movielist.getValue():
-					self.LivePlayTimer.start(100)
-				self.filePlayingTimer.start(100)
+				if playInForeground != current:
+					self.callLater(self.preview)
 			else:
 				self.list.playInBackground = current
 				self.session.nav.playService(current)
@@ -1174,6 +1168,13 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 			self.session.nav.stopService()
 			self.callLater(self.abort)
 			return
+
+		if self.playingInForeground:
+			self.list.playInForeground = self.playingInForeground
+			self.session.nav.stopService()
+			self.close(self.playingInForeground)
+			return
+
 		self.saveconfig()
 		from Screens.InfoBar import InfoBar
 		infobar = InfoBar.instance
@@ -1433,8 +1434,8 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 	def can_createdir(self, item):
 		return True
 	def do_createdir(self):
-		from Screens.InputBox import InputBox
-		self.session.openWithCallback(self.createDirCallback, InputBox,
+		from Screens.VirtualKeyBoard import VirtualKeyBoard
+		self.session.openWithCallback(self.createDirCallback, VirtualKeyBoard,
 			title = _("Please enter name of the new directory"),
 			text = "")
 	def createDirCallback(self, name):
@@ -1475,8 +1476,8 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		else:
 			info = item[1]
 			name = info.getName(item[0])
-		from Screens.InputBox import InputBox
-		self.session.openWithCallback(self.renameCallback, InputBox,
+		from Screens.VirtualKeyBoard import VirtualKeyBoard
+		self.session.openWithCallback(self.renameCallback, VirtualKeyBoard,
 			title = _("Rename"),
 			text = name)
 

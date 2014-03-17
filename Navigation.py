@@ -36,6 +36,7 @@ class Navigation:
 		self.RecordTimer = RecordTimer.RecordTimer()
 		self.PowerTimer = PowerTimer.PowerTimer()
 		self.nextRecordTimerAfterEventActionAuto = nextRecordTimerAfterEventActionAuto
+		self.nextPowerManagerAfterEventActionAuto = nextPowerManagerAfterEventActionAuto
 		self.__wasTimerWakeup = False
 		self.__wasRecTimerWakeup = False
 		self.__wasPowerTimerWakeup = False
@@ -43,23 +44,37 @@ class Navigation:
 
 		wasTimerWakeup = getFPWasTimerWakeup()
 		thisBox = getBoxType()
-		if thisBox == 'gbquad' or thisBox == 'xp1000' or thisBox == 'ixussone' or thisBox == 'ventonhdx' or thisBox.startswith("tm") or thisBox.startswith("iqon") or thisBox.startswith("azbox") or thisBox.startswith("ebox"):
+		if thisBox == 'gbquad' or thisBox == 'xp1000' or thisBox == 'ixussone' or thisBox == 'ventonhdx' or thisBox.startswith("tm") or thisBox.startswith("iqon") or thisBox.startswith("opti") or thisBox.startswith("azbox") or thisBox.startswith("ebox"):
 			config.workaround.deeprecord.setValue(True)
 			config.workaround.deeprecord.save()
 			config.save()
 			print"[NAVIGATION] USE DEEPSTAND-WORKAROUND FOR THIS BOXTYPE (%s) !!" %thisBox
+		
 		if not wasTimerWakeup and config.workaround.deeprecord.getValue(): #work-around for boxes where driver not sent was_timer_wakeup signal to e2
+			print"=================================================================================="
 			print"[NAVIGATION] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
+			print"[NAVIGATION] nextRecordTimerAfterEventActionAuto= %s" % nextRecordTimerAfterEventActionAuto
 			print"[NAVIGATION] current Time=%s" % time()
 			print"[NAVIGATION] timediff=%s" % abs(self.RecordTimer.getNextRecordingTime() - time())
+			print"=================================================================================="
+			print"[NAVIGATION] getNextPowerManagerTime= %s" % self.PowerTimer.getNextPowerManagerTime()
+			print"[NAVIGATION] nextPowerManagerAfterEventActionAuto= %s" % nextPowerManagerAfterEventActionAuto
+			print"[NAVIGATION] current Time=%s" % time()
+			print"[NAVIGATION] timediff=%s" % abs(self.PowerTimer.getNextPowerManagerTime() - time())
+			print"=================================================================================="
 
 			if time() <= 31536000: # check for NTP-time sync, if no sync, wait for transponder time
 				self.timesynctimer = eTimer()
 				self.timesynctimer.callback.append(self.TimeSynctimer)
 				self.timesynctimer.start(5000, True)
-				print"[NAVIGATION] wait for time sync"
+				print"[NAVIGATION] [work-around] wait for time sync"
 				
 			elif abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360: # if there is a recording sheduled in the next 5 mins, set the wasTimerWakeup flag
+				wasTimerWakeup = True
+				f = open("/tmp/was_timer_wakeup_workaround.txt", "w")
+				file = f.write(str(wasTimerWakeup))
+				f.close()
+			elif abs(self.PowerTimer.getNextPowerManagerTime() - time()) <= 360: # if there is a power timer in the next 5 mins, set the wasTimerWakeup flag
 				wasTimerWakeup = True
 				f = open("/tmp/was_timer_wakeup_workaround.txt", "w")
 				file = f.write(str(wasTimerWakeup))
@@ -69,7 +84,13 @@ class Navigation:
 
 		if wasTimerWakeup:
 			self.__wasTimerWakeup = True
-			if nextRecordTimerAfterEventActionAuto and abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
+			if time() <= 31536000:
+				self.timesynctimer = eTimer()
+				self.timesynctimer.callback.append(self.TimeSynctimer)
+				self.timesynctimer.start(5000, True)
+				print"[NAVIGATION] wait for time sync"
+
+			elif nextRecordTimerAfterEventActionAuto and abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
 				self.__wasRecTimerWakeup = True
 				print 'RECTIMER: wakeup to standby detected.'
 				f = open("/tmp/was_rectimer_wakeup", "w")
@@ -105,10 +126,20 @@ class Navigation:
 		if self.nextRecordTimerAfterEventActionAuto and abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
 			self.__wasRecTimerWakeup = True
 			print 'RECTIMER: wakeup to standby detected.'
-			print"[NAVIGATION] [work-around] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
-			print"[NAVIGATION] [work-around] current Time=%s" % time()
-			print"[NAVIGATION] [work-around] timediff=%s" % abs(self.RecordTimer.getNextRecordingTime() - time())
+			print"[NAVIGATION] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
+			print"[NAVIGATION] current Time=%s" % time()
+			print"[NAVIGATION] timediff=%s" % abs(self.RecordTimer.getNextRecordingTime() - time())
 			f = open("/tmp/was_rectimer_wakeup", "w")
+			f.write('1')
+			f.close()
+			self.gotostandby()
+		elif self.nextPowerManagerAfterEventActionAuto and abs(self.PowerTimer.getNextPowerManagerTime() - time()) <= 360:
+			self.__wasPowerTimerWakeup = True
+			print 'POWERTIMER: wakeup to standby detected.'
+			print"[NAVIGATION] getNextPowerManagerTime= %s" % self.PowerTimer.getNextPowerManagerTime()
+			print"[NAVIGATION] current Time=%s" % time()
+			print"[NAVIGATION] timediff=%s" % abs(self.PowerTimer.getNextPowerManagerTime() - time())
+			f = open("/tmp/was_powertimer_wakeup", "w")
 			f.write('1')
 			f.close()
 			self.gotostandby()
@@ -116,12 +147,15 @@ class Navigation:
 			if self.syncCount <= 24 and time() <= 31536000: # max 2 mins or when time is in sync
 				self.timesynctimer.start(5000, True)
 			else:
-				print"[NAVIGATION] [work-around] No Recordings found, end work-around"
+				print"[NAVIGATION] No Recordings/PowerTimers found, end work-around"
 
-		print"[NAVIGATION] [work-around] wasTimerWakeup after time sync = %s, sync time = %s sec." % (self.__wasRecTimerWakeup, self.syncCount * 5)
+		if self.nextRecordTimerAfterEventActionAuto:
+			print"[NAVIGATION] wasTimerWakeup after time sync = %s, sync time = %s sec." % (self.__wasRecTimerWakeup, self.syncCount * 5)
+		elif self.nextPowerManagerAfterEventActionAuto:
+			print"[NAVIGATION] wasPowerTimerWakeup after time sync = %s, sync time = %s sec." % (self.__wasPowerTimerWakeup, self.syncCount * 5)
 
 	def gotostandby(self):
-		print 'TIMER: now entering standby'
+		print '[NAVIGATION] TIMER: now entering standby'
 		from Tools import Notifications
 		Notifications.AddNotification(Screens.Standby.Standby)
 

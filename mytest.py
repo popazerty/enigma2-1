@@ -537,8 +537,15 @@ def runScreenTest():
 	vol = VolumeControl(session)
 	profile("Init:PowerKey")
 	power = PowerKey(session)
+	
+	try:
+		file = open("/proc/stb/info/boxtype", "r")
+		model = file.readline().strip()
+		file.close()
+	except:
+		model = "unknown"
 
-	if enigma.getBoxType() == 'odinm9' or enigma.getBoxType() == 'ventonhdx' or enigma.getBoxType() == 'ebox5000' or enigma.getBoxType() == 'ixussone' or enigma.getBoxType() == 'ixusszero':
+	if enigma.getBoxType() == 'odinm9' or enigma.getBoxType() == 'ventonhdx' or enigma.getBoxType() == 'ebox5000' or enigma.getBoxType() == 'ixussone' or enigma.getBoxType() == 'ixusszero' or model == 'ini-1000ru' or model == 'ini-1000sv':
 		profile("VFDSYMBOLS")
 		import Components.VfdSymbols
 		Components.VfdSymbols.SymbolsCheck(session)
@@ -553,10 +560,10 @@ def runScreenTest():
 	profile("RunReactor")
 	profile_final()
 
-	if enigma.getBoxType() == 'gb800se' or enigma.getBoxType() == 'gb800solo':
+	if enigma.getBoxType() == 'gb800se' or enigma.getBoxType() == 'gb800solo' or enigma.getBoxType() == 'gb800seplus':
 		from enigma import evfd, eConsoleAppContainer
 		try:
-			cmd = 'vfdctl "    openspa starting e2"'
+			cmd = 'vfdctl "    openatv starting e2"'
 			container = eConsoleAppContainer()
 			container.execute(cmd)
 		except:
@@ -568,8 +575,7 @@ def runScreenTest():
 		f.write('-E2-')
 		f.close()
 		
-	print "##################################### BOOTUP ACTIONS ###########################################"
-	print "lastshutdown=%s" % config.usage.shutdownOK.getValue()
+	print "lastshutdown=%s		(True = last shutdown was OK)" % config.usage.shutdownOK.getValue()
 	print "NOK shutdown action=%s" % config.usage.shutdownNOK_action.getValue()
 	print "bootup action=%s" % config.usage.boot_action.getValue()
 	if not config.usage.shutdownOK.getValue() and not config.usage.shutdownNOK_action.getValue() == 'normal' or not config.usage.boot_action.getValue() == 'normal':
@@ -594,7 +600,7 @@ def runScreenTest():
 	from Tools.StbHardware import setFPWakeuptime, getFPWakeuptime, setRTCtime
 	#get currentTime
 	nowTime = time()
-	if not config.misc.SyncTimeUsing.getValue() == "0" or enigma.getBoxType().startswith('gb'):
+	if not config.misc.SyncTimeUsing.getValue() == "0" or enigma.getBoxType().startswith('gb') or enigma.getBoxType().startswith('ini'):
 		print "dvb time sync disabled... so set RTC now to current linux time!", strftime("%Y/%m/%d %H:%M", localtime(nowTime))
 		setRTCtime(nowTime)
 
@@ -635,8 +641,8 @@ def runScreenTest():
 		if (startTime[0] - nowTime) < 60: # no time to switch box back on
 			wptime = nowTime + 30  # so switch back on in 30 seconds
 		else:
-			if enigma.getBoxType().startswith("gb"):
-				wptime = startTime[0] # Gigaboxes already starts 2 min. before wakeup time
+			if config.workaround.deeprecord.getValue():
+				wptime = startTime[0] - 240 # Gigaboxes already starts 2 min. before wakeup time
 			else:
 				wptime = startTime[0]
 #		if not config.misc.SyncTimeUsing.getValue() == "0" or enigma.getBoxType().startswith('gb'):

@@ -38,7 +38,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 	InfoBarNumberZap, InfoBarChannelSelection, InfoBarMenu, InfoBarEPG, InfoBarRdsDecoder,
 	InfoBarInstantRecord, InfoBarAudioSelection, InfoBarRedButton, InfoBarTimerButton, InfoBarINFOpanel, InfoBarResolutionSelection, InfoBarAspectSelection, InfoBarVmodeButton,
 	HelpableScreen, InfoBarAdditionalInfo, InfoBarNotifications, InfoBarDish, InfoBarUnhandledKey,
-	InfoBarSubserviceSelection, InfoBarTimeshift, InfoBarSeek,
+	InfoBarSubserviceSelection, InfoBarTimeshift, InfoBarSeek, InfoBarCueSheetSupport,
 	InfoBarSummarySupport, InfoBarTimeshiftState, InfoBarTeletextPlugin, InfoBarExtensions,
 	InfoBarPiP, InfoBarPlugins, InfoBarSubtitleSupport, InfoBarServiceErrorPopupSupport, InfoBarJobman, InfoBarQuickMenu, InfoBarZoom,
 	Screen):
@@ -88,7 +88,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 				InfoBarNumberZap, InfoBarChannelSelection, InfoBarMenu, InfoBarEPG, InfoBarRdsDecoder, \
 				InfoBarInstantRecord, InfoBarAudioSelection, InfoBarRedButton, InfoBarTimerButton, InfoBarUnhandledKey, InfoBarINFOpanel, InfoBarResolutionSelection, InfoBarVmodeButton, \
 				InfoBarAdditionalInfo, InfoBarNotifications, InfoBarDish, InfoBarSubserviceSelection, InfoBarAspectSelection, \
-				InfoBarTimeshift, InfoBarSeek, InfoBarSummarySupport, InfoBarTimeshiftState, \
+				InfoBarTimeshift, InfoBarSeek, InfoBarCueSheetSupport, InfoBarSummarySupport, InfoBarTimeshiftState, \
 				InfoBarTeletextPlugin, InfoBarExtensions, InfoBarPiP, InfoBarSubtitleSupport, InfoBarJobman, InfoBarQuickMenu, InfoBarZoom, \
 				InfoBarPlugins, InfoBarServiceErrorPopupSupport:
 			x.__init__(self)
@@ -107,16 +107,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 		self.zoomrate = 0
 		self.zoomin = 1
 
-		if config.misc.initialchannelselection.getValue():
-			self.onShown.append(self.showMenu)
-
 		self.onShow.append(self.doButtonsCheck)
-
-	def showMenu(self):
-		self.onShown.remove(self.showMenu)
-		config.misc.initialchannelselection.setValue(False)
-		config.misc.initialchannelselection.save()
-		self.mainMenu()
 
 	def doButtonsCheck(self):
 		if config.plisettings.ColouredButtons.getValue():
@@ -173,7 +164,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 			self.showTvChannelList(True)
 			self.servicelist.showFavourites()
 	def showTvButton(self):
-		if enigma.getBoxType().startswith('gb'):
+		if enigma.getBoxType().startswith('gb') or enigma.getBoxType() == 'odinm7':
 			self.toogleTvRadio()
 		elif enigma.getBoxType() == 'ventonhdx':
 			self.showMovies()
@@ -191,7 +182,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 			self.showTvChannelList(True)
 
 	def showRadioButton(self):
-		if enigma.getBoxType().startswith('gb') or enigma.getBoxType() == 'ventonhdx' or enigma.getBoxType().startswith('azbox'):
+		if enigma.getBoxType().startswith('gb') or enigma.getBoxType() == 'ventonhdx' or enigma.getBoxType().startswith('azbox') or enigma.getBoxType() == 'odinm7':
 			self.toogleTvRadio()
 		else:
 			self.showRadio()
@@ -355,8 +346,11 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 		self.session.open(PluginBrowser)
 		
 	def showBoxPortal(self):
-		from Screens.BoxPortal import BoxPortal
-		self.session.open(BoxPortal)	
+		if enigma.getMachineBrand() == 'GI' or enigma.getBoxType().startswith('azbox'):
+			from Screens.BoxPortal import BoxPortal
+			self.session.open(BoxPortal)
+		else:
+			self.showMovies()
 
 class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 		InfoBarMenu, InfoBarEPG, \
@@ -455,13 +449,24 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 	def leavePlayerOnExit(self):
 		if self.shown:
 			self.hide()
-		else:
+		elif self.session.pipshown and "popup" in config.usage.pip_hideOnExit.getValue():
+			if config.usage.pip_hideOnExit.getValue() == "popup":
+				self.session.openWithCallback(self.hidePipOnExitCallback, MessageBox, _("Disable Picture in Picture"), simple=True)
+			else:
+				self.hidePipOnExitCallback(True)
+		elif config.usage.leave_movieplayer_onExit.getValue() == "popup":
 			self.session.openWithCallback(self.leavePlayerOnExitCallback, MessageBox, _("Exit movie player?"), simple=True)
+		elif config.usage.leave_movieplayer_onExit.getValue() == "without popup":	
+			self.leavePlayerOnExitCallback(True)
 
 	def leavePlayerOnExitCallback(self, answer):
 		if answer == True:
 			setResumePoint(self.session)
 			self.handleLeave("quit")
+
+	def hidePipOnExitCallback(self, answer):
+		if answer == True:
+			self.showPiP()
 
 	def deleteConfirmed(self, answer):
 		if answer:

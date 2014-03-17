@@ -1,6 +1,7 @@
+from Components.About import about
 from Components.Harddisk import harddiskmanager
 from config import ConfigSubsection, ConfigYesNo, config, ConfigSelection, ConfigText, ConfigNumber, ConfigSet, ConfigLocations, NoSave, ConfigClock, ConfigInteger, ConfigBoolean, ConfigPassword, ConfigIP, ConfigSlider, ConfigSelectionNumber
-from Tools.Directories import resolveFilename, SCOPE_HDD, SCOPE_TIMESHIFT, SCOPE_SYSETC
+from Tools.Directories import resolveFilename, SCOPE_HDD, SCOPE_TIMESHIFT, SCOPE_SYSETC, defaultRecordingLocation
 from enigma import setTunerTypePriorityOrder, setPreferredTuner, setSpinnerOnOff, setEnableTtCachingOnOff, Misc_Options, eEnv, getBoxType
 from Components.NimManager import nimmanager
 from Components.ServiceList import refreshServiceList
@@ -36,11 +37,12 @@ def InitUsageConfig():
 	config.usage.service_icon_enable = ConfigYesNo(default = False)
 	config.usage.service_icon_enable.addNotifier(refreshServiceList)
 
-	config.usage.panicbutton = ConfigYesNo(default = False)
+	config.usage.servicelist_keep_service = ConfigYesNo(default = True)
 	config.usage.multiepg_ask_bouquet = ConfigYesNo(default = False)
 	config.usage.showpicon = ConfigYesNo(default = True)
 	config.usage.show_dvdplayer = ConfigYesNo(default = False)
 
+	config.usage.panicbutton = ConfigYesNo(default = False)
 	config.usage.quickzap_bouquet_change = ConfigYesNo(default = False)
 	config.usage.e1like_radio_mode = ConfigYesNo(default = True)
 
@@ -90,6 +92,8 @@ def InitUsageConfig():
 	config.usage.pip_zero_button = ConfigSelection(default = "standard", choices = [
 		("standard", _("Standard")), ("swap", _("Swap PiP and main picture")),
 		("swapstop", _("Move PiP to main picture")), ("stop", _("Stop PiP")) ])
+	config.usage.pip_hideOnExit = ConfigSelection(default = "no", choices = [
+		("no", _("No")), ("popup", _("With popup")), ("without popup", _("Without popup")) ])
 
 	if not os.path.exists(resolveFilename(SCOPE_HDD)):
 		try:
@@ -141,6 +145,8 @@ def InitUsageConfig():
 		("ask", _("Ask user")), ("movielist", _("Return to movie list")), ("quit", _("Return to previous service")), ("pause", _("Pause movie at end")), ("playlist", _("Play next (return to movie list)")),
 		("playlistquit", _("Play next (return to previous service)")), ("loop", _("Continues play (loop)")), ("repeatcurrent", _("Repeat"))])
 	config.usage.next_movie_msg = ConfigYesNo(default = True)
+	config.usage.leave_movieplayer_onExit = ConfigSelection(default = "no", choices = [
+		("no", _("No")), ("popup", _("With popup")), ("without popup", _("Without popup")) ])
 
 	config.usage.setup_level = ConfigSelection(default = "expert", choices = [
 		("simple", _("Simple")),
@@ -647,7 +653,7 @@ def InitUsageConfig():
 					("2", _("with exit button")),
 					("3", _("with left/right buttons"))])
 
-	if getBoxType() == 'dm800' or getBoxType() == 'dm800se' or getBoxType() == 'dm500hd' or getBoxType() == 'azboxhd' or getBoxType() == 'azboxminime':				
+	if getBoxType() == 'dm800' or getBoxType() == 'ixussone' or getBoxType() == 'ixusszero' or getBoxType() == 'ixussduo' or getBoxType() == 'dm800se' or getBoxType() == 'dm500hd' or getBoxType() == 'azboxminime'  or getBoxType() == 'azboxhd':				
 		config.plisettings.PLIEPG_mode = ConfigSelection(default="pliepg", choices = [
 					("pliepg", _("Show Graphical EPG")),
 					("single", _("Show Single EPG")),
@@ -674,7 +680,8 @@ def InitUsageConfig():
 					("epgpress", _("Show EPG")),
 					("single", _("Show Single EPG")),
 					("coolsingleguide", _("Show CoolSingleGuide")),
-					("coolinfoguide", _("Show CoolInfoGuide"))])
+					("coolinfoguide", _("Show CoolInfoGuide")),
+					("cooltvguide", _("Show CoolTVGuide"))])
 
 	config.epgselection = ConfigSubsection()
 	config.epgselection.sort = ConfigSelection(default="0", choices = [("0", _("Time")),("1", _("Alphanumeric"))])
@@ -688,7 +695,11 @@ def InitUsageConfig():
 	config.epgselection.infobar_oklong = ConfigSelection(choices = [("Zap",_("Zap")), ("Zap + Exit", _("Zap + Exit"))], default = "Zap + Exit")
 	config.epgselection.infobar_itemsperpage = ConfigSelectionNumber(default = 2, stepwidth = 1, min = 2, max = 4, wraparound = True)
 	if SystemInfo.get("NumVideoDecoders", 1) > 1:
-		config.epgselection.infobar_preview_mode = ConfigSelection(choices = [("0",_("Disabled")), ("1", _("Fulscreen")), ("2", _("PiP"))], default = "1")
+		if about.getCPUString() in ('BCM7346B2', 'BCM7425B2'):
+			previewdefault = "2"
+		else:
+			previewdefault = "1"
+		config.epgselection.infobar_preview_mode = ConfigSelection(choices = [("0",_("Disabled")), ("1", _("Fulscreen")), ("2", _("PiP"))], default = previewdefault)
 	else:
 		config.epgselection.infobar_preview_mode = ConfigSelection(choices = [("0",_("Disabled")), ("1", _("Fulscreen"))], default = "1")
 	config.epgselection.infobar_roundto = ConfigSelection(default = "15", choices = [("15", _("%d minutes") % 15), ("30", _("%d minutes") % 30), ("60", _("%d minutes") % 60)])
@@ -804,7 +815,7 @@ def preferredInstantRecordPath():
 	return preferredPath(config.usage.instantrec_path.getValue())
 
 def defaultMoviePath():
-	return config.usage.default_path.getValue()
+	return defaultRecordingLocation(config.usage.default_path.getValue())
 
 def refreshServiceList(configElement = None):
 	from Screens.InfoBar import InfoBar

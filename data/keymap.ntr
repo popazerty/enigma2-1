@@ -81,18 +81,20 @@
 	</map>
 
 	<map context="InfobarEPGActions">
-		<key id="KEY_INFO" mapto="showEventInfo" flags="b" />
+		<key id="KEY_RED" mapto="RedPressed" flags="b" />
+		<key id="KEY_I" mapto="IPressed" flags="b" />
+		<key id="KEY_INFO" mapto="InfoPressed" flags="b" />
 		<key id="KEY_INFO" mapto="showEventInfoPlugin" flags="l" />
-		<key id="KEY_EPG" mapto="showEventInfo" flags="b" />
+		<key id="KEY_EPG" mapto="EPGPressed" flags="b" />
 		<key id="KEY_EPG" mapto="showEventInfoPlugin" flags="l" />
 	</map>
 	
-	<map context="InfobarInstantRecord">
+	<!--map context="InfobarInstantRecord">
 		<key id="KEY_RECORD" mapto="instantRecord" flags="b" />
 		<device name="dreambox remote control (native)">
 			<key id="KEY_RED" mapto="instantRecord" flags="b" />
 		</device>
-	</map>
+	</map-->
 
 	<map context="InfobarExtensions">
 		<key id="KEY_BLUE" mapto="extensions" flags="b" />
@@ -341,7 +343,7 @@
 		<key id="KEY_9" mapto="seekdef:9" flags="m" />
 	</map>
 
-	<map context="InfobarTimeshiftActions">
+	<!--map context="InfobarTimeshiftActions">
 		<device name="dreambox remote control (native)">
 			<key id="KEY_YELLOW" mapto="timeshiftStart" flags="b" />
 		</device>
@@ -365,7 +367,7 @@
 		</device>
 		<key id="KEY_PLAYPAUSE" mapto="timeshiftActivateEndAndPause" flags="m" />
 		<key id="KEY_PAUSE" mapto="timeshiftActivateEndAndPause" flags="m" />
-        </map>
+        </map-->
 
 	<map context="MovieSelectionActions">
 		<key id="KEY_MENU" mapto="contextMenu" flags="m" />

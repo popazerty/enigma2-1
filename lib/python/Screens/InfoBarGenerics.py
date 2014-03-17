@@ -572,12 +572,19 @@ class InfoBarShowHide(InfoBarScreenSaver):
 				if self.secondInfoBarScreen and self.secondInfoBarScreen.shown:
 					self.secondInfoBarScreen.hide()
 					self.secondInfoBarWasShown = False
-			if self.session.pipshown:
-				self.showPiP()
+			if self.session.pipshown and "popup" in config.usage.pip_hideOnExit.getValue():
+				if config.usage.pip_hideOnExit.getValue() == "popup":
+					self.session.openWithCallback(self.hidePipOnExitCallback, MessageBox, _("Disable Picture in Picture"), simple=True)
+				else:
+					self.hidePipOnExitCallback(True)
 		else:
 			self.hide()
 			if hasattr(self, "pvrStateDialog"):
 				self.pvrStateDialog.hide()
+
+	def hidePipOnExitCallback(self, answer):
+		if answer == True:
+			self.showPiP()
 
 	def connectShowHideNotifier(self, fnc):
 		if not fnc in self.onShowHideNotifiers:
@@ -969,6 +976,9 @@ class InfoBarChannelSelection:
 		self.servicelist = self.session.instantiateDialog(ChannelSelection)
 		self.tscallback = None
 
+		if config.misc.initialchannelselection.value:
+			self.onShown.append(self.firstRun)
+
 		self["ChannelSelectActions"] = HelpableActionMap(self, "InfobarChannelSelection",
 			{
 				"switchChannelUp": (self.UpPressed, _("Open service list and select previous channel")),
@@ -984,6 +994,12 @@ class InfoBarChannelSelection:
 				"ChannelPlusPressed": self.ChannelPlusPressed,
 				"ChannelMinusPressed": self.ChannelMinusPressed,
 			})
+
+	def firstRun(self):
+		self.onShown.remove(self.firstRun)
+		config.misc.initialchannelselection.value = False
+		config.misc.initialchannelselection.save()
+		self.openServiceList()
 
 	def LeftPressed(self):
 		if config.plisettings.InfoBarEpg_mode.getValue() == "3":
@@ -1057,7 +1073,8 @@ class InfoBarChannelSelection:
 
 	def switchChannelUp(self):
 		if not config.usage.show_bouquetalways.getValue():
-#				self.servicelist.moveUp()
+			if not config.usage.servicelist_keep_service.getValue():
+				self.servicelist.moveUp()
 			self.session.execDialog(self.servicelist)
 		else:
 			self.servicelist.showFavourites()
@@ -1065,7 +1082,8 @@ class InfoBarChannelSelection:
 
 	def switchChannelDown(self):
 		if not config.usage.show_bouquetalways.getValue():
-#				self.servicelist.moveDown()
+			if not config.usage.servicelist_keep_service.getValue():
+				self.servicelist.moveDown()
 			self.session.execDialog(self.servicelist)
 		else:
 			self.servicelist.showFavourites()
@@ -1133,7 +1151,7 @@ class InfoBarMenu:
 		self.session.infobar = None
 
 	def mainMenu(self):
-		print "loading mainmenu XML..."
+		# print "loading mainmenu XML..."
 		menu = mdom.getroot()
 		assert menu.tag == "menu", "root element in menu must be 'menu'!"
 
@@ -1403,7 +1421,10 @@ class InfoBarEPG:
 			elif config.plisettings.PLIINFO_mode.getValue() == "coolinfoguide":
 				self.showCoolInfoGuide()
 			elif config.plisettings.PLIINFO_mode.getValue() == "coolsingleguide":
-				self.showCoolSingleGuide()			
+				self.showCoolSingleGuide()
+			elif config.plisettings.PLIINFO_mode.getValue() == "cooltvguide":
+				if self.isInfo:
+					self.showCoolTVGuide()
 
 	def IPressed(self):
 		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
@@ -3019,7 +3040,7 @@ class InfoBarInstantRecord:
 			if len(simulTimerList) > 1: # with other recording
 				name = simulTimerList[1].name
 				name_date = ' '.join((name, strftime('%F %T', localtime(simulTimerList[1].begin))))
-				print "[TIMER] conflicts with", name_date
+				# print "[TIMER] conflicts with", name_date
 				recording.autoincrease = True	# start with max available length, then increment
 				if recording.setAutoincreaseEnd():
 					self.session.nav.RecordTimer.record(recording)
@@ -3040,12 +3061,12 @@ class InfoBarInstantRecord:
 		return False
 
 	def recordQuestionCallback(self, answer):
-		print 'recordQuestionCallback'
+		# print 'recordQuestionCallback'
 #		print "pre:\n", self.recording
 
-		print 'test1'
+		# print 'test1'
 		if answer is None or answer[1] == "no":
-			print 'test2'
+			# print 'test2'
 			return
 		list = []
 		recording = self.recording[:]
@@ -3077,21 +3098,21 @@ class InfoBarInstantRecord:
 			elif answer[1] == "manualendtime":
 				self.setEndtime(len(self.recording)-1)
 		elif answer[1] == "savetimeshift":
-			print 'test1'
+			# print 'test1'
 			if self.isSeekable() and self.pts_eventcount != self.pts_currplaying:
-				print 'test2'
+				# print 'test2'
 				InfoBarTimeshift.SaveTimeshift(self, timeshiftfile="pts_livebuffer_%s" % self.pts_currplaying)
 			else:
-				print 'test3'
+				# print 'test3'
 				Notifications.AddNotification(MessageBox,_("Timeshift will get saved at end of event!"), MessageBox.TYPE_INFO, timeout=5)
 				self.save_current_timeshift = True
 				config.timeshift.isRecording.value = True
 		elif answer[1] == "savetimeshiftEvent":
-			print 'test4'
+			# print 'test4'
 			InfoBarTimeshift.saveTimeshiftEventPopup(self)
 
 		elif answer[1].startswith("pts_livebuffer") is True:
-			print 'test2'
+			# print 'test2'
 			InfoBarTimeshift.SaveTimeshift(self, timeshiftfile=answer[1])
 
 	def setEndtime(self, entry):
@@ -3244,17 +3265,27 @@ class InfoBarSubserviceSelection:
 		if not config.plisettings.Subservice.getValue():
 			self.openTimerList()
 		else:
-			#self.subserviceSelection()
 			service = self.session.nav.getCurrentService()
 			subservices = service and service.subServices()
 			if not subservices or subservices.getNumberOfSubservices() == 0:
-				try:
-					from Screens.PluginBrowser import PluginBrowser
-					self.session.open(PluginBrowser)
-				except:
-					pass
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/CustomSubservices/plugin.pyo"):
+					serviceRef = self.session.nav.getCurrentlyPlayingServiceReference()
+					subservices = self.getAvailableSubservices(serviceRef)
+					if not subservices or len(subservices) == 0:
+						self.openPluginBrowser()
+					else:
+						self.subserviceSelection()
+				else:
+					self.openPluginBrowser()
 			else:
 				self.subserviceSelection()
+
+	def openPluginBrowser(self):
+		try:
+			from Screens.PluginBrowser import PluginBrowser
+			self.session.open(PluginBrowser)
+		except:
+			pass
 
 	def __removeNotifications(self):
 		self.session.nav.event.remove(self.checkSubservicesAvail)
@@ -3704,6 +3735,7 @@ class InfoBarCueSheetSupport:
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
 			{
 				iPlayableService.evStart: self.__serviceStarted,
+				iPlayableService.evCuesheetChanged: self.downloadCuesheet,
 			})
 
 	def __serviceStarted(self):
@@ -3712,6 +3744,7 @@ class InfoBarCueSheetSupport:
 #		print "new service started! trying to download cuts!"
 		self.downloadCuesheet()
 
+		self.resume_point = None
 		if self.ENABLE_RESUME_SUPPORT:
 			for (pts, what) in self.cut_list:
 				if what == self.CUT_TYPE_LAST:
@@ -3734,13 +3767,6 @@ class InfoBarCueSheetSupport:
 				if config.usage.on_movie_start.getValue() == "ask" or not length[1]:
 					Notifications.AddNotificationWithCallback(self.playLastCB, MessageBox, _("Do you want to resume this playback?") + "\n" + (_("Resume position at %s") % ("%d:%02d:%02d" % (l/3600, l%3600/60, l%60))), timeout=10)
 				elif config.usage.on_movie_start.getValue() == "resume":
-# TRANSLATORS: The string "Resuming playback" flashes for a moment
-# TRANSLATORS: at the start of a movie, when the user has selected
-# TRANSLATORS: "Resume from last position" as start behavior.
-# TRANSLATORS: The purpose is to notify the user that the movie starts
-# TRANSLATORS: in the middle somewhere and not from the beginning.
-# TRANSLATORS: (Some translators seem to have interpreted it as a
-# TRANSLATORS: question or a choice, but it is a statement.)
 					Notifications.AddNotificationWithCallback(self.playLastCB, MessageBox, _("Resuming playback"), timeout=2, type=MessageBox.TYPE_INFO)
 
 	def playLastCB(self, answer):

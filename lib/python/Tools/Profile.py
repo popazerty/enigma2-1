@@ -48,6 +48,9 @@ def profile(id):
 					f.write("%d" % perc)
 				elif getBoxType() == "gb800se" or getBoxType() == "gb800solo":
 					f = open("/dev/dbox/oled0", "w")
+					f.write("%d  \n" % perc)
+				elif getBoxType() == "gb800seplus":
+					f = open("/dev/mcu", "w")
 					f.write("%d  \n" % perc)					
 				elif getBoxType() == "ebox5000":
 					f = open("/proc/progress", "w")

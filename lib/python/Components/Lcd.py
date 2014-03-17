@@ -188,7 +188,7 @@ def standbyCounterChanged(configElement):
 	config.lcd.ledbrightnessdeepstandby.apply()
 
 def InitLcd():
-	if getBoxType() == 'gb800se' or getBoxType() == 'gb800solo' or getBoxType() == 'tmsingle' or getBoxType() == 'vusolo' or getBoxType() == 'et4x00' or getBoxType() == 'et5x00' or getBoxType() == 'et6x00':
+	if getBoxType() == 'gb800se' or getBoxType() == 'gb800solo' or getBoxType() == 'gb800seplus' or getBoxType() == 'tmsingle' or getBoxType() == 'vusolo' or getBoxType() == 'et4x00' or getBoxType() == 'et5x00' or getBoxType() == 'et6x00':
 		detected = False
 	else:
 		detected = eDBoxLCD.getInstance().detected()
@@ -213,10 +213,10 @@ def InitLcd():
 				except:
 					pass
 			config.lcd.modeminitv = ConfigSelection(choices={
-					"0": _("normale"),
-					"1": _("Mini TV"),
+					"0": _("normal"),
+					"1": _("MiniTV"),
 					"2": _("OSD"),
-					"3": _("Minit TV with OSD")},					
+					"3": _("MiniTV with OSD")},					
 					default = "0")
 			config.lcd.modeminitv.addNotifier(setLCDModeMinitTV)
 		else:

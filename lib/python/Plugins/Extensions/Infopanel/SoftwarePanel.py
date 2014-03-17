@@ -89,6 +89,7 @@ class SoftwarePanel(Screen):
 			self.close()
 
 	def layoutFinished(self):
+		self.checkTraficLight()
 		self.rebuildList()
 
 	def UpdatePackageNr(self):
@@ -102,6 +103,38 @@ class SoftwarePanel(Screen):
 		else:
 			self['key_green'].show()
 			self['key_green_pic'].show()
+
+	def checkTraficLight(self):
+		print"checkTraficLight"
+		from urllib import urlopen
+		import socket
+		self['a_red'].hide()
+		self['a_yellow'].hide()
+		self['a_green'].hide()
+		self['feedstatusRED'].hide()
+		self['feedstatusYELLOW'].hide()
+		self['feedstatusGREEN'].hide()
+		currentTimeoutDefault = socket.getdefaulttimeout()
+		socket.setdefaulttimeout(3)
+		try:
+			urlopenATV = "http://ampel.mynonpublic.com/Ampel/index.php"
+			d = urlopen(urlopenATV)
+			tmpStatus = d.read()
+			if 'rot.png' in tmpStatus:
+				self['a_off'].hide()
+				self['a_red'].show()
+				self['feedstatusRED'].show()
+			elif 'gelb.png' in tmpStatus:
+				self['a_off'].hide()
+				self['a_yellow'].show()
+				self['feedstatusYELLOW'].show()
+			elif 'gruen.png' in tmpStatus:
+				self['a_off'].hide()
+				self['a_green'].show()
+				self['feedstatusGREEN'].show()
+		except:
+			self['a_off'].show()
+		socket.setdefaulttimeout(currentTimeoutDefault)
 
 	def setStatus(self,status = None):
 		if status:

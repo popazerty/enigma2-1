@@ -4,11 +4,20 @@ from Components.config import config
 from Components.AVSwitch import AVSwitch
 from Components.SystemInfo import SystemInfo
 from GlobalActions import globalActionMap
-from enigma import eDVBVolumecontrol, getMachineBrand, getMachineName
+from enigma import eDVBVolumecontrol, getMachineBrand, getMachineName, getBoxType
 from Tools import Notifications
 import Screens.InfoBar
+from gettext import dgettext
 
 inStandby = None
+
+def setLCDModeMinitTV(value):
+	try:
+		f = open("/proc/stb/lcd/mode", "w")
+		f.write(value)
+		f.close()
+	except:
+		pass
 
 class Standby2(Screen):
 	def Power(self):
@@ -18,6 +27,9 @@ class Standby2(Screen):
 		#restart last played service
 		#unmute adc
 		self.leaveMute()
+		# set LCDminiTV 
+		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
+			setLCDModeMinitTV(config.lcd.modeminitv.getValue())
 		#kill me
 		self.close(True)
 
@@ -50,6 +62,10 @@ class Standby2(Screen):
 
 		#mute adc
 		self.setMute()
+		
+		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
+			# set LCDminiTV off
+			setLCDModeMinitTV("0")
 
 		self.paused_service = None
 		self.prev_running_service = None

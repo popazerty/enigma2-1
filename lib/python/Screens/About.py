@@ -36,11 +36,11 @@ class About(Screen):
 			})
 
 	def populate(self):
-		self["lab1"] = StaticText(_("openSPA Alliance Edition"))
-		self["lab2"] = StaticText(_("By openSPA Team"))
+		self["lab1"] = StaticText(_("openX2"))
+		self["lab2"] = StaticText(_("powered by  openATV Image Team"))
 		model = None
 		AboutText = ""
-		self["lab3"] = StaticText(_("Support at") + " www.openspa.info")
+		self["lab3"] = StaticText(_("lite edition of the openATV"))
 		AboutText += _("Model:\t%s %s\n") % (getMachineBrand(), getMachineName())
 
 		if path.exists('/proc/stb/info/chipset'):
@@ -215,8 +215,8 @@ class SystemMemoryInfo(Screen):
 		Screen.__init__(self, session)
 		Screen.setTitle(self, _("Memory Information"))
 		self.skinName = ["SystemMemoryInfo", "About"]
-		self["lab1"] = StaticText(_("openSPA Alliance Edition"))
-		self["lab2"] = StaticText(_("By openSPA Team"))
+		self["lab1"] = StaticText(_("openATV"))
+		self["lab2"] = StaticText(_("By openATV Image Team"))
 		self["AboutScrollLabel"] = ScrollLabel()
 
 		self["actions"] = ActionMap(["SetupActions", "ColorActions"],
@@ -331,6 +331,15 @@ class SystemNetworkInfo(Screen):
 				self.AboutText += _("MAC:") + "\t" + eth0['hwaddr'] + "\n"
 			self.iface = 'eth0'
 
+		ra0 = about.getIfConfig('ra0')
+		if ra0.has_key('addr'):
+			self.AboutText += _("IP:") + "\t" + ra0['addr'] + "\n"
+			if ra0.has_key('netmask'):
+				self.AboutText += _("Netmask:") + "\t" + ra0['netmask'] + "\n"
+			if ra0.has_key('hwaddr'):
+				self.AboutText += _("MAC:") + "\t" + ra0['hwaddr'] + "\n"
+			self.iface = 'ra0'
+
 		wlan0 = about.getIfConfig('wlan0')
 		if wlan0.has_key('addr'):
 			self.AboutText += _("IP:") + "\t" + wlan0['addr'] + "\n"
@@ -361,7 +370,7 @@ class SystemNetworkInfo(Screen):
 		if data is not None:
 			if data is True:
 				if status is not None:
-					if self.iface == 'wlan0':
+					if self.iface == 'wlan0' or self.iface == 'ra0':
 						if status[self.iface]["essid"] == "off":
 							essid = _("No Connection")
 						else:
@@ -465,7 +474,7 @@ class SystemNetworkInfo(Screen):
 class AboutSummary(Screen):
 	def __init__(self, session, parent):
 		Screen.__init__(self, session, parent = parent)
-		self["selected"] = StaticText("openSPA:" + getImageVersionString())
+		self["selected"] = StaticText("openATV:" + getImageVersionString())
 
 		AboutText = _("Model:\t%s %s\n") % (getMachineBrand(), getMachineName())
 
@@ -542,7 +551,7 @@ class ViewGitLog(Screen):
 		fd = open('/etc/' + self.logtype + '-git.log', 'r')
 		releasenotes = fd.read()
 		fd.close()
-		releasenotes = releasenotes.replace('\nopenspa: build',"\n\nopenspa: build")
+		releasenotes = releasenotes.replace('\nopenATV: build',"\n\nopenATV: build")
 		self["text"].setText(releasenotes)
 		summarytext = releasenotes
 		try:

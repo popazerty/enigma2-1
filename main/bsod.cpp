@@ -18,7 +18,7 @@
 
 /************************************************/
 
-#define CRASH_EMAILADDR "forum at www.openspa.info"
+#define CRASH_EMAILADDR "forum at www.opena.tv"
 #define INFOFILE "/maintainer.info"
 
 #define RINGBUFFER_SIZE 16384
@@ -193,7 +193,7 @@ void bsodFatal(const char *component)
 
 		XmlGenerator xml(f);
 
-		xml.open("openSPA");
+		xml.open("openATV");
 
 		xml.open("enigma2");
 		xml.string("crashdate", tm_str);

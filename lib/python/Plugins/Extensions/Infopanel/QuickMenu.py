@@ -1,5 +1,5 @@
 
-from enigma import eListboxPythonMultiContent, gFont, eEnv, getMachineBrand, getMachineName
+from enigma import eListboxPythonMultiContent, gFont, eEnv, getMachineBrand, getMachineName, getBoxType
 
 from Components.ActionMap import ActionMap
 from Components.Label import Label
@@ -32,10 +32,11 @@ from Plugins.SystemPlugins.Videomode.VideoHardware import video_hw
 from Plugins.Extensions.Infopanel.RestartNetwork import RestartNetwork
 from Plugins.Extensions.Infopanel.MountManager import HddMount
 from Plugins.Extensions.Infopanel.SoftcamPanel import *
+from Plugins.Extensions.Infopanel.SoftwarePanel import SoftwarePanel
+from Plugins.SystemPlugins.SoftwareManager.Flash_online import FlashOnline
 from Plugins.SystemPlugins.SoftwareManager.ImageBackup import ImageBackup
 from Plugins.SystemPlugins.SoftwareManager.plugin import UpdatePlugin, SoftwareManagerSetup
 from Plugins.SystemPlugins.SoftwareManager.BackupRestore import BackupScreen, RestoreScreen, BackupSelection, getBackupPath, getOldBackupPath, getBackupFilename
-from Plugins.Extensions.Infopanel.SoftwarePanel import SoftwarePanel
 
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_SKIN_IMAGE, SCOPE_SKIN
 from Tools.LoadPixmap import LoadPixmap
@@ -198,7 +199,7 @@ class QuickMenu(Screen):
 		self.list = []
 		self.oldlist = []
 		self.list.append(QuickMenuEntryComponent("Software Manager",_("Update/Backup/Restore your box"),_("Update/Backup your firmware, Backup/Restore settings")))
-		self.list.append(QuickMenuEntryComponent("Softcam",_("Start/stop/select cam"),_("Start/stop/select your cam, You need to install first a softcam")))
+		#self.list.append(QuickMenuEntryComponent("Softcam",_("Start/stop/select cam"),_("Start/stop/select your cam, You need to install first a softcam")))
 		self.list.append(QuickMenuEntryComponent("System",_("System Setup"),_("Setup your System")))
 		self.list.append(QuickMenuEntryComponent("Mounts",_("Mount Setup"),_("Setup your mounts for network")))
 		self.list.append(QuickMenuEntryComponent("Network",_("Setup your local network"),_("Setup your local network. For Wlan you need to boot with a USB-Wlan stick")))
@@ -294,6 +295,8 @@ class QuickMenu(Screen):
 	def Qsoftware(self):
 		self.sublist = []
 		self.sublist.append(QuickSubMenuEntryComponent("Software Update",_("Online software update"),_("Check/Install online updates (you must have a working internet connection)")))
+		if not getBoxType().startswith('az') and not getBoxType().startswith('dream') and not getBoxType().startswith('ebox') and not getBoxType() == 'gb800solo':
+			self.sublist.append(QuickSubMenuEntryComponent("Flash Online",_("Flash Online a new image"),_("Flash on the fly your your Receiver software.")))
 		self.sublist.append(QuickSubMenuEntryComponent("Complete Backup",_("Backup your current image"),_("Backup your current image to HDD or USB. This will make a 1:1 copy of your box")))
 		self.sublist.append(QuickSubMenuEntryComponent("Backup Settings",_("Backup your current settings"),_("Backup your current settings. This includes E2-setup, channels, network and all selected files")))
 		self.sublist.append(QuickSubMenuEntryComponent("Restore Settings",_("Restore settings from a backup"),_("Restore your settings back from a backup. After restore the box will restart to activated the new settings")))
@@ -458,8 +461,9 @@ class QuickMenu(Screen):
 			self.SatfinderMain()
 ######## Select Software Manager Menu ##############################
 		elif item[0] == _("Software Update"):
-			#self.session.open(UpdatePlugin)
 			self.session.open(SoftwarePanel)
+		elif item[0] == _("Flash Online"):
+			self.session.open(FlashOnline)
 		elif item[0] == _("Complete Backup"):
 			if DFLASH == True:
 				self.session.open(dFlash)

@@ -342,19 +342,19 @@ const char *getMachineBrand()
 		fgets(boxtype_name, sizeof(boxtype_name), boxtype_file);
 		fclose(boxtype_file);
 
-		if((strcmp(boxtype_name, "ini-1000\n") == 0)  || (strcmp(boxtype_name, "ini-3000\n") == 0) || (strcmp(boxtype_name, "ini-5000\n") == 0) || (strcmp(boxtype_name, "ini-7000\n") == 0) || (strcmp(boxtype_name, "ini-7012\n") == 0))
+		if((strcmp(boxtype_name, "ini-1000\n") == 0)  || (strcmp(boxtype_name, "ini-3000\n") == 0) || (strcmp(boxtype_name, "ini-5000\n") == 0) || (strcmp(boxtype_name, "ini-7000\n") == 0) || (strcmp(boxtype_name, "ini-7012\n") == 0) || (strcmp(boxtype_name, "ini-9000\n") == 0))
 		{
 			return "UNiBOX";
 		}
-		else if((strcmp(boxtype_name, "ini-1000sv\n") == 0) || (strcmp(boxtype_name, "ini-5000sv\n") == 0))
+		else if((strcmp(boxtype_name, "ini-1000sv\n") == 0) || (strcmp(boxtype_name, "ini-5000sv\n") == 0) || (strcmp(boxtype_name, "ini-9000sv\n") == 0))
 		{
 			return "Miraclebox";
 		}
-		else if((strcmp(boxtype_name, "ini-1000ru\n") == 0) || (strcmp(boxtype_name, "ini-5000ru\n") == 0))
+		else if((strcmp(boxtype_name, "ini-1000ru\n") == 0) || (strcmp(boxtype_name, "ini-5000ru\n") == 0) || (strcmp(boxtype_name, "ini-9000ru\n") == 0))
 		{
 			return "Sezam";
 		}
-		else if((strcmp(boxtype_name, "ini-1000de\n") == 0))
+		else if((strcmp(boxtype_name, "ini-1000de\n") == 0) || (strcmp(boxtype_name, "ini-9000de\n") == 0))
 		{
 			return "GI";
 		}
@@ -368,6 +368,14 @@ const char *getMachineBrand()
 			{
 				return "TELESTAR";
 			}
+			else if (access("/dev/bus/usb/001/002", F_OK) != NULL )
+			{
+				return "Opticum";
+			}
+			else
+			{	
+				return MACHINE_BRAND;
+			}			
 		}
 		else
 		{
@@ -426,8 +434,12 @@ const char *getMachineName()
 		}
 		else if(strcmp(boxtype_name, "ini-9000ru\n") == 0) 
 		{
-			return "HD-9000";
+			return "Marvel";
 		}
+		else if(strcmp(boxtype_name, "ini-9000de\n") == 0) 
+		{
+			return "XpeedLX-3";
+		}		
 		else if(strcmp(boxtype_name, "ini-1000de\n") == 0) 
 		{
 			return "XpeedLX";
@@ -441,6 +453,14 @@ const char *getMachineName()
 			if(strcmp(BOXTYPE, "odinm6") == 0)
 			{
 				return "STARSAT-LX";
+			}
+			else if (access("/dev/bus/usb/001/002", F_OK) != NULL )
+			{
+				return "AX-Odin";
+			}
+			else
+			{	
+				return MACHINE_NAME;
 			}
 		}
 		else

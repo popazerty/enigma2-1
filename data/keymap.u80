@@ -81,12 +81,12 @@
 		<key id="KEY_EPG" mapto="showEventInfoPlugin" flags="l" />
 	</map>
 
-	<map context="InfobarInstantRecord">
+	<!--map context="InfobarInstantRecord">
 		<key id="KEY_RECORD" mapto="instantRecord" flags="m" />
 		<key id="KEY_RECORD" mapto="ShortRecord" flags="b" />
 		<key id="KEY_RECORD" mapto="LongRecord" flags="l" />
 		<key id="KEY_RED" mapto="instantRecord" flags="b" />
-	</map>
+	</map-->
 
 	<map context="InfobarExtensions">
 		<key id="KEY_RED" mapto="RedPressed" flags="b" />
@@ -390,7 +390,7 @@
 		<key id="KEY_9" mapto="seekdef:9" flags="m" />
 	</map>
 
-	<map context="InfobarTimeshiftActions">
+	<!--map context="InfobarTimeshiftActions">
 		<key id="KEY_YELLOW" mapto="timeshiftStartY" flags="b" />
 
 		<device name="dreambox ir keyboard">
@@ -425,7 +425,7 @@
 		<key id="KEY_OK" mapto="SeekPointerOK" flags="m" />
 		<key id="KEY_LEFT" mapto="SeekPointerLeft" flags="mr" />
 		<key id="KEY_RIGHT" mapto="SeekPointerRight" flags="mr" />
-	</map>
+	</map-->
 
 	<map context="MovieSelectionActions">
 		<key id="KEY_MENU" mapto="contextMenu" flags="m" />

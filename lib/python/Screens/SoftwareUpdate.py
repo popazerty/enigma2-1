@@ -69,7 +69,7 @@ class SoftwareUpdateChanges(Screen):
 	def getlog(self):
 		global ocram
 		try:
-			sourcefile = 'http://downloads.openspa.info/feeds/' + getImageVersionString() + '/' + getBoxType() + '/' + self.logtype + '-git.log'
+			sourcefile = 'http://enigma2.world-of-satellite.com/feeds/' + getImageVersionString() + '/' + getBoxType() + '/'  + self.logtype + '-git.log'
 			sourcefile,headers = urllib.urlretrieve(sourcefile)
 			rename(sourcefile,'/tmp/' + self.logtype + '-git.log')
 			fd = open('/tmp/' + self.logtype + '-git.log', 'r')
@@ -78,7 +78,7 @@ class SoftwareUpdateChanges(Screen):
 		except:
 			releasenotes = '404 Not Found'
 		if releasenotes.find('404 Not Found') == -1:
-			releasenotes = releasenotes.replace('\nopenspa: build',"\n\nopenspa: build")
+			releasenotes = releasenotes.replace('\nopenvix: build',"\n\nopenvix: build")
 			releasenotes = releasenotes.split('\n\n')
 			ver = -1
 			releasever = ""

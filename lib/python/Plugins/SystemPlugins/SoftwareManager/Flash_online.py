@@ -13,7 +13,7 @@ from Screens.Console import Console
 from Screens.HelpMenu import HelpableScreen
 from Screens.TaskView import JobView
 from Tools.Downloader import downloadWithProgress
-from enigma import getBoxType, getDistro
+from enigma import getBoxType, getDistro, getMachineName
 import urllib2
 import os
 import shutil
@@ -38,7 +38,7 @@ ofgwritePath = '/usr/bin/ofgwrite'
 def Freespace(dev):
 	statdev = os.statvfs(dev)
 	space = (statdev.f_bavail * statdev.f_frsize) / 1024
-	print "[Flash Online] Free space on %s = %i bytes" %(dev, space)
+	print "[Flash Online] Free space on %s = %i kilobytes" %(dev, space)
 	return space
 
 class FlashOnline(Screen):
@@ -186,8 +186,19 @@ class doFlashImage(Screen):
 		
 	def box(self):
 		box = getBoxType()
+		machinename = getMachineName()
 		if box == 'odinm6':
 			box = getMachineName().lower()
+		elif box == "inihde" and machinename.lower() == "xpeedlx":
+			box = "xpeedlx"
+		elif box == "inihde" and machinename.lower() == "hd-1000":
+			box = "sezam-1000hd"
+		elif box == "ventonhdx" and machinename.lower() == "hd-5000":
+			box = "sezam-5000hd"
+		elif box == "ventonhdx" and machinename.lower() == "premium twin":
+			box = "miraclebox-twin"
+		elif box == "xp1000" and machinename.lower() == "sf8 hd":
+			box = "sf8"
 		return box
 
 	def green(self):
@@ -289,8 +300,9 @@ class doFlashImage(Screen):
 		if not self.Online:
 			self.session.openWithCallback(self.DeviceBrowserClosed, DeviceBrowser, None, matchingPattern="^.*\.(zip|bin|jffs2)", showDirectories=True, showMountpoints=True, inhibitMounts=["/autofs/sr0/"])
 
-	def DeviceBrowserClosed(self, path):
+	def DeviceBrowserClosed(self, path, filename, binorzip):
 		if path:
+			print path, filename, binorzip
 			strPath = str(path)
 			if strPath[-1] == '/':
 				strPath = strPath[:-1]
@@ -298,11 +310,17 @@ class doFlashImage(Screen):
 			if os.path.exists(flashTmp):
 				os.system('rm -rf ' + flashTmp)
 			os.mkdir(flashTmp)
-			for files in os.listdir(self.imagePath):
-				if files.endswith(".bin") or files.endswith('.jffs2'):
-					self.prepair_flashtmp(strPath)
-					break
-			self.layoutFinished()
+			if binorzip == 0:
+				for files in os.listdir(self.imagePath):
+					if files.endswith(".bin") or files.endswith('.jffs2'):
+						self.prepair_flashtmp(strPath)
+						break
+				self.Start_Flashing()
+			elif binorzip == 1:
+				self.unzip_image(strPath + '/' + filename, flashPath)
+			else:
+				self.layoutFinished()
+	
 		else:
 			self.imagePath = imagePath
 
@@ -418,7 +436,7 @@ class ImageDownloadTask(Task):
 
 class DeviceBrowser(Screen, HelpableScreen):
 	skin = """
-		<screen name="DeviceBrowser" position="center,center" size="520,430" title="Please select target medium" >
+		<screen name="DeviceBrowser" position="center,center" size="520,430" >
 			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
 			<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
 			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
@@ -431,6 +449,7 @@ class DeviceBrowser(Screen, HelpableScreen):
 		Screen.__init__(self, session)
 
 		HelpableScreen.__init__(self)
+		Screen.setTitle(self, _("Please select medium"))
 
 		self["key_red"] = StaticText(_("Cancel"))
 		self["key_green"] = StaticText()
@@ -458,7 +477,7 @@ class DeviceBrowser(Screen, HelpableScreen):
 	def updateButton(self):
 
 		if self["filelist"].getFilename() or self["filelist"].getCurrentDirectory():
-			self["key_green"].text = _("Use")
+			self["key_green"].text = _("Flash")
 		else:
 			self["key_green"].text = ""
 
@@ -475,12 +494,13 @@ class DeviceBrowser(Screen, HelpableScreen):
 
 	def use(self):
 		print "[use]", self["filelist"].getCurrentDirectory(), self["filelist"].getFilename()
-		if self["filelist"].getCurrentDirectory() is not None:
-			if self.filelist.canDescent() and self["filelist"].getFilename() and len(self["filelist"].getFilename()) > len(self["filelist"].getCurrentDirectory()):
-				self.filelist.descent()
-			self.close(self["filelist"].getCurrentDirectory())
-		elif self["filelist"].getFilename():
-			self.close(self["filelist"].getFilename())
+		if self["filelist"].getFilename() is not None and self["filelist"].getCurrentDirectory() is not None:
+			if self["filelist"].getFilename().endswith(".bin") or self["filelist"].getFilename().endswith(".jffs2"):
+				self.close(self["filelist"].getCurrentDirectory(), self["filelist"].getFilename(), 0)
+			elif self["filelist"].getFilename().endswith(".zip"):
+				self.close(self["filelist"].getCurrentDirectory(), self["filelist"].getFilename(), 1)
+			else:
+				return
 
 	def exit(self):
-		self.close(False)
+		self.close(False, False, -1)
