@@ -1,10 +1,10 @@
-from Screens.Screen import Screen
+from Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.Pixmap import Pixmap
 from Components.Sources.StaticText import StaticText
 from Components.MenuList import MenuList
-import enigma
+from enigma import eTimer
 
 class MessageBox(Screen):
 	TYPE_YESNO = 0
@@ -12,27 +12,20 @@ class MessageBox(Screen):
 	TYPE_WARNING = 2
 	TYPE_ERROR = 3
 
-	def __init__(self, session, text, type = TYPE_YESNO, timeout = -1, close_on_any_key = False, default = True, enable_input = True, msgBoxID = None, picon = None, simple = False, wizard = False, list = []):
+	def __init__(self, session, text, type = TYPE_YESNO, timeout = -1, close_on_any_key = False, default = True, enable_input = True, msgBoxID = None, picon = None, simple = False, list = []):
 		self.type = type
 		Screen.__init__(self, session)
 
-		if wizard:
-			from Components.config import config, ConfigInteger
-			from Components.Pixmap import MultiPixmap
-			self["rc"] = MultiPixmap()
-			self["rc"].setPixmapNum(config.misc.rcused.value)		
-			self.skinName = ["MessageBoxWizard"]
-
 		if simple:
 			self.skinName="MessageBoxSimple"
-
+		
 		self.msgBoxID = msgBoxID
 
-		self["text"] = Label(_(text))
-		self["Text"] = StaticText(_(text))
+		self["text"] = Label(text)
+		self["Text"] = StaticText(text)
 		self["selectedChoice"] = StaticText()
 
-		self.text = _(text)
+		self.text = text
 		self.close_on_any_key = close_on_any_key
 
 		self["ErrorPixmap"] = Pixmap()
@@ -49,7 +42,6 @@ class MessageBox(Screen):
 		if picon != self.TYPE_INFO:
 			self["InfoPixmap"].hide()
 
-		self.messtype = type
 		if type == self.TYPE_YESNO:
 			if list:
 				self.list = list
@@ -67,7 +59,7 @@ class MessageBox(Screen):
 			self["list"].hide()
 
 		if enable_input:
-			self["actions"] = ActionMap(["MsgBoxActions", "DirectionActions"],
+			self["actions"] = ActionMap(["MsgBoxActions", "DirectionActions"], 
 				{
 					"cancel": self.cancel,
 					"ok": self.ok,
@@ -82,50 +74,15 @@ class MessageBox(Screen):
 					"rightRepeated": self.right
 				}, -1)
 
-	def autoResize(self):
-		desktop_w = enigma.getDesktop(0).size().width()
-		desktop_h = enigma.getDesktop(0).size().height()
-		count = len(self.list)
-		if self["ErrorPixmap"].visible or self["QuestionPixmap"].visible or self["InfoPixmap"].visible:
-			textsize = self["text"].getSize()
-			if textsize[0] > 520:
-				textsize = (textsize[0],textsize[1]+25)
-			else:
-				textsize = (520,textsize[1]+25)
-			listsize = (textsize[0],25*count)
-			# resize label
-			self["text"].instance.resize(enigma.eSize(*textsize))
-			self["text"].instance.move(enigma.ePoint(65, 0))
-			# move list
-			self["list"].instance.move(enigma.ePoint(65, textsize[1]))
-			self["list"].instance.resize(enigma.eSize(*listsize))
-			wsizex = textsize[0]+65
-		else:
-			textsize = self["text"].getSize()
-			if textsize[0] > 520:
-				textsize = (textsize[0],textsize[1]+25)
-			else:
-				textsize = (520,textsize[1]+25)
-			listsize = (textsize[0],25*count)
-			# resize label
-			self["text"].instance.resize(enigma.eSize(*textsize))
-			self["text"].instance.move(enigma.ePoint(0, 0))
-			# move list
-			self["list"].instance.move(enigma.ePoint(0, textsize[1]))
-			self["list"].instance.resize(enigma.eSize(*listsize))
-			wsizex = textsize[0]
+		self.onLayoutFinish.append(self.layoutFinished)
 
-		wsizey = textsize[1]+listsize[1]
-		wsize = (wsizex, wsizey)
-		self.instance.resize(enigma.eSize(*wsize))
-		# center window
-		newwidth = wsize[0]
-		self.instance.move(enigma.ePoint((desktop_w-wsizex)/2, (desktop_h-wsizey)/2))
+	def layoutFinished(self):
+		self.setTitle(_(self.title))
 
 	def initTimeout(self, timeout):
 		self.timeout = timeout
 		if timeout > 0:
-			self.timer = enigma.eTimer()
+			self.timer = eTimer()
 			self.timer.callback.append(self.timerTick)
 			self.onExecBegin.append(self.startTimer)
 			self.origTitle = None
@@ -148,10 +105,7 @@ class MessageBox(Screen):
 		if self.timerRunning:
 			del self.timer
 			self.onExecBegin.remove(self.startTimer)
-			if self.origTitle:
-				self.setTitle(_(self.origTitle))
-			else:
-				self.setTitle(self.origTitle)
+			self.setTitle(self.origTitle)
 			self.timerRunning = False
 
 	def timerTick(self):
@@ -159,10 +113,7 @@ class MessageBox(Screen):
 			self.timeout -= 1
 			if self.origTitle is None:
 				self.origTitle = self.instance.getTitle()
-			if self.origTitle:
-				self.setTitle(_(self.origTitle) + " (" + str(self.timeout) + ")")
-			else:
-				self.setTitle(self.origTitle + " (" + str(self.timeout) + ")")
+			self.setTitle(self.origTitle + " (" + str(self.timeout) + ")")
 			if self.timeout == 0:
 				self.timer.stop()
 				self.timerRunning = False

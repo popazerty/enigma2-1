@@ -21,7 +21,7 @@ import shutil
 distro = getDistro()
 
 #############################################################################################################
-feedurl_mcron = 'http://sat-world-forum.com/ronny/images/ventonhdx/online'
+feedurl_opendroid = 'http://opendroid.bugs3.com/images/ventonhdx/online'
 imagePath = '/hdd/images'
 flashPath = '/hdd/images/flash'
 flashTmp = '/hdd/images/tmp'
@@ -134,7 +134,7 @@ class doFlashImage(Screen):
 		self.simulate = False
 		self.Online = online
 		self.imagePath = imagePath
-		self.feedurl = feedurl_mcron
+		self.feedurl = feedurl_opendroid
 		self["imageList"] = MenuList(self.imagelist)
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"], 
 		{
@@ -312,7 +312,7 @@ class doFlashImage(Screen):
 		self.imagelist = []
 		if self.Online:
 			self["key_yellow"].setText("")
-			self.feedurl = feedurl_mcron
+			self.feedurl = feedurl_opendroid
 			self["key_blue"].setText("")
 			#url = '%s/index.php?open=%s' % (self.feedurl,box)
 			req = urllib2.Request(self.feedurl)
@@ -331,7 +331,7 @@ class doFlashImage(Screen):
 
 			lines = the_page.split('\n')
 			for line in lines:
-				if line.find('<a href="swf-3.0-') > -1 and line.find('_usb.zip') > -1:
+				if line.find('<a href="opendroid-2.0-') > -1 and line.find('_usb.zip') > -1:
 					self.imagelist.append(line[13:47])
 		else:
 			self["key_blue"].setText(_("Delete"))

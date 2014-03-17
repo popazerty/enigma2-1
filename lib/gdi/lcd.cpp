@@ -119,12 +119,6 @@ eDBoxLCD::eDBoxLCD()
 		}
 	}
 #endif
-#ifdef HAVE_FULLGRAPHICLCD
-	fprintf(stdout,"SET RIGHT HALF VFD SKIN\n");
-	FILE *f = fopen("/proc/stb/lcd/right_half", "w");
-	fprintf(f,"skin");
-	fclose(f);
-#endif
 	instance=this;
 
 	setSize(xres, yres, bpp);
@@ -192,33 +186,11 @@ int eDBoxLCD::setLCDBrightness(int brightness)
 #define FP_IOCTL_LCD_DIMM       3
 #endif
 		if(ioctl(fp, FP_IOCTL_LCD_DIMM, &brightness) < 0)
-			eDebug("[LCD] can't set lcd brightness");
+			eDebug("[LCD] can't set lcd brightness (%m)");
 		close(fp);
 	}
 #endif
 	return(0);
-}
-
-int eDBoxLCD::setLED(int value, int option)
-{
-	switch(option)
-	{
-		case LED_BRIGHTNESS:
-			eDebug("setLEDNormalState %d", value);
-			if(ioctl(lcdfd, LED_IOCTL_BRIGHTNESS_NORMAL, (unsigned char)value) < 0)
-				eDebug("[LED] can't set led brightness");
-			break;
-		case LED_DEEPSTANDBY:
-			eDebug("setLEDBlinkingTime %d", value);
-			if(ioctl(lcdfd, LED_IOCTL_BRIGHTNESS_DEEPSTANDBY, (unsigned char)value) < 0)
-				eDebug("[LED] can't set led deep standby");
-			break;
-		case LED_BLINKINGTIME:
-			eDebug("setLEDBlinkingTime %d", value);
-			if(ioctl(lcdfd, LED_IOCTL_BLINKING_TIME, (unsigned char)value) < 0)
-				eDebug("[LED] can't set led blinking time");
-			break;
-	}
 }
 
 eDBoxLCD::~eDBoxLCD()
@@ -294,17 +266,7 @@ void eDBoxLCD::update()
 			}
 			else
 			{
-#ifdef HAVE_GIGABLUELCD
-				unsigned char gb_buffer[_stride * res.height()];
-				for (int offset = 0; offset < _stride * res.height(); offset += 2)
-				{
-					gb_buffer[offset] = (_buffer[offset] & 0x1F) | ((_buffer[offset + 1] << 3) & 0xE0);
-					gb_buffer[offset + 1] = ((_buffer[offset + 1] >> 5) & 0x03) | ((_buffer[offset] >> 3) & 0x1C) | ((_buffer[offset + 1] << 5) & 0x60);
-				}
-				write(lcdfd, gb_buffer, _stride * res.height());
-#else
 				write(lcdfd, _buffer, _stride * res.height());
-#endif
 			}
 		}
 		else /* is_oled == 1 */

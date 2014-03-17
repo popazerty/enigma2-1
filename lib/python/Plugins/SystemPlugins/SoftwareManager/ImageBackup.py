@@ -730,8 +730,8 @@ class ImageBackup(Screen):
 
 	def imageInfo(self):
 		AboutText = _("Full Image Backup ")
-		AboutText += _("By openSWF") + "\n"
-		AboutText += _("Support at") + " www.sat-world-forum.com\n\n"
+		AboutText += _("By opendroid") + "\n"
+		AboutText += _("Support at") + " www.droidsat.org\n\n"
 		AboutText += _("[Image Info]\n")
 		AboutText += _("Model: %s %s\n") % (getMachineBrand(), getMachineName())
 		AboutText += _("Backup Date: %s\n") % strftime("%Y-%m-%d", localtime(self.START))

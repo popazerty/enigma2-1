@@ -37,8 +37,6 @@ class inputDevices:
 				self.fd = os_open("/dev/input/" + evdev, O_RDWR | O_NONBLOCK)
 				self.name = ioctl(self.fd, EVIOCGNAME(256), buffer)
 				self.name = self.name[:self.name.find("\0")]
-				if str(self.name).find("Keyboard") != -1:
-					self.name = 'keyboard'
 				os_close(self.fd)
 			except (IOError,OSError), err:
 				print '[iInputDevices] getInputDevices  <ERROR: ioctl(EVIOCGNAME): ' + str(err) + ' >'
@@ -205,8 +203,8 @@ class RcTypeControl():
 			self.boxType = fd.read()
 			fd.close()
 
-			if config.plugins.remotecontroltype.rctype.getValue() != 0:
-				self.writeRcType(config.plugins.remotecontroltype.rctype.getValue())
+			if config.plugins.remotecontroltype.rctype.value != 0:
+				self.writeRcType(config.plugins.remotecontroltype.rctype.value)
 		else:
 			self.isSupported = False
 

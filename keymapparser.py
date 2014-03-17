@@ -7,11 +7,11 @@ from keyids import KEYIDS
 from Tools.KeyBindings import addKeyBinding
 
 class KeymapError(Exception):
-	def __init__(self, message):
-		self.msg = message
+    def __init__(self, message):
+        self.msg = message
 
-	def __str__(self):
-		return self.msg
+    def __str__(self):
+        return self.msg
 
 def parseKeys(context, filename, actionmap, device, keys):
 	for x in keys.findall("key"):
@@ -57,7 +57,6 @@ def readKeymap(filename):
 	except:
 		raise KeymapError("keymap %s not well-formed." % filename)
 
-	source.close()
 	keymap = dom.getroot()
 
 	for cmap in keymap.findall("map"):

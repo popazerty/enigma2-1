@@ -1,35 +1,13 @@
-from Screens.Screen import Screen
+from Screens.Wizard import wizardManager, WizardSummary
 from Screens.WizardLanguage import WizardLanguage
 from Screens.Rc import Rc
 from Screens.MessageBox import MessageBox
-from Components.Pixmap import Pixmap
+from Components.Pixmap import Pixmap, MovingPixmap, MultiPixmap
 from Components.Sources.Boolean import Boolean
-from Components.Sources.StaticText import StaticText
 from Components.Network import iNetwork
-from Components.config import config, ConfigSubsection, ConfigBoolean
-from Tools.Directories import resolveFilename, SCOPE_PLUGINS
-from Components.About import about
-from enigma import eTimer, getMachineBrand, getMachineName
-
+from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_SKIN_IMAGE
+from enigma import eTimer
 from os import system
-
-config.misc.networkwizard = ConfigSubsection()
-config.misc.networkwizard.hasnetwork = ConfigBoolean(default = False)
-
-firstRun = False
-checkNetwork = False
-
-class NotificationBox(Screen):
-	skin = """
-	<screen name="NotificationBox" position="150,40" zPosition="100" size="503,66" backgroundColor="#202020" flags="wfNoBorder">
-		<eLabel position="0,0" size="500,63" backgroundColor="#c0c0c0" zPosition="-1" />
-		<widget source="text" render="Label" position="5,5" zPosition="100" size="490,53" font="Regular;18" halign="center" valign="center" />
-	</screen>"""
-	
-	def __init__(self, session, text):
-		Screen.__init__(self, session)
-		self["text"] = StaticText(text)
-
 
 class NetworkWizard(WizardLanguage, Rc):
 	skin = """
@@ -42,7 +20,7 @@ class NetworkWizard(WizardLanguage, Rc):
 			<ePixmap pixmap="skin_default/buttons/button_red.png" position="40,225" zPosition="0" size="15,16" transparent="1" alphatest="on" />
 			<widget name="languagetext" position="55,225" size="95,30" font="Regular;18" />
 			<widget name="wizard" pixmap="skin_default/wizard.png" position="40,50" zPosition="10" size="110,174" alphatest="on" />
-			<widget name="rc" pixmaps="skin_default/rc0.png,skin_default/rc1.png,skin_default/rc2.png" position="500,50" zPosition="10" size="154,500" alphatest="on" />
+			<widget name="rc" pixmaps="skin_default/rc.png,skin_default/rcold.png" position="500,50" zPosition="10" size="154,500" alphatest="on" />
 			<widget name="arrowdown" pixmap="skin_default/arrowdown.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
 			<widget name="arrowdown2" pixmap="skin_default/arrowdown.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
 			<widget name="arrowup" pixmap="skin_default/arrowup.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
@@ -69,28 +47,26 @@ class NetworkWizard(WizardLanguage, Rc):
 		self.WlanPluginInstalled = False
 		self.ap = None
 		self.w = None
-		self.selectedInterface = interface
-		self.originalSelectedInterface = interface
+		if interface is not None:
+			self.selectedInterface = interface
+		else:
+			self.selectedInterface = None
 		self.NextStep = None
 		self.resetRef = None
+		self.checkRef = None
 		self.AdapterRef = None
 		self.APList = None
 		self.newAPlist = None
 		self.oldlist = None
-		self.notification = None
 		
 		self.originalInterfaceState = {}
 		self.originalInterfaceStateChanged = False
 		self.Text = None
 		self.rescanTimer = eTimer()
 		self.rescanTimer.callback.append(self.rescanTimerFired)
-		self.dhcpWaitTimerRunCount = 0
-		self.dhcpWaitTimer = eTimer()
-		self.dhcpWaitTimer.callback.append(self.dhcpWaitTimerFired)
-
 		self.getInstalledInterfaceCount()
 		self.isWlanPluginInstalled()
-
+		
 	def exitWizardQuestion(self, ret = False):
 		if (ret):
 			self.markDone()
@@ -99,20 +75,15 @@ class NetworkWizard(WizardLanguage, Rc):
 	def markDone(self):
 		self.stopScan()
 		del self.rescanTimer
-		del self.dhcpWaitTimer
-		self.dhcpWaitTimerRunCount = 0
 		self.checkOldInterfaceState()
-		global firstRun
-		if firstRun == True:
-			firstRun = False
+		self.exit()
+		pass
 
 	def back(self):
 		self.stopScan()
 		self.ap = None
 		WizardLanguage.back(self)
-		if len(self.stepHistory) <= 1:
-			if self.originalSelectedInterface is None:
-				self.selectedInterface = None		
+		
 	def stopScan(self):
 		self.rescanTimer.stop()
 		if self.w is not None:
@@ -127,86 +98,29 @@ class NetworkWizard(WizardLanguage, Rc):
 		if self.Adapterlist is not None:
 			if self.InstalledInterfaceCount == 1 and self.selectedInterface is None:
 					self.selectedInterface = self.Adapterlist[0]
-					self.originalSelectedInterface = self.Adapterlist[0]
 		for interface in iNetwork.getAdapterList():
 			self.originalInterfaceState[interface] = {}
 			self.originalInterfaceState[interface]["up"] = iNetwork.getAdapterAttribute(interface, 'up')
 
-	def verifyFirstRun(self):
-		#check if we have already a working network connection after flashing/factory reset
-		if firstRun and checkNetwork:
-			self.notification = self.session.instantiateDialog(NotificationBox, _("Please wait while we test your network connection..."))
-			self.notification.show()			
-			iNetwork.checkNetworkState(self.firstRunNetworkCheck)
-		elif firstRun and not checkNetwork:
-			self.prepareNextStep()
-		else:
-			self.selectInterface()
-
-	def firstRunNetworkCheck(self,data):
-		self.notification.close()
-		del self.notification
-		global checkNetwork
-		#be sure 'back' does not start the check again
-		if checkNetwork == True:
-			checkNetwork = False
-		self.prepareNextStep()
-
-	def prepareNextStep(self):
-		if iNetwork.NetworkState <= 2:
-			if self.selectedInterface == "eth0" and iNetwork.getAdapterAttribute(self.selectedInterface, 'up'):
-				if str('.'.join(["%d" % d for d in iNetwork.getAdapterAttribute(self.selectedInterface, 'ip')])) != "0.0.0.0":
-					self.isInterfaceUp = True
-					self.NextStep = 'alreadyConfiguredInterface'
-					text1 = _("Your internet connection is already configured.") + "\n\n"
-					text2 = _("Network") + ":\t" + str(iNetwork.getFriendlyAdapterName(self.selectedInterface)) + "\n"
-					text3 = _("IP Address") + ":\t" + str('.'.join(["%d" % d for d in iNetwork.getAdapterAttribute(self.selectedInterface, 'ip')])) + "\n\n"
-					text4 = _("Please choose what you want to do next.")
-					infotext = text1 + text2 + text3 + text4
-					self.currStep = self.getStepWithID(self.NextStep)
-					self.Text = infotext
-					self.afterAsyncCode()
-				else:
-					self.selectInterface()
-			else:
-				self.selectInterface()
-		else:
-			self.selectInterface()
-
-	def prepareAlreadyConfiguredInterfaceSelection(self):
-		list = []
-		list.append((_("Continue configuring your network"), "selectinterface"))
-		list.append((_("Exit network wizard"), "end"))
-		return list
-
-	def AlreadyConfiguredInterfaceSelectionMade(self):
-		if self.selection == 'end':
-			self.NextStep = 'end'
-		else:
-			if self.InstalledInterfaceCount > 1:
-					self.selectedInterface = None
-			self.NextStep = 'selectinterface'
-			
 	def selectInterface(self):
 		self.InterfaceState = None
-		if self.NextStep == "end":
-			self.currStep = self.getStepWithID(self.NextStep)
-			self.afterAsyncCode()
-		else:
-			if self.selectedInterface is None:
-				if self.InstalledInterfaceCount <= 1:
-					self.NextStep = 'nwconfig'
-					self.checkInterface(self.selectedInterface)
-				else:
-					self.NextStep = 'selectinterface'
-					self.currStep = self.getStepWithID(self.NextStep)
-					self.afterAsyncCode()
-			else:
+		if self.selectedInterface is None:
+			if self.InstalledInterfaceCount <= 1:
 				if not iNetwork.isWirelessInterface(self.selectedInterface):
 					self.NextStep = 'nwconfig'
 				else:
 					self.NextStep = 'asknetworktype'
 				self.checkInterface(self.selectedInterface)
+			else:
+				self.NextStep = 'selectinterface'
+				self.currStep = self.getStepWithID(self.NextStep)
+				self.afterAsyncCode()
+		else:
+			if not iNetwork.isWirelessInterface(self.selectedInterface):
+				self.NextStep = 'nwconfig'
+			else:
+				self.NextStep = 'asknetworktype'
+			self.checkInterface(self.selectedInterface)
 
 	def checkOldInterfaceState(self):
 		# disable up interface if it was originally down and config is unchanged.
@@ -287,8 +201,12 @@ class NetworkWizard(WizardLanguage, Rc):
 
 	def AdapterSetupEnd(self, iface):
 		self.originalInterfaceStateChanged = True
-		iNetwork.checkNetworkState(self.AdapterSetupEndFinished)
-		self.AdapterRef = self.session.openWithCallback(self.AdapterSetupEndCB, MessageBox, _("Please wait while we test your network..."), type = MessageBox.TYPE_INFO, enable_input = False)
+		if iNetwork.getAdapterAttribute(iface, "dhcp") is True:
+			iNetwork.checkNetworkState(self.AdapterSetupEndFinished)
+			self.AdapterRef = self.session.openWithCallback(self.AdapterSetupEndCB, MessageBox, _("Please wait while we test your network..."), type = MessageBox.TYPE_INFO, enable_input = False)
+		else:
+			self.currStep = self.getStepWithID("confdns")
+			self.afterAsyncCode()
 
 	def AdapterSetupEndCB(self,data):
 		if data is True:
@@ -301,71 +219,58 @@ class NetworkWizard(WizardLanguage, Rc):
 					self.afterAsyncCode()					
 			else:
 				self.currStep = self.getStepWithID("checklanstatusend")
-				self.Text = self.getLanStatusMsg()
 				self.afterAsyncCode()
 
 	def AdapterSetupEndFinished(self,data):
 		if data <= 2:
-			config.misc.networkwizard.hasnetwork.value = True
-			config.misc.networkwizard.save()		  
 			self.InterfaceState = True
-			self.AdapterRef.close(True)
 		else:
-			if iNetwork.getAdapterAttribute(self.selectedInterface, 'up') is True and self.dhcpWaitTimerRunCount <=2:
-				#some wlan drivers need a long time to get an ip, lets wait max three times and retest network, if first pass didn't got a usable result.
-				self.dhcpWaitTimer.startLongTimer(4)
-			else:
-				config.misc.networkwizard.hasnetwork.value = False
-				config.misc.networkwizard.save()  
-				self.InterfaceState = False
-				self.AdapterRef.close(True)
-
-	def dhcpWaitTimerFired(self):
-		if self.dhcpWaitTimerRunCount <=2:
-			self.dhcpWaitTimerRunCount+=1
-		else:
-			self.dhcpWaitTimer.stop()
-		iNetwork.getInterfaces(self.getInterfacesReReadFinished)
-
-	def getInterfacesReReadFinished(self, data):
-		if data is True:
-			if iNetwork.getAdapterAttribute(self.selectedInterface, 'up') is True:
-				self.isInterfaceUp = True
-			else:
-				self.isInterfaceUp = False
-		iNetwork.checkNetworkState(self.AdapterSetupEndFinished)
-
+			self.InterfaceState = False
+		self.AdapterRef.close(True)
+			
 	def checkWlanStateCB(self,data,status):
 		if data is not None:
 			if data is True:
 				if status is not None:
-					wlan0 = about.getIfConfig('wlan0')
-					if wlan0.has_key('addr'):
-						text11 = _("Your IP:") + "\t" + wlan0['addr'] + "\n\n"
-						if wlan0.has_key('netmask'):
-							text11 += _("Netmask:") + "\t" + wlan0['netmask'] + "\n"
-						if wlan0.has_key('brdaddr'):
-							text11 += _("Gateway:") + "\t" + wlan0['brdaddr'] + "\n"
-						if wlan0.has_key('hwaddr'):
-							text11 += _("MAC:") + "\t" + wlan0['hwaddr'] + "\n\n"  
-					text1 = _("Your %s %s is now ready to be used.\n\nYour internet connection is working now.\n\n") % (getMachineBrand(), getMachineName())
+					text1 = _("Your receiver is now ready to be used.\n\nYour internet connection is working.\n\n")
 					text2 = _('Accesspoint:') + "\t" + str(status[self.selectedInterface]["accesspoint"]) + "\n"
 					text3 = _('SSID:') + "\t" + str(status[self.selectedInterface]["essid"]) + "\n"
 					text4 = _('Link quality:') + "\t" + str(status[self.selectedInterface]["quality"])+ "\n"
 					text5 = _('Signal strength:') + "\t" + str(status[self.selectedInterface]["signal"]) + "\n"
-					text6 = _('Bitrate:') + "\t" + str(status[self.selectedInterface]["bitrate"]) + " Mbps\n"
-					text7 = _('Encryption:') + "\t" + str(status[self.selectedInterface]["encryption"]) + "\n"
+					text6 = _('Bitrate:') + "\t" + str(status[self.selectedInterface]["bitrate"]) + "\n"
+					text7 = _('Encryption:') + " " + str(status[self.selectedInterface]["encryption"]) + "\n"
 					text8 = _("Please press OK to continue.")
-					try:
-						infotext = text1 + text11 + text2 + text3 + text4 + text6 + text7 + "\n" + text8
-					except:
-						infotext = text1 + text2 + text3 + text4 + text6 + text7 + "\n" + text8
+					infotext = text1 + text2 + text3 + text4 + text5 + text7 +"\n" + text8
 					self.currStep = self.getStepWithID("checkWlanstatusend")
 					self.Text = infotext
 					if str(status[self.selectedInterface]["accesspoint"]) == "Not-Associated":
 						self.InterfaceState = False
 					self.afterAsyncCode()
 
+	def checkNetwork(self):
+		iNetwork.checkNetworkState(self.checkNetworkStateCB)
+		self.checkRef = self.session.openWithCallback(self.checkNetworkCB, MessageBox, _("Please wait while we test your network..."), type = MessageBox.TYPE_INFO, enable_input = False)
+
+	def checkNetworkCB(self,data):
+		if data is True:
+			if iNetwork.isWirelessInterface(self.selectedInterface):
+				if self.WlanPluginInstalled == True:
+					from Plugins.SystemPlugins.WirelessLan.Wlan import iStatus
+					iStatus.getDataForInterface(self.selectedInterface,self.checkWlanStateCB)
+				else:
+					self.currStep = self.getStepWithID("checklanstatusend")
+					self.afterAsyncCode()					
+			else:
+				self.currStep = self.getStepWithID("checklanstatusend")
+				self.afterAsyncCode()
+
+	def checkNetworkStateCB(self,data):
+		if data <= 2:
+			self.InterfaceState = True
+		else:
+			self.InterfaceState = False
+		self.checkRef.close(True)
+	
 	def rescanTimerFired(self):
 		self.rescanTimer.stop()
 		self.updateAPList()
@@ -455,7 +360,7 @@ class NetworkWizard(WizardLanguage, Rc):
 		if self.WlanPluginInstalled == True:
 			list.append((_("Configure your wireless LAN again"), "scanwlan"))
 		list.append((_("Configure your internal LAN"), "nwconfig"))
-		list.append((_("Exit network wizard"), "end"))
+		list.append((_("Exit network wizard"), "end"))		
 		return list
 
 	def ChoicesSelectionMade(self, index):
@@ -472,23 +377,3 @@ class NetworkWizard(WizardLanguage, Rc):
 
 	def ChoicesSelectionMoved(self):
 		pass
-
-	def getLanStatusMsg(self):      
-		eth0 = about.getIfConfig('eth0')
-		if eth0.has_key('addr'):
-			text11 = _("Your IP:") + "\t" + eth0['addr'] + "\n\n"
-			if eth0.has_key('netmask'):
-				text11 += _("Netmask:") + "\t" + eth0['netmask'] + "\n"
-			if eth0.has_key('brdaddr'):
-				text11 += _("Gateway:") + "\t" + eth0['brdaddr'] + "\n"
-			if eth0.has_key('hwaddr'):
-				text11 += _("MAC:") + "\t" + eth0['hwaddr'] + "\n"  
-		try:
-			text1 = _("Your %s %s is now ready to be used.\n\nYour internet connection is working now.\n\n") % (getMachineBrand(), getMachineName())
-			text2 = _("Please press OK to continue.")
-			return text1 + text11 +"\n" + text2
-		except:
-			text1 = _("Your %s %s is now ready to be used.\n\nYour internet connection is not working now.\n\n") % (getMachineBrand(), getMachineName())
-			text2 = _("Please press OK to continue.")
-			return text1 + "\n" + text2
-
