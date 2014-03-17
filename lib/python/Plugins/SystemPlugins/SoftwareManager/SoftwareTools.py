@@ -11,7 +11,6 @@ from Tools.Directories import pathExists, fileExists, resolveFilename, SCOPE_MET
 from Tools.HardwareInfo import HardwareInfo
 from time import time
 
-from enigma import getImageVersionString
 
 class SoftwareTools(PackageInfoHandler):
 	lastDownloadDate = None
@@ -24,7 +23,7 @@ class SoftwareTools(PackageInfoHandler):
 
 
 	def __init__(self):
-		aboutInfo = getImageVersionString()
+		aboutInfo = about.getImageVersionString()
 		if aboutInfo.startswith("dev-"):
 			self.ImageVersion = 'Experimental'
 		else:

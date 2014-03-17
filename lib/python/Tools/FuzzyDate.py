@@ -1,11 +1,12 @@
 from time import localtime, time
 
+
 def FuzzyTime(t, inPast = False):
 	d = localtime(t)
 	nt = time()
 	n = localtime()
-	dayOfWeek = (_("Mon"), _("Tue"), _("Wed"), _("Thu"), _("Fri"), _("Sat"), _("Sun"))
-
+        dayOfWeek = (_("Mon"), _("Tue"), _("Wed"), _("Thu"), _("Fri"), _("Sat"), _("Sun"))
+	
 	if d[:3] == n[:3]:
 		# same day
 		date = _("Today")
@@ -19,15 +20,17 @@ def FuzzyTime(t, inPast = False):
 		# same year
 		if inPast:
 			# I want the day in the movielist
-			date = "%s %02d.%02d." % (dayOfWeek[d[6]], d[2], d[1])
+			date = "%s %d.%d" % (dayOfWeek[d[6]], d[2], d[1])
 		else:
-			date = "%02d.%02d." % (d[2], d[1])
+			date = "%d.%d" % (d[2], d[1])
 	else:
-		date = "%02d.%02d.%d" % (d[2], d[1], d[0])
-
-	timeres = "%02d:%02d" % (d[3], d[4])
-
+		date = "%d.%d.%d" % (d[2], d[1], d[0])
+	
+	timeres = "%d:%02d" % (d[3], d[4])
+	
 	return (date, timeres)
+
+
 
 if __name__ == "__main__":
         def _(x): return x

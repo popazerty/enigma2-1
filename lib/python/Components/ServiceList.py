@@ -2,10 +2,10 @@ from HTMLComponent import HTMLComponent
 from GUIComponent import GUIComponent
 from skin import parseColor, parseFont
 
-from enigma import eListboxServiceContent, eListbox, eServiceCenter, eServiceReference, gFont, eRect, eSize
+from enigma import eListboxServiceContent, eListbox, eServiceCenter, eServiceReference, gFont, eRect
 from Tools.LoadPixmap import LoadPixmap
 
-from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
+from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN
 
 from Components.Renderer.Picon import getPiconName
 from Components.config import config
@@ -26,44 +26,40 @@ class ServiceList(HTMLComponent, GUIComponent):
 		GUIComponent.__init__(self)
 		self.l = eListboxServiceContent()
 
-		pic = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "icons/folder.png"))
+		pic = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/folder.png"))
 		if pic:
 			self.l.setPixmap(self.l.picFolder, pic)
 
-		pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/marker.png"))
+		pic = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/marker.png"))
 		if pic:
 			self.l.setPixmap(self.l.picMarker, pic)
 
-		pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_dvb-s.png"))
+		pic = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_dvb_s-fs8.png"))
 		if pic:
 			self.l.setPixmap(self.l.picDVB_S, pic)
 
-		pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_dvb-c.png"))
+		pic = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_dvb_c-fs8.png"))
 		if pic:
 			self.l.setPixmap(self.l.picDVB_C, pic)
 
-		pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_dvb-t.png"))
+		pic = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_dvb_t-fs8.png"))
 		if pic:
 			self.l.setPixmap(self.l.picDVB_T, pic)
 
-		pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_stream.png"))
+		pic = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_stream-fs8.png"))
 		if pic:
 			self.l.setPixmap(self.l.picStream, pic)
 
-		pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_service_group.png"))
+		pic = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_service_group-fs8.png"))
 		if pic:
 			self.l.setPixmap(self.l.picServiceGroup, pic)
 
 		self.root = None
 		self.mode = self.MODE_NORMAL
-		self.listHeight = None
-		self.listWidth = None
-		self.ServiceNumberFontName = "Regular"
-		self.ServiceNumberFontSize = 20
-		self.ServiceNameFontName = "Regular"
-		self.ServiceNameFontSize = 22
-		self.ServiceInfoFontName = "Regular"
-		self.ServiceInfoFontSize = 18
+		self.ItemHeight = 28
+		self.ServiceNameFont = parseFont("Regular;22", ((1,1),(1,1)))
+		self.ServiceInfoFont = parseFont("Regular;18", ((1,1),(1,1)))
+		self.ServiceNumberFont = parseFont("Regular;20", ((1,1),(1,1)))
 		self.onSelectionChanged = [ ]
 
 	def applySkin(self, desktop, parent):
@@ -98,32 +94,21 @@ class ServiceList(HTMLComponent, GUIComponent):
 				elif attrib == "colorEventProgressbarBorderSelected":
 					self.l.setColor(eListboxServiceContent.serviceEventProgressbarBorderColorSelected, parseColor(value))
 				elif attrib == "picServiceEventProgressbar":
-					pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, value))
+					pic = LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, value))
 					if pic:
 						self.l.setPixmap(self.l.picServiceEventProgressbar, pic)
 				elif attrib == "serviceItemHeight":
 					self.ItemHeight = int(value)
 				elif attrib == "serviceNameFont":
-					font = parseFont(value, ((1,1),(1,1)) )
-					self.ServiceNameFontName = font.family
-					self.ServiceNameFontSize = font.pointSize
+					self.ServiceNameFont = parseFont(value, ((1,1),(1,1)))
 				elif attrib == "serviceInfoFont":
-					font = parseFont(value, ((1,1),(1,1)) )
-					self.ServiceInfoFontName = font.family
-					self.ServiceInfoFontSize = font.pointSize
+					self.ServiceInfoFont = parseFont(value, ((1,1),(1,1)))
 				elif attrib == "serviceNumberFont":
-					font = parseFont(value, ((1,1),(1,1)) )
-					self.ServiceNumberFontName = font.family
-					self.ServiceNumberFontSize = font.pointSize
+					self.ServiceNumberFont = parseFont(value, ((1,1),(1,1)))
 				else:
 					attribs.append((attrib, value))
-			self.skinAttributes = attribs
-			self.setServiceFontsize()
-		rc = GUIComponent.applySkin(self, desktop, parent)
-		self.listHeight = self.instance.size().height()
-		self.listWidth = self.instance.size().width()
-		self.setItemsPerPage()
-		return rc
+		self.skinAttributes = attribs
+		return GUIComponent.applySkin(self, desktop, parent)
 
 	def connectSelChanged(self, fnc):
 		if not fnc in self.onSelectionChanged:
@@ -184,30 +169,11 @@ class ServiceList(HTMLComponent, GUIComponent):
 		return self.instance.getCurrentIndex()
 
 	GUI_WIDGET = eListbox
-
-	def setItemsPerPage(self):
-		if self.listHeight > 0:
-			itemHeight = self.listHeight / config.usage.serviceitems_per_page.getValue()
-		else:
-			itemHeight = 28
-		self.ItemHeight = itemHeight
-		self.l.setItemHeight(itemHeight)
-		if self.listHeight:
-			self.instance.resize(eSize(self.listWidth, self.listHeight / itemHeight * itemHeight))
-
-	def setServiceFontsize(self):
-		self.ServiceNumberFont = gFont(self.ServiceNameFontName, self.ServiceNameFontSize + config.usage.servicenum_fontsize.getValue())
-		self.ServiceNameFont = gFont(self.ServiceNameFontName, self.ServiceNameFontSize + config.usage.servicename_fontsize.getValue())
-		self.ServiceInfoFont = gFont(self.ServiceInfoFontName, self.ServiceInfoFontSize + config.usage.serviceinfo_fontsize.getValue())
-		self.l.setElementFont(self.l.celServiceName, self.ServiceNameFont)
-		self.l.setElementFont(self.l.celServiceNumber, self.ServiceNumberFont)
-		self.l.setElementFont(self.l.celServiceInfo, self.ServiceInfoFont)
-
+	
 	def postWidgetCreate(self, instance):
 		instance.setWrapAround(True)
 		instance.setContent(self.l)
 		instance.selectionChanged.get().append(self.selectionChanged)
-		self.setServiceFontsize()
 		self.setMode(self.mode)
 
 	def preWidgetRemove(self, instance):
@@ -285,11 +251,10 @@ class ServiceList(HTMLComponent, GUIComponent):
 
 	def setMode(self, mode):
 		self.mode = mode
-		self.setItemsPerPage()
 		self.l.setItemHeight(self.ItemHeight)
 		self.l.setVisualMode(eListboxServiceContent.visModeComplex)
-
-		if config.usage.service_icon_enable.getValue():
+		
+		if config.usage.service_icon_enable.value:
 			self.l.setGetPiconNameFunc(getPiconName)
 		else:
 			self.l.setGetPiconNameFunc(None)
@@ -297,27 +262,29 @@ class ServiceList(HTMLComponent, GUIComponent):
 		progressBarWidth = 52
 		rowWidth = self.instance.size().width() - 30 #scrollbar is fixed 20 + 10 Extra marge
 
-		if mode == self.MODE_NORMAL or not config.usage.show_channel_numbers_in_servicelist.getValue():
+		if mode == self.MODE_NORMAL or not config.usage.show_channel_numbers_in_servicelist.value:
 			channelNumberWidth = 0
 			channelNumberSpace = 0
 		else:
-			channelNumberWidth = 55
+			channelNumberWidth = config.usage.alternative_number_mode.value and 50 or 63
 			channelNumberSpace = 10
 
 		self.l.setElementPosition(self.l.celServiceNumber, eRect(0, 0, channelNumberWidth, self.ItemHeight))
 
-		if "left" in config.usage.show_event_progress_in_servicelist.getValue():
+		if "left" in config.usage.show_event_progress_in_servicelist.value:
 			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(channelNumberWidth+channelNumberSpace, 0, progressBarWidth , self.ItemHeight))
 			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace+progressBarWidth+10, 0, rowWidth - (channelNumberWidth+channelNumberSpace+progressBarWidth+10), self.ItemHeight))
-		elif "right" in config.usage.show_event_progress_in_servicelist.getValue():
+		elif "right" in config.usage.show_event_progress_in_servicelist.value:
 			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(rowWidth-progressBarWidth, 0, progressBarWidth, self.ItemHeight))
 			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace, 0, rowWidth - (channelNumberWidth+channelNumberSpace+progressBarWidth+10), self.ItemHeight))
 		else:
 			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(0, 0, 0, 0))
 			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace, 0, rowWidth - (channelNumberWidth+channelNumberSpace), self.ItemHeight))
+
 		self.l.setElementFont(self.l.celServiceName, self.ServiceNameFont)
 		self.l.setElementFont(self.l.celServiceNumber, self.ServiceNumberFont)
 		self.l.setElementFont(self.l.celServiceInfo, self.ServiceInfoFont)
-		if "perc" in config.usage.show_event_progress_in_servicelist.getValue():
+		if "perc" in config.usage.show_event_progress_in_servicelist.value:
 			self.l.setElementFont(self.l.celServiceEventProgressbar, self.ServiceInfoFont)
-		self.l.setServiceTypeIconMode(int(config.usage.servicetype_icon_mode.getValue()))
+		self.l.setHideNumberMarker(config.usage.hide_number_markers.value)
+		self.l.setServiceTypeIconMode(int(config.usage.servicetype_icon_mode.value))

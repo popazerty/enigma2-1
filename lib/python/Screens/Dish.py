@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-from Screens.Screen import Screen
+from Screen import Screen
 from Components.BlinkingPixmap import BlinkingPixmapConditional
+from Components.Pixmap import Pixmap
 from Components.config import config, ConfigInteger
+from Components.Sources.Boolean import Boolean
 from Components.Label import Label
+from Components.ProgressBar import ProgressBar
 from Components.ServiceEventTracker import ServiceEventTracker
-from enigma import eDVBSatelliteEquipmentControl, eTimer, iPlayableService
+from enigma import eDVBSatelliteEquipmentControl, eTimer, eComponentScan, iPlayableService
 from enigma import eServiceCenter, iServiceInformation
+from ServiceReference import ServiceReference
 
 INVALID_POSITION = 9999
 config.misc.lastrotorposition = ConfigInteger(INVALID_POSITION)
@@ -13,16 +17,28 @@ config.misc.lastrotorposition = ConfigInteger(INVALID_POSITION)
 class Dish(Screen):
 	STATE_HIDDEN = 0
 	STATE_SHOWN  = 1
+	skin = """
+		<screen name="Dish" flags="wfNoBorder" position="86,100" size="130,200" title="Dish" zPosition="1" backgroundColor="#11396D" >
+			<widget name="Dishpixmap" position="0,0"  size="130,160" zPosition="-1" pixmap="skin_default/icons/dish.png" transparent="1" alphatest="on" />
+			<widget name="turnTime"   position="5,0"   size="120,20" zPosition="1" font="Regular;20" halign="right" shadowColor="black" shadowOffset="-2,-2" transparent="1" />
+			<widget name="From"       position="5,162" size="50,17" zPosition="1" font="Regular;17" halign="left"  shadowColor="black" shadowOffset="-2,-1" transparent="1"  />
+			<widget name="posFrom"    position="57,160" size="70,20" zPosition="1" font="Regular;20" halign="left"  shadowColor="black" shadowOffset="-2,-2" transparent="1" />
+			<widget name="Goto"       position="5,182"  size="50,17" zPosition="1" font="Regular;17" halign="left"  shadowColor="black" shadowOffset="-2,-1" transparent="1" />
+			<widget name="posGoto"    position="57,180" size="70,20" zPosition="1" font="Regular;20" halign="left"  shadowColor="black" shadowOffset="-2,-2" transparent="1" />
+			<widget name="tunerName"  position="5,144"  size="90,16" zPosition="2" font="Regular;14" halign="left"  shadowColor="black" shadowOffset="-2,-1" transparent="1" />
+			<widget name="turnSpeed"  position="75,95" size="50,16" zPosition="2" font="Regular;14" halign="right" shadowColor="black" shadowOffset="-2,-1" transparent="1" />
+		</screen>"""
+
 	def __init__(self, session):
+		self.skin = Dish.skin
 		Screen.__init__(self, session)
-		self["Dishpixmap"] = BlinkingPixmapConditional()
-		self["Dishpixmap"].onVisibilityChange.append(self.DishpixmapVisibilityChanged)
+
+		self["Dishpixmap"] = Pixmap()
 		self["turnTime"] = Label("")
 		self["posFrom"] = Label("")
 		self["posGoto"] = Label("")
 		self["From"] = Label(_("From :"))
 		self["Goto"] = Label(_("Goto :"))
-		self["Tuner"] = Label(_("Tuner :"))
 		self["tunerName"] = Label("")
 		self["turnSpeed"] = Label("")
 
@@ -33,11 +49,10 @@ class Dish(Screen):
 		self.showTimer = eTimer()
 		self.showTimer.callback.append(self.hide)
 
-		self.showdish = config.usage.showdish.getValue()
 		config.usage.showdish.addNotifier(self.configChanged)
 		self.configChanged(config.usage.showdish)
 
-		self.rotor_pos = self.cur_orbpos = config.misc.lastrotorposition.getValue()
+		self.rotor_pos = self.cur_orbpos = config.misc.lastrotorposition.value
 		self.turn_time = self.total_time = None
 		self.cur_polar = 0
 		self.__state = self.STATE_HIDDEN
@@ -95,7 +110,7 @@ class Dish(Screen):
 	def __serviceStarted(self):
 		if self.__state == self.STATE_SHOWN:
 			self.hide()
-		if self.showdish == "off":
+		if not self.showdish:
 			return
 
 		service = self.session.nav.getCurrentService()
@@ -108,7 +123,7 @@ class Dish(Screen):
 		if tuner_type and tuner_type.find("DVB-S") != -1:
 			self.cur_orbpos = data.get("orbital_position", INVALID_POSITION)
 			if self.cur_orbpos != INVALID_POSITION:
-				config.misc.lastrotorposition.setValue(self.cur_orbpos)
+				config.misc.lastrotorposition.value = self.cur_orbpos
 				config.misc.lastrotorposition.save()
 			self.cur_polar  = data.get("polarization", 0)
 			self.rotorTimer.start(500, False)
@@ -120,20 +135,7 @@ class Dish(Screen):
 			self.hide()
 
 	def configChanged(self, configElement):
-		self.showdish = configElement.getValue()
-		if configElement.getValue() == "off":
-			self["Dishpixmap"].setConnect(lambda: False)
-		else:
-			self["Dishpixmap"].setConnect(eDVBSatelliteEquipmentControl.getInstance().isRotorMoving)
-
-	def DishpixmapVisibilityChanged(self, state):
-		if self.showdish == "flashing":
-			if state:
-				self["Dishpixmap"].show() # show dish picture
-			else:
-				self["Dishpixmap"].hide() # hide dish picture
-		else:
-			self["Dishpixmap"].show() # show dish picture
+		self.showdish = configElement.value
 
 	def getTurnTime(self, start, end, pol=0):
 		mrt = abs(start - end) if start and end else 0
@@ -169,7 +171,9 @@ class Dish(Screen):
 		if nr is not None:
 			from Components.NimManager import nimmanager
 			nims = nimmanager.nimList()
-			return str(nims[nr].split(':')[:1][0].split(' ')[1])
+			if nr < 4:
+				return "".join(nims[nr].split(':')[:1])
+			return " ".join((_("Tuner"),str(nr)))
 		return ""
 
 	def OrbToStr(self, orbpos):

@@ -11,6 +11,7 @@ from Screens.ChoiceBox import ChoiceBox
 
 # Generic
 from Tools.BoundFunction import boundFunction
+from Tools.Directories import *
 from Components.config import config
 import os
 
@@ -32,6 +33,23 @@ defaultInhibitDirs = ["/bin", "/boot", "/dev", "/etc", "/lib", "/proc", "/sbin",
 
 class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 	"""Simple Class similar to MessageBox / ChoiceBox but used to choose a folder/pathname combination"""
+
+	skin = """<screen name="LocationBox" position="100,75" size="540,460" >
+			<widget name="text" position="0,2" size="540,22" font="Regular;22" />
+			<widget name="target" position="0,23" size="540,22" valign="center" font="Regular;22" />
+			<widget name="filelist" position="0,55" zPosition="1" size="540,210" scrollbarMode="showOnDemand" selectionDisabled="1" />
+			<widget name="textbook" position="0,272" size="540,22" font="Regular;22" />
+			<widget name="booklist" position="5,302" zPosition="2" size="535,100" scrollbarMode="showOnDemand" />
+			<widget name="red" position="0,415" zPosition="1" size="135,40" pixmap="skin_default/buttons/red.png" transparent="1" alphatest="on" />
+			<widget name="key_red" position="0,415" zPosition="2" size="135,40" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />   
+			<widget name="green" position="135,415" zPosition="1" size="135,40" pixmap="skin_default/buttons/green.png" transparent="1" alphatest="on" />
+			<widget name="key_green" position="135,415" zPosition="2" size="135,40" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
+			<widget name="yellow" position="270,415" zPosition="1" size="135,40" pixmap="skin_default/buttons/yellow.png" transparent="1" alphatest="on" />
+			<widget name="key_yellow" position="270,415" zPosition="2" size="135,40" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
+			<widget name="blue" position="405,415" zPosition="1" size="135,40" pixmap="skin_default/buttons/blue.png" transparent="1" alphatest="on" />
+			<widget name="key_blue" position="405,415" zPosition="2" size="135,40" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />            
+		</screen>"""
+
 	def __init__(self, session, text = "", filename = "", currDir = None, bookmarks = None, userMode = False, windowTitle = _("Select location"), minFree = None, autoAdd = False, editDir = False, inhibitDirs = [], inhibitMounts = []):
 		# Init parents
 		Screen.__init__(self, session)
@@ -59,7 +77,7 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 		self.filename = filename
 		self.minFree = minFree
 		self.realBookmarks = bookmarks
-		self.bookmarks = bookmarks and bookmarks.getValue()[:] or []
+		self.bookmarks = bookmarks and bookmarks.value[:] or []
 		self.userMode = userMode
 		self.autoAdd = autoAdd
 		self.editDir = editDir
@@ -104,16 +122,12 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 		# Actions that will reset quickselect
 		self["WizardActions"] = LocationBoxActionMap(self, "WizardActions",
 			{
-				"ok": (self.ok, _("select")),
-				"back": (self.cancel, _("Cancel")),
-			}, -2)
-
-		self["DirectionActions"] = LocationBoxActionMap(self, "DirectionActions",
-			{
 				"left": self.left,
 				"right": self.right,
 				"up": self.up,
 				"down": self.down,
+				"ok": (self.ok, _("select")),
+				"back": (self.cancel, _("Cancel")),
 			}, -2)
 
 		self["ColorActions"] = LocationBoxActionMap(self, "ColorActions",
@@ -126,8 +140,8 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 
 		self["EPGSelectActions"] = LocationBoxActionMap(self, "EPGSelectActions",
 			{
-				"prevService": (self.switchToBookList, _("switch to bookmarks")),
-				"nextService": (self.switchToFileList, _("switch to filelist")),
+				"prevBouquet": (self.switchToBookList, _("switch to bookmarks")),
+				"nextBouquet": (self.switchToFileList, _("switch to filelist")),
 			}, -2)
 
 		self["MenuActions"] = LocationBoxActionMap(self, "MenuActions",
@@ -152,18 +166,18 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 
 		# Run some functions when shown
 		self.onShown.extend((
-			boundFunction(self.setTitle, _("Select Location")),
+			boundFunction(self.setTitle, windowTitle),
 			self.updateTarget,
 			self.showHideRename,
 		))
 
 		self.onLayoutFinish.append(self.switchToFileListOnStart)
-
+ 
 		# Make sure we remove our callback
 		self.onClose.append(self.disableTimer)
 
 	def switchToFileListOnStart(self):
-		if self.realBookmarks and self.realBookmarks.getValue():
+		if self.realBookmarks and self.realBookmarks.value:
 			self.currList = "booklist"
 			currDir = self["filelist"].current_directory
 			if currDir in self.bookmarks:
@@ -277,10 +291,10 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 			else:
 				self["filelist"].refresh()
 				self.removeBookmark(name, True)
-				val = self.realBookmarks and self.realBookmarks.getValue()
+				val = self.realBookmarks and self.realBookmarks.value
 				if val and name in val:
 					val.remove(name)
-					self.realBookmarks.setValue(val)
+					self.realBookmarks.value = val
 					self.realBookmarks.save()
 
 	def up(self):
@@ -325,8 +339,8 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 					self.bookmarks.append(self.getPreferredFolder())
 					self.bookmarks.sort()
 
-				if self.bookmarks != self.realBookmarks.getValue():
-					self.realBookmarks.setValue(self.bookmarks)
+				if self.bookmarks != self.realBookmarks.value:
+					self.realBookmarks.value = self.bookmarks
 					self.realBookmarks.save()
 			self.close(ret)
 
@@ -416,7 +430,7 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 	def menuCallback(self, choice):
 		if choice:
 			choice[1]()
-
+			
 	def usermodeOn(self):
 		self.switchToBookList()
 		self["filelist"].hide()
@@ -504,7 +518,7 @@ class TimeshiftLocationBox(LocationBox):
 				self,
 				session,
 				text = _("Where to save temporary timeshift recordings?"),
-				currDir = config.usage.timeshift_path.getValue(),
+				currDir = config.usage.timeshift_path.value,
 				bookmarks = config.usage.allowed_timeshift_paths,
 				autoAdd = True,
 				editDir = True,
@@ -519,7 +533,7 @@ class TimeshiftLocationBox(LocationBox):
 
 	def selectConfirmed(self, ret):
 		if ret:
-			config.usage.timeshift_path.setValue(self.getPreferredFolder())
+			config.usage.timeshift_path.value = self.getPreferredFolder()
 			config.usage.timeshift_path.save()
 			LocationBox.selectConfirmed(self, ret)
 

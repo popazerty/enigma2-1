@@ -1,4 +1,2 @@
-enigma2
-=======
-
-openatv-gui
+opendroid-enigma2
+==========

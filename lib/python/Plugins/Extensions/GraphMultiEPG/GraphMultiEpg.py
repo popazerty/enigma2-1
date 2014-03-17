@@ -869,7 +869,7 @@ class GraphMultiEPG(Screen, HelpableScreen):
 
 	def updEpoch(self, mins):
 		self["list"].setEpoch(mins)
-		config.misc.graph_mepg.prev_time_period.setValue(mins)
+		config.misc.graph_mepg.prev_time_period.value = mins
 		self.moveTimeLines()
 
 	def key1(self):
@@ -900,7 +900,7 @@ class GraphMultiEPG(Screen, HelpableScreen):
 
 	def enterDateTime(self):
 		t = localtime(time())
-		config.misc.graph_mepg.prev_time.setValue([t.tm_hour, t.tm_min])
+		config.misc.graph_mepg.prev_time.value = [t.tm_hour, t.tm_min]
 		self.session.openWithCallback(self.onDateTimeInputClosed, TimeDateInput, config.misc.graph_mepg.prev_time)
 
 	def onDateTimeInputClosed(self, ret):

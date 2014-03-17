@@ -1,6 +1,6 @@
 from MenuList import MenuList
 
-from Tools.Directories import SCOPE_ACTIVE_SKIN, resolveFilename
+from Tools.Directories import SCOPE_CURRENT_SKIN, resolveFilename
 from os import path
 
 from enigma import eListboxPythonMultiContent, RT_VALIGN_CENTER, gFont, eServiceCenter
@@ -24,11 +24,11 @@ class PlayList(MenuList):
 		self.serviceHandler = eServiceCenter.getInstance()
 		self.state = STATE_NONE
 		self.icons = [
-			LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_mp_play.png")),
-			LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_mp_pause.png")),
-			LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_mp_stop.png")),
-			LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_mp_rewind.png")),
-			LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "icons/ico_mp_forward.png")),
+			LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_mp_play.png")),
+			LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_mp_pause.png")),
+			LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_mp_stop.png")),
+			LoadPixmap(resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_mp_rewind.png")),
+			LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/ico_mp_forward.png")),
 		]
 
 	def PlaylistEntryComponent(self, serviceref, state):
@@ -86,7 +86,7 @@ class PlayList(MenuList):
 
 	def pauseFile(self):
 		self.updateState(STATE_PAUSE)
-
+		
 	def stopFile(self):
 		self.updateState(STATE_STOP)
 

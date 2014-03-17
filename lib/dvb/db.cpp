@@ -663,7 +663,7 @@ int eDVBDB::loadBouquet(const char *path, int startChannelNum)
 
 	std::string p = eEnv::resolve("${sysconfdir}/enigma2/");
 	p+=path;
-	// eDebug("loading bouquet... %s %d", p.c_str(), startChannelNum);
+	eDebug("loading bouquet... %s %d", p.c_str(), startChannelNum);
 	CFile fp(p.c_str(), "rt");
 	if (!fp)
 	{
@@ -759,7 +759,7 @@ int eDVBDB::loadBouquet(const char *path, int startChannelNum)
 			bouquet.m_bouquet_name=line+6;
 	}
 	free(line);
-	// eDebug("%d entries in Bouquet %s", entries, bouquet_name.c_str());
+	eDebug("%d entries in Bouquet %s", entries, bouquet_name.c_str());
 	return startChannelNum;
 }
 
@@ -1153,7 +1153,8 @@ PyObject *eDVBDB::readCables(ePyObject cab_list, ePyObject tp_dict)
 				}
 				if (freq && sr)
 				{
-					freq /= 1000;
+					while (freq > 999999)
+						freq /= 10;
 					tuple = PyTuple_New(7);
 					PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(1));
 					PyTuple_SET_ITEM(tuple, 1, PyInt_FromLong(freq));

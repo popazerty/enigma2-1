@@ -1,3 +1,4 @@
+
 keyBindings = { }
 
 from keyids import KEYIDS
@@ -144,7 +145,7 @@ def queryKeyBinding(context, action):
 
 def getKeyDescription(key):
 	if rc_model.rcIsDefault():
-		idx = config.misc.rcused.getValue()
+		idx = config.misc.rcused.value
 	else:
 		idx = 2
 	if key in keyDescriptions[idx]:
