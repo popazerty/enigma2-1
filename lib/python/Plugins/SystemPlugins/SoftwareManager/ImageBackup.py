@@ -17,7 +17,7 @@ from os import path, system, makedirs, listdir, walk, statvfs
 import commands
 import datetime
 
-VERSION = "Version 2.0 "
+VERSION = "Version 2.0 openATV"
 
 def Freespace(dev):
 	statdev = statvfs(dev)
@@ -208,7 +208,7 @@ class ImageBackup(Screen):
 			self.EXTRAOLD = "%s/fullbackup_%s/%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE, self.MODEL)
 			self.EXTRA = "%s/fullbackup_e3hd/%s" % (self.DIRECTORY, self.DATE)
 		## TESTING THE MK Digital Model
-		elif self.MODEL == "xp1000":
+		elif self.MODEL == "xp1000" and not self.MACHINENAME.lower() == "sf8 hd":
 			self.TYPE = "MAXDIGITAL"
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
@@ -427,11 +427,11 @@ class ImageBackup(Screen):
 		## TESTING THE Gigablue 800 SE Plus Model
 		elif self.MODEL == "gb800seplus":
 			self.TYPE = "GIGABLUE"
-			self.MODEL = "seplus"
+			self.MODEL = "ueplus"
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
 			self.SHOWNAME = "GigaBlue %s" %self.MODEL
-			self.MTDKERNEL = "mtd1"	
+			self.MTDKERNEL = "mtd2"	
 			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
 			self.MAINDEST = "%s/gigablue/%s" %(self.DIRECTORY, self.MODEL)
 			self.EXTRA =  "%s/fullbackup_%s/%s/gigablue" % (self.DIRECTORY, self.TYPE, self.DATE)
@@ -442,7 +442,7 @@ class ImageBackup(Screen):
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
 			self.SHOWNAME = "GigaBlue %s" %self.MODEL
-			self.MTDKERNEL = "mtd1"	
+			self.MTDKERNEL = "mtd2"	
 			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
 			self.MAINDEST = "%s/gigablue/%s" %(self.DIRECTORY, self.MODEL)
 			self.EXTRA =  "%s/fullbackup_%s/%s/gigablue" % (self.DIRECTORY, self.TYPE, self.DATE)
@@ -658,10 +658,10 @@ class ImageBackup(Screen):
 
 				if self.TYPE == 'ET':
 					cmdlist.append('mkdir -p %s/%sx00' % (self.TARGET, self.MODEL[:-3]))
-					cmdlist.append('cp -r %s %s' % (MAINDEST, TARGET))
+					cmdlist.append('cp -r %s %s' % (self.MAINDEST, self.TARGET))
 				elif self.TYPE == 'VU':
 					cmdlist.append('mkdir -p %s/vuplus_back/%s' % (self.TARGET, self.MODEL[2:]))
-					cmdlist.append('cp -r %s %s/vuplus_back/' % (MAINDEST, TARGET))
+					cmdlist.append('cp -r %s %s/vuplus_back/' % (self.MAINDEST, self.TARGET))
 				elif self.TYPE == 'VENTON':
 					cmdlist.append('mkdir -p %s/venton/%s' % (self.TARGET, self.MODEL))
 					cmdlist.append('cp -r %s %s/venton/' % (self.MAINDEST, self.TARGET))
@@ -730,8 +730,8 @@ class ImageBackup(Screen):
 
 	def imageInfo(self):
 		AboutText = _("Full Image Backup ")
-		AboutText += _("By opendroid") + "\n"
-		AboutText += _("Support at") + " www.droidsat.org\n\n"
+		AboutText += _("By openATV Image Team") + "\n"
+		AboutText += _("Support at") + " www.opena.tv\n\n"
 		AboutText += _("[Image Info]\n")
 		AboutText += _("Model: %s %s\n") % (getMachineBrand(), getMachineName())
 		AboutText += _("Backup Date: %s\n") % strftime("%Y-%m-%d", localtime(self.START))

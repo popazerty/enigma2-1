@@ -1,3 +1,5 @@
+from enigma import getBoxType
+
 class HardwareInfo:
 	device_name = None
 	device_version = None
@@ -12,6 +14,8 @@ class HardwareInfo:
 			file = open("/proc/stb/info/model", "r")
 			HardwareInfo.device_name = file.readline().strip()
 			file.close()
+			if getBoxType().startswith('tm') or getBoxType().startswith('iqon') or getBoxType().startswith('media') or getBoxType().startswith('opti'):
+				HardwareInfo.device_name = "dm800se"
 			try:
 				file = open("/proc/stb/info/version", "r")
 				HardwareInfo.device_version = file.readline().strip()
@@ -44,4 +48,10 @@ class HardwareInfo:
 		return HardwareInfo.device_version
 
 	def has_hdmi(self):
-		return (HardwareInfo.device_name == 'dm7020hd' or HardwareInfo.device_name == 'dm800se' or HardwareInfo.device_name == 'dm500hd' or (HardwareInfo.device_name == 'dm8000' and HardwareInfo.device_version != None))
+		return not (HardwareInfo.device_name == 'dm800' or (HardwareInfo.device_name == 'dm8000' and HardwareInfo.device_version == None))
+
+	def linux_kernel(self):
+		try:
+			return open("/proc/version","r").read().split(' ', 4)[2].split('-',2)[0]
+		except:
+			return "unknown"

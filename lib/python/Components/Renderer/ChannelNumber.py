@@ -10,6 +10,7 @@ class ChannelNumber(Renderer, VariableText):
 	GUI_WIDGET = eLabel
 
 	def changed(self, what):
+		global text
 		if what[0] != self.CHANGED_SPECIFIC:
 			return
 		if what[1] != iPlayableService.evStart:

@@ -3,8 +3,11 @@ import os
 def enumFeeds():
 	for fn in os.listdir('/etc/opkg'):
 		if fn.endswith('-feed.conf'):
+			file = open(os.path.join('/etc/opkg', fn))
+			feedfile = file.readlines()
+			file.close()
 			try:
-				for feed in open(os.path.join('/etc/opkg', fn)):
+				for feed in feedfile:
 					yield feed.split()[1]
 			except IndexError:
 				pass
@@ -15,7 +18,8 @@ def enumPlugins(filter_start=''):
 	for feed in enumFeeds():
 		package = None
 		try:
-			for line in open('/var/lib/opkg/lists/%s' % feed, 'r'):
+			file = open('/var/lib/opkg/lists/%s' % feed, 'r')
+			for line in file:
 				if line.startswith('Package:'):
 					package = line.split(":",1)[1].strip()
 					version = ''
@@ -41,6 +45,7 @@ def enumPlugins(filter_start=''):
 							description = description.split(' ',1)[1]
 					yield package, version, description.strip()
 					package = None
+			file.close()
 		except IOError:
 			pass
 
