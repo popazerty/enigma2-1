@@ -9,6 +9,8 @@ dist_pkgdata_DATA = \
 	black.mvi \
 	rcpositions.xml \
 	setup.xml \
+	skin.xml \
+	skin_default.xml \
 	skin_subtitles.xml \
 	startwizard.xml \
 	userinterfacepositionerwizard.xml \
@@ -23,11 +25,11 @@ if HAVE_TEXTLCD
 SUBDIRS += displaytext
 endif
 
-if HAVE_COLORLCD2
+if HAVE_COLORLCD
 SUBDIRS += display96
 endif
 
-if HAVE_COLORLCD1
+if HAVE_COLORLCD128
 SUBDIRS += display128
 endif
 

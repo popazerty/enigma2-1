@@ -18,9 +18,7 @@ static int determineBufferCount()
 	}
 	unsigned int megabytes = si.totalram >> 20;
 	int result;
-	if (megabytes > 400)
-		result = 40; // 1024MB systems: Use 8MB IO buffers (vusolo2, vuduo2, ...)
-	else if (megabytes > 200)
+	if (megabytes > 200)
 		result = 20; // 512MB systems: Use 4MB IO buffers (et9x00, vuultimo, ...)
 	else if (megabytes > 100)
 		result = 16; // 256MB systems: Use 3MB demux buffers (dm8000, et5x00, vuduo)
@@ -392,7 +390,6 @@ public:
 	void startSaveMetaInformation(const std::string &filename);
 	void stopSaveMetaInformation();
 	int getLastPTS(pts_t &pts);
-	int getFirstPTS(pts_t &pts);
 	void setTargetFD(int fd) { m_fd_dest = fd; }
 	void enableAccessPoints(bool enable) { m_ts_parser.enableAccessPoints(enable); }
 protected:
@@ -473,11 +470,6 @@ void eDVBRecordFileThread::stopSaveMetaInformation()
 int eDVBRecordFileThread::getLastPTS(pts_t &pts)
 {
 	return m_ts_parser.getLastPTS(pts);
-}
-
-int eDVBRecordFileThread::getFirstPTS(pts_t &pts)
-{
-	return m_ts_parser.getFirstPTS(pts);
 }
 
 int eDVBRecordFileThread::AsyncIO::wait()
@@ -898,14 +890,6 @@ RESULT eDVBTSRecorder::getCurrentPCR(pts_t &pcr)
 
 			/* we don't filter PCR data, so just use the last received PTS, which is not accurate, but better than nothing */
 	return m_thread->getLastPTS(pcr);
-}
-
-RESULT eDVBTSRecorder::getFirstPTS(pts_t &pts)
-{
-	if (!m_running || !m_thread)
-		return 0;
-
-	return m_thread->getFirstPTS(pts);
 }
 
 RESULT eDVBTSRecorder::connectEvent(const Slot1<void,int> &event, ePtr<eConnection> &conn)

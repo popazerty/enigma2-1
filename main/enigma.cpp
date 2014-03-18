@@ -61,7 +61,6 @@ void keyEvent(const eRCKey &key)
 
 	ePtr<eActionMap> ptr;
 	eActionMap::getInstance(ptr);
-	/*eDebug("key.code : %02x \n", key.code);*/
 
 	if ((key.code == last.code) && (key.producer == last.producer) && key.flags & eRCKey::flagRepeat)
 		num_repeat++;
@@ -128,14 +127,6 @@ int exit_code;
 
 int main(int argc, char **argv)
 {
-#ifdef MEMLEAK_CHECK
-	atexit(DumpUnfreed);
-#endif
-
-#ifdef OBJECT_DEBUG
-	atexit(object_dump);
-#endif
-
 	printf("Distro:  %s\n", DISTRO);
 	printf("Version: %s\n", IMAGEVERSION);
 	printf("Build:   %s\n", IMAGEBUILD);
@@ -143,6 +134,14 @@ int main(int argc, char **argv)
 	printf("Boxtype: %s\n", BOXTYPE);
 	printf("Machine: %s\n", MACHINE_NAME);
 	printf("Drivers: %s\n", DRIVERDATE);
+
+#ifdef MEMLEAK_CHECK
+	atexit(DumpUnfreed);
+#endif
+
+#ifdef OBJECT_DEBUG
+	atexit(object_dump);
+#endif
 
 	gst_init(&argc, &argv);
 
@@ -222,10 +221,14 @@ int main(int argc, char **argv)
 				break;
 			}
 		}
-		if (i)
-			my_dc->setSpinner(eRect(ePoint(100, 100), wait[0]->size()), wait, i);
+		/*if (i)
+			my_dc->setSpinner(eRect(ePoint(608, 328), wait[0]->size()), wait, i);
 		else
-			my_dc->setSpinner(eRect(100, 100, 0, 0), wait, 1);
+			my_dc->setSpinner(eRect(608, 328, 0, 0), wait, 1);*/
+		if (i)
+			my_dc->setSpinner(eRect(ePoint(25, 25), wait[0]->size()), wait, i);
+		else
+			my_dc->setSpinner(eRect(25, 25, 0, 0), wait, 1);
 	}
 
 	gRC::getInstance()->setSpinnerDC(my_dc);
@@ -241,7 +244,7 @@ int main(int argc, char **argv)
 	/* start at full size */
 	eVideoWidget::setFullsize(true);
 
-	//	python.execute("mytest", "__main__");
+	// python.execute("mytest", "__main__");
 	python.execFile(eEnv::resolve("${libdir}/enigma2/python/mytest.py").c_str());
 
 	/* restore both decoders to full size */
@@ -342,11 +345,11 @@ const char *getMachineBrand()
 		fgets(boxtype_name, sizeof(boxtype_name), boxtype_file);
 		fclose(boxtype_file);
 
-		if((strcmp(boxtype_name, "ini-1000\n") == 0)  || (strcmp(boxtype_name, "ini-3000\n") == 0) || (strcmp(boxtype_name, "ini-5000\n") == 0) || (strcmp(boxtype_name, "ini-7000\n") == 0) || (strcmp(boxtype_name, "ini-7012\n") == 0) || (strcmp(boxtype_name, "ini-9000\n") == 0))
+		if((strcmp(boxtype_name, "ini-1000\n") == 0)  || (strcmp(boxtype_name, "ini-3000\n") == 0) || (strcmp(boxtype_name, "ini-5000\n") == 0) || (strcmp(boxtype_name, "ini-7000\n") == 0) || (strcmp(boxtype_name, "ini-7012\n") == 0))
 		{
 			return "UNiBOX";
 		}
-		else if((strcmp(boxtype_name, "ini-1000sv\n") == 0) || (strcmp(boxtype_name, "ini-5000sv\n") == 0) || (strcmp(boxtype_name, "ini-9000sv\n") == 0))
+		else if((strcmp(boxtype_name, "ini-1000sv\n") == 0) || (strcmp(boxtype_name, "ini-5000sv\n") == 0))
 		{
 			return "Miraclebox";
 		}
@@ -354,28 +357,17 @@ const char *getMachineBrand()
 		{
 			return "Sezam";
 		}
-		else if((strcmp(boxtype_name, "ini-1000de\n") == 0) || (strcmp(boxtype_name, "ini-9000de\n") == 0))
+		else if((strcmp(boxtype_name, "ini-1000ru\n") == 0) || (strcmp(boxtype_name, "ini-5000ru\n") == 0))
 		{
-			return "GI";
+			return "Sezam";
 		}
+		else if((strcmp(boxtype_name, "ini-1000de\n") == 0))
+		{
+			return "GM";
+		}		
 		else if((strcmp(boxtype_name, "xp1000s\n") == 0))
 		{
 			return "Octagon";
-		}
-		else if(strcmp(boxtype_name, "odinm7\n") == 0)
-		{
-			if(strcmp(BOXTYPE, "odinm6") == 0)
-			{
-				return "TELESTAR";
-			}
-			else if (access("/dev/bus/usb/001/002", F_OK) != NULL )
-			{
-				return "Opticum";
-			}
-			else
-			{	
-				return MACHINE_BRAND;
-			}			
 		}
 		else
 		{
@@ -436,33 +428,18 @@ const char *getMachineName()
 		{
 			return "Marvel";
 		}
-		else if(strcmp(boxtype_name, "ini-9000de\n") == 0) 
-		{
-			return "XpeedLX-3";
-		}		
 		else if(strcmp(boxtype_name, "ini-1000de\n") == 0) 
 		{
-			return "XpeedLX";
+			return "Xpeed LX";
+		}
+		else if(strcmp(boxtype_name, "ini-9000de\n") == 0) 
+		{
+			return "Xpeed LX-3";
 		}
 		else if(strcmp(boxtype_name, "xp1000s\n") == 0) 
 		{
 			return "SF8 HD";
-		}
-		else if(strcmp(boxtype_name, "odinm7\n") == 0)
-		{
-			if(strcmp(BOXTYPE, "odinm6") == 0)
-			{
-				return "STARSAT-LX";
-			}
-			else if (access("/dev/bus/usb/001/002", F_OK) != NULL )
-			{
-				return "AX-Odin";
-			}
-			else
-			{	
-				return MACHINE_NAME;
-			}
-		}
+		}	
 		else
 		{
 			return MACHINE_NAME;
@@ -488,7 +465,19 @@ const char *getDriverDateString()
 
 const char *getBoxType()
 {
-	return BOXTYPE;
+  	// hack way to not change all in code
+	if(strcmp(BOXTYPE, "sezamhdx") == 0) 
+	{
+		return "ventonhdx";
+	}
+	else if(strcmp(BOXTYPE, "sezamhde") == 0) 
+	{
+		return "inihde";
+	}
+	else
+	{
+		return BOXTYPE;
+	}
 }
 
 #include <malloc.h>

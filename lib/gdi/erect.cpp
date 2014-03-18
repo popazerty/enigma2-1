@@ -5,6 +5,14 @@
   eRect member functions
  *****************************************************************************/
 
+eRect::eRect( const ePoint &topLeft, const ePoint &bottomRight )
+{
+	x1 = topLeft.x();
+	y1 = topLeft.y();
+	x2 = bottomRight.x();
+	y2 = bottomRight.y();
+}
+
 eRect eRect::normalize() const
 {
 	eRect r;

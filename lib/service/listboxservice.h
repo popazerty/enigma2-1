@@ -4,13 +4,11 @@
 #include <lib/gdi/gpixmap.h>
 #include <lib/gui/elistbox.h>
 #include <lib/service/iservice.h>
-#include <lib/python/python.h>
 #include <set>
 
 class eListboxServiceContent: public virtual iListboxContent
 {
 	DECLARE_REF(eListboxServiceContent);
-	static ePyObject m_GetPiconNameFunc;
 public:
 	eListboxServiceContent();
 
@@ -81,7 +79,6 @@ public:
 	int getItemHeight() { return m_itemheight; }
 	void setItemHeight(int height);
 	void setServiceTypeIconMode(int mode);
-	static void setGetPiconNameFunc(SWIG_PYOBJECT(ePyObject) func);
 
 	enum {
 		markedForeground,

@@ -19,7 +19,7 @@ from Screens.OScamInfo import OscamInfoMenu
 def Check_Softcam():
 	found = False
 	for x in os.listdir('/etc'):
-		if x.find('.emu') > -1:
+		if x.find('.conf') > -1:
 			found = True
 			break;
 	return found

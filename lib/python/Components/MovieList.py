@@ -14,10 +14,10 @@ import skin
 
 from enigma import eListboxPythonMultiContent, eListbox, gFont, iServiceInformation, eSize, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_VALIGN_CENTER, eServiceReference, eServiceCenter, eTimer
 
-AUDIO_EXTENSIONS = frozenset((".dts", ".mp3", ".wav", ".wave", ".ogg", ".flac", ".m4a", ".mp2", ".m2a", ".3gp", ".3g2", ".asf", ".wma"))
+AUDIO_EXTENSIONS = frozenset((".dts", ".mp3", ".wav", ".wave", ".ogg", ".flac", ".m4a", ".mp2", ".m2a", ".3gp", ".3g2", ".asf", ".wma",  ))
 DVD_EXTENSIONS = ('.iso', '.img')
 IMAGE_EXTENSIONS = frozenset((".jpg", ".png", ".gif", ".bmp"))
-MOVIE_EXTENSIONS = frozenset((".mpg", ".vob", ".wav", ".m4v", ".mkv", ".avi", ".divx", ".dat", ".flv", ".mp4", ".mov", ".wmv", ".m2ts"))
+MOVIE_EXTENSIONS = frozenset((".mpg", ".vob", ".wav", ".m4v", ".mkv", ".avi", ".divx", ".dat", ".flv", ".mp4", ".mov", ".wmv"))
 KNOWN_EXTENSIONS = MOVIE_EXTENSIONS.union(IMAGE_EXTENSIONS, DVD_EXTENSIONS, AUDIO_EXTENSIONS)
 
 cutsParser = struct.Struct('>QI') # big-endian, 64-bit PTS and 32-bit type
@@ -36,15 +36,12 @@ class StubInfo:
 	def isPlayable(self):
 		return True
 	def getInfo(self, serviceref, w):
-		try:
-			if w == iServiceInformation.sTimeCreate:
-				return os.stat(serviceref.getPath()).st_ctime
-			if w == iServiceInformation.sFileSize:
-				return os.stat(serviceref.getPath()).st_size
-			if w == iServiceInformation.sDescription:
-				return serviceref.getPath()
-		except:
-			pass
+		if w == iServiceInformation.sTimeCreate:
+			return os.stat(serviceref.getPath()).st_ctime
+		if w == iServiceInformation.sFileSize:
+			return os.stat(serviceref.getPath()).st_size
+		if w == iServiceInformation.sDescription:
+			return serviceref.getPath()
 		return 0
 	def getInfoString(self, serviceref, w):
 		return ''
@@ -155,7 +152,6 @@ class MovieList(GUIComponent):
 		self.l = eListboxPythonMultiContent()
 		self.tags = set()
 		self.root = None
-		self.list = None
 		self._playInBackground = None
 		self._playInForeground = None
 		self._char = ''
@@ -368,7 +364,7 @@ class MovieList(GUIComponent):
 
 		begin_string = ""
 		if begin > 0:
-			begin_string = ' '.join(FuzzyTime(begin, inPast = True))
+			begin_string = ', '.join(FuzzyTime(begin, inPast = True))
 
 		ih = self.itemHeight
 		lenSize = ih * 3 # 25 -> 75
@@ -457,7 +453,7 @@ class MovieList(GUIComponent):
 	def load(self, root, filter_tags):
 		# this lists our root service, then building a
 		# nice list
-		self.list = [ ]
+		del self.list[:]
 		serviceHandler = eServiceCenter.getInstance()
 		numberOfDirs = 0
 

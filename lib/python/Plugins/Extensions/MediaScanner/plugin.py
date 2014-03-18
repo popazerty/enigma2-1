@@ -99,10 +99,7 @@ def movielist_open(list, session, **kwargs):
 		if not path.endswith('/'):
 			path += '/'
 		config.movielist.last_videodir.value = path
-		try:
-			InfoBar.instance.showMovies(eServiceReference(stype, 0, f.path))
-		except:
-			pass
+		InfoBar.instance.showMovies(eServiceReference(stype, 0, f.path))
 
 def filescan(**kwargs):
 	from Components.Scanner import Scanner, ScanPath

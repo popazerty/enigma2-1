@@ -2,7 +2,7 @@
 from . import _
 
 from Screens.Screen import Screen
-from enigma import eTimer, getMachineBrand, getMachineName
+from enigma import eTimer
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
 from Components.ActionMap import ActionMap
@@ -118,44 +118,43 @@ class HddMount(Screen):
 		self['lab1'].hide()
 
 	def buildMy_rec(self, device):
-		device2 = ''
 		try:
-			if device.find('1') > 1:
+			if device.find('1') > 0:
 				device2 = device.replace('1', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('2') > 1:
+			if device.find('2') > 0:
 				device2 = device.replace('2', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('3') > 1:
+			if device.find('3') > 0:
 				device2 = device.replace('3', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('4') > 1:
+			if device.find('4') > 0:
 				device2 = device.replace('4', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('5') > 1:
+			if device.find('5') > 0:
 				device2 = device.replace('5', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('6') > 1:
+			if device.find('6') > 0:
 				device2 = device.replace('6', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('7') > 1:
+			if device.find('7') > 0:
 				device2 = device.replace('7', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('8') > 1:
+			if device.find('8') > 0:
 				device2 = device.replace('8', '')
 		except:
 			device2 = ''

@@ -42,8 +42,7 @@ class SetupSummary(Screen):
 
 class RecordingSettings(Screen,ConfigListScreen):
 	def removeNotifier(self):
-		if config.usage.setup_level.notifiers:
-			config.usage.setup_level.notifiers.remove(self.levelChanged)
+		config.usage.setup_level.notifiers.remove(self.levelChanged)
 
 	def levelChanged(self, configElement):
 		list = []

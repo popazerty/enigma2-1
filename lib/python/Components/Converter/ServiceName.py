@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 from Components.Converter.Converter import Converter
 from Components.config import config
-from enigma import iServiceInformation, iPlayableService, iPlayableServicePtr, eServiceReference, eEPGCache
+from enigma import iServiceInformation, iPlayableService, iPlayableServicePtr
 from Components.Element import cached
 from ServiceReference import resolveAlternate
 
 class ServiceName(Converter, object):
 	NAME = 0
-	NAME_ONLY = 1
-	NAME_EVENT = 2
+	NAME_ONLY = 2
 	PROVIDER = 3
 	REFERENCE = 4
-	EDITREFERENCE = 5
-	SID = 6	
+	EDITREFERENCE = 4
 
 	def __init__(self, type):
 		Converter.__init__(self, type)
-		self.epgQuery = eEPGCache.getInstance().lookupEventTime
 		if type == "Provider":
 			self.type = self.PROVIDER
 		elif type == "Reference":
@@ -25,10 +22,6 @@ class ServiceName(Converter, object):
 			self.type = self.EDITREFERENCE
 		elif type == "NameOnly":
 			self.type = self.NAME_ONLY
-		elif type == "NameAndEvent":
-			self.type = self.NAME_EVENT
-		elif type == "Sid":
-			self.type = self.SID			
 		else:
 			self.type = self.NAME
 
@@ -43,30 +36,22 @@ class ServiceName(Converter, object):
 			ref = service
 		if not info:
 			return ""
-
-		if self.type == self.NAME or self.type == self.NAME_ONLY or self.type == self.NAME_EVENT:
-			name = ref and info.getName(ref)
-			if name is None:
-				name = info.getName()
-			name = name.replace('\xc2\x86', '').replace('\xc2\x87', '')
-			if self.type == self.NAME_EVENT:
-				act_event = info and info.getEvent(0)
-				if not act_event and info:
-					refstr = info.getInfoString(iServiceInformation.sServiceref)
-					act_event = self.epgQuery(eServiceReference(refstr), -1, 0)
-				if act_event is None:
-					return "%s - " % name
-				else:
-					return "%s - %s" % (name, act_event.getEventName())
-			elif self.type != self.NAME_ONLY and config.usage.show_infobar_channel_number.getValue() and hasattr(self.source, "serviceref") and self.source.serviceref.toString().find('0:0:0:0:0:0:0:0:0') == -1:
+		if self.type == self.NAME or self.type == self.NAME_ONLY:
+			if self.type != self.NAME_ONLY and config.usage.show_infobar_channel_number.getValue() and hasattr(self.source, "serviceref") and self.source.serviceref.toString().find('0:0:0:0:0:0:0:0:0') == -1:
+				name = ref and info.getName(ref)
 				numservice = self.source.serviceref
 				num = numservice and numservice.getChannelNum() or None
+				if name is None:
+					name = info.getName()
 				if num is not None:
-					return str(num) + '   ' + name
+					return str(num) + '   ' + name.replace('\xc2\x86', '').replace('\xc2\x87', '')
 				else:
-					return name
+					return name.replace('\xc2\x86', '').replace('\xc2\x87', '')
 			else:
-				return name
+				name = ref and info.getName(ref)
+				if name is None:
+					name = info.getName()
+				return name.replace('\xc2\x86', '').replace('\xc2\x87', '')
 		elif self.type == self.PROVIDER:
 			return info.getInfoString(iServiceInformation.sProvider)
 		elif self.type == self.REFERENCE or self.type == self.EDITREFERENCE and hasattr(self.source, "editmode") and self.source.editmode:
@@ -76,20 +61,6 @@ class ServiceName(Converter, object):
 			if nref:
 				ref = nref
 			return ref.toString()
-		elif self.type == self.SID:
-			if ref is None:
-				tmpref = info.getInfoString(iServiceInformation.sServiceref)
-			else:
-				tmpref = ref.toString()
-
-			if tmpref:
-				refsplit = tmpref.split(':')
-				if len(refsplit) >= 3: 
-					return refsplit[3]
-				else:
-					return tmpref
-			else:
-				return 'N/A'			
 
 	text = property(getText)
 

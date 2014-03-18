@@ -7,10 +7,11 @@ class WOL:
 		pass
 
 	def setWolState(self, value):
-		print '[WOL] set:',value
+		print 'setWOL',value
 		f = open("/proc/stb/fp/wol", "w")
 		f.write(value)
 		f.close()
+		enable = value == 'enable' and True or False
 
 def Init():
 	if SystemInfo["WOL"]:
@@ -18,7 +19,7 @@ def Init():
 			iwol.setWolState(config.network.wol.value);
 		iwol = WOL()
 		config.network.wol = ConfigSelection([("disable", _("No")), ("enable", _("Yes"))], default = "disable")
-		config.network.wol.addNotifier(setWOLmode, initial_call=True)
+		config.misc.DeepStandby.addNotifier(setWOLmode, initial_call=False)
 	else:
 		def doNothing():
 			pass

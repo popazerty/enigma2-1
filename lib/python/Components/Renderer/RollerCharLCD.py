@@ -1,14 +1,19 @@
 from Components.config import config
 from Renderer import Renderer
-from enigma import eLabel, eTimer, getBoxType
+from enigma import eLabel
+from enigma import eTimer
 from Components.VariableText import VariableText
+from Tools.HardwareInfoVu import HardwareInfoVu
 
 class RollerCharLCD(VariableText, Renderer):
 
     def __init__(self):
         Renderer.__init__(self)
         VariableText.__init__(self)
-        if getBoxType() == 'vuduo':
+        self.moveTimerText = None
+        self.delayTimer = None
+        vumodel = HardwareInfoVu().get_device_name()
+        if vumodel == 'duo':
             self.stringlength = 16
         else:
             self.stringlength = 12
@@ -21,6 +26,10 @@ class RollerCharLCD(VariableText, Renderer):
 
     def changed(self, what):
         if what[0] == self.CHANGED_CLEAR:
+            if self.moveTimerText:
+                self.moveTimerText.stop()
+            if self.delayTimer:
+                self.delayTimer.stop()
             self.text = ''
         else:
             self.text = self.source.text
@@ -43,17 +52,21 @@ class RollerCharLCD(VariableText, Renderer):
         self.moveTimerText.stop()
         if self.x > 0:
             txttmp = self.backtext[self.idx:]
-            self.text = txttmp[:self.stringlength]
-            self.idx = self.idx + 1
-            self.x = self.x - 1
+            self.text = txttmp
+            str_length = 1
+            accents = self.text[:2]
+            if accents in ('\xc3\xbc', '\xc3\xa4', '\xc3\xb6', '\xc3\x84', '\xc3\x9c', '\xc3\x96', '\xc3\x9f'):
+                str_length = 2
+            self.idx = self.idx + str_length
+            self.x = self.x - str_length
         if self.x == 0:
             self.status = 'end'
             self.text = self.backtext
         if self.status != 'end':
-            self.scrollspeed = int(config.usage.lcd_scroll_speed.value)
+            self.scrollspeed = int(config.usage.vfd_scroll_speed.value)
             self.moveTimerText.start(self.scrollspeed)
-        if config.usage.lcd_scroll_delay.value != 'noscrolling':
-            self.scrolldelay = int(config.usage.lcd_scroll_delay.value)
+        if config.usage.vfd_scroll_delay.value != 'noscrolling':
+            self.scrolldelay = int(config.usage.vfd_scroll_delay.value)
             self.delayTimer = eTimer()
             self.delayTimer.timeout.get().append(self.delayTimergo)
             self.delayTimer.start(self.scrolldelay)

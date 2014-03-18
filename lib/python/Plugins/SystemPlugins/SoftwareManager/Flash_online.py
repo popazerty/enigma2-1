@@ -21,14 +21,7 @@ import shutil
 distro = getDistro()
 
 #############################################################################################################
-image = 0 # 0=openATV / 1=openMips
-if distro.lower() == "openmips":
-	image = 1
-elif distro.lower() == "openatv":
-	from enigma import getMachineBrand, getMachineName
-	image = 0
-feedurl_atv = 'http://images.mynonpublic.com/openatv/nightly'
-feedurl_om = 'http://image.openmips.com/2.0'
+feedurl_mcron = 'http://sat-world-forum.com/ronny/images/ventonhdx/online'
 imagePath = '/hdd/images'
 flashPath = '/hdd/images/flash'
 flashTmp = '/hdd/images/tmp'
@@ -141,11 +134,7 @@ class doFlashImage(Screen):
 		self.simulate = False
 		self.Online = online
 		self.imagePath = imagePath
-		self.feedurl = feedurl_atv
-		if image == 0:
-			self.feed = "atv"
-		else:
-			self.feed = "om"
+		self.feedurl = feedurl_mcron
 		self["imageList"] = MenuList(self.imagelist)
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"], 
 		{
@@ -163,12 +152,6 @@ class doFlashImage(Screen):
 		
 	def blue(self):
 		if self.Online:
-			if image == 1:
-				if self.feed == "atv":
-					self.feed = "om"
-				else:
-					self.feed = "atv"
-				self.layoutFinished()
 			return
 		sel = self["imageList"].l.getCurrentSelection()
 		if sel == None:
@@ -211,7 +194,7 @@ class doFlashImage(Screen):
 		box = self.box()
 		self.hide()
 		if self.Online:
-			url = self.feedurl + "/" + box + "/" + sel
+			url = self.feedurl + "/" + "/" + sel
 			u = urllib2.urlopen(url)
 			f = open(file_name, 'wb')
 			meta = u.info()
@@ -329,18 +312,10 @@ class doFlashImage(Screen):
 		self.imagelist = []
 		if self.Online:
 			self["key_yellow"].setText("")
-			if image == 1:
-				if self.feed == "atv":
-					self.feedurl = feedurl_atv
-					self["key_blue"].setText("openMIPS")
-				else:
-					self.feedurl = feedurl_om
-					self["key_blue"].setText("openATV")
-			else:
-				self.feedurl = feedurl_atv
-				self["key_blue"].setText("")
-			url = '%s/index.php?open=%s' % (self.feedurl,box)
-			req = urllib2.Request(url)
+			self.feedurl = feedurl_mcron
+			self["key_blue"].setText("")
+			#url = '%s/index.php?open=%s' % (self.feedurl,box)
+			req = urllib2.Request(self.feedurl)
 			try:
 				response = urllib2.urlopen(req)
 			except urllib2.URLError as e:
@@ -355,14 +330,9 @@ class doFlashImage(Screen):
 				return
 
 			lines = the_page.split('\n')
-			tt = len(box)
 			for line in lines:
-				if line.find("<a href='%s/" % box) > -1:
-					t = line.find("<a href='%s/" % box)
-					if self.feed == "atv":
-						self.imagelist.append(line[t+tt+10:t+tt+tt+39])
-					else:
-						self.imagelist.append(line[t+tt+10:t+tt+tt+40])
+				if line.find('<a href="swf-3.0-') > -1 and line.find('_usb.zip') > -1:
+					self.imagelist.append(line[13:47])
 		else:
 			self["key_blue"].setText(_("Delete"))
 			self["key_yellow"].setText(_("Devices"))

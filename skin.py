@@ -4,19 +4,13 @@ import xml.etree.cElementTree
 import os
 
 profile("LOAD:enigma_skin")
-from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, addFont, gRGB, eWindowStyleSkinned, getDesktop, getBoxType
-from Components.config import ConfigSubsection, ConfigText, config, ConfigYesNo, ConfigSelection, ConfigNothing
-from Components.Converter.Converter import Converter
-from Components.Sources.Source import Source, ObsoleteSource
+from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, addFont, gRGB, eWindowStyleSkinned, getDesktop
+from Components.config import ConfigSubsection, ConfigText, config, ConfigYesNo
+from Components.Sources.Source import ObsoleteSource
 from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_SKIN_IMAGE, SCOPE_FONTS, SCOPE_ACTIVE_SKIN, SCOPE_ACTIVE_LCDSKIN, SCOPE_CURRENT_SKIN, SCOPE_CONFIG, fileExists
 from Tools.Import import my_import
 from Tools.LoadPixmap import LoadPixmap
 from Components.RcModel import rc_model
-
-config.vfd = ConfigSubsection()
-config.vfd.show = ConfigSelection([("skin_text.xml", _("Channel Name")), ("skin_text_clock.xml", _("Clock"))], "skin_text.xml")
-if not os.path.exists("/usr/share/enigma2/skin_text.xml"):
-	config.vfd.show = ConfigNothing()
 
 colorNames = {}
 # Predefined fonts, typically used in built-in screens and for components like
@@ -79,10 +73,13 @@ def skin_user_skinname():
 
 # example: loadSkin("nemesis_greenline/skin.xml")
 config.skin = ConfigSubsection()
+
+# on SD hardware, ViX Night HD will not be available
 DEFAULT_SKIN = "mega32/skin.xml"
 if not fileExists(resolveFilename(SCOPE_SKIN, DEFAULT_SKIN)):
 	# in that case, fallback to Magic (which is an SD skin)
 	DEFAULT_SKIN = "skin.xml"
+
 config.skin.primary_skin = ConfigText(default=DEFAULT_SKIN)
 
 DEFAULT_DISPLAY_SKIN = "skin_display.xml"
@@ -103,8 +100,6 @@ addSkin('skin_box.xml')
 # add optional discrete second infobar
 addSkin('skin_second_infobar.xml')
 display_skin_id = 1
-if getBoxType().startswith('dm'):
-	display_skin_id = 2
 try:
 	if not addSkin(os.path.join('display', config.skin.display_skin.getValue())):
 		raise DisplaySkinError, "display skin not found"
@@ -118,12 +113,6 @@ except Exception, err:
 	skin = os.path.join('display', skin)
 	addSkin(skin)
 	del skin
-
-# Add Skin for Display
-try:
-	addSkin(config.vfd.show.getValue())
-except:
-	addSkin('skin_text.xml')
 
 addSkin('skin_subtitles.xml')
 
@@ -262,17 +251,18 @@ def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, igno
 
 def morphRcImagePath(value):
 	if rc_model.rcIsDefault() is False:
-		if value == '/usr/share/enigma2/skin_default/rc.png' or value == '/usr/share/enigma2/skin_default/rcold.png':
-			value = rc_model.getRcLocation() + 'rc.png'
-		elif value == '/usr/share/enigma2/skin_default/rc0.png' or value == '/usr/share/enigma2/skin_default/rc1.png' or value == '/usr/share/enigma2/skin_default/rc2.png':
+		if value.find('rc.png') != -1 or value.find('oldrc.png') != -1:
 			value = rc_model.getRcLocation() + 'rc.png'
 	return value
 
 def loadPixmap(path, desktop):
+	cached = False
 	option = path.find("#")
 	if option != -1:
+		options = path[option+1:].split(',')
 		path = path[:option]
-	ptr = LoadPixmap(morphRcImagePath(path), desktop)
+		cached = "cached" in options
+	ptr = LoadPixmap(morphRcImagePath(path), desktop, cached)
 	if ptr is None:
 		raise SkinError("pixmap file %s not found!" % (path))
 	return ptr
@@ -488,10 +478,12 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 			skinfile = resolveFilename(SCOPE_ACTIVE_SKIN, filename, path_prefix=path_prefix)
 			if not fileExists(skinfile):
 				skinfile = resolveFilename(SCOPE_SKIN_IMAGE, filename, path_prefix=path_prefix)
-			if fileExists(skinfile):
-				print "[SKIN] loading include:", skinfile
+			print "[SKIN] loading include:", skinfile
+			try:
 				loadSkin(skinfile)
-
+			except Exception, err:
+				print "not loading user skin: ", err
+				
 	for c in skin.findall("colors"):
 		for color in c.findall("color"):
 			get_attr = color.attrib.get

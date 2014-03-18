@@ -152,22 +152,19 @@ class SecConfigure:
 				used_nim_slots.append((slot.slot, slot.description, slot.config.configMode.getValue() != "nothing" and True or False, slot.isCompatible("DVB-S2"), slot.frontend_id is None and -1 or slot.frontend_id))
 		eDVBResourceManager.getInstance().setFrontendSlotInformations(used_nim_slots)
 
-		try:
-			for slot in nim_slots:
-				if slot.frontend_id is not None:
-					types = [type for type in ["DVB-C", "DVB-T", "DVB-T2", "DVB-S", "DVB-S2", "ATSC"] if eDVBResourceManager.getInstance().frontendIsCompatible(slot.frontend_id, type)]
-					if "DVB-T2" in types:
-						# DVB-T2 implies DVB-T support
-						types.remove("DVB-T")
-					if "DVB-S2" in types:
-						# DVB-S2 implies DVB-S support
-						types.remove("DVB-S")
-					if len(types) > 1:
-						slot.multi_type = {}
-						for type in types:
-							slot.multi_type[str(types.index(type))] = type
-		except:
-			pass
+		for slot in nim_slots:
+			if slot.frontend_id is not None:
+				types = [type for type in ["DVB-C", "DVB-T", "DVB-T2", "DVB-S", "DVB-S2", "ATSC"] if eDVBResourceManager.getInstance().frontendIsCompatible(slot.frontend_id, type)]
+				if "DVB-T2" in types:
+					# DVB-T2 implies DVB-T support
+					types.remove("DVB-T")
+				if "DVB-S2" in types:
+					# DVB-S2 implies DVB-S support
+					types.remove("DVB-S")
+				if len(types) > 1:
+					slot.multi_type = {}
+					for type in types:
+						slot.multi_type[str(types.index(type))] = type
 
 		for slot in nim_slots:
 			x = slot.slot
@@ -208,15 +205,13 @@ class SecConfigure:
 					elif nim.configMode.getValue() == "simple":		#simple config
 						print "diseqcmode: ", nim.diseqcMode.getValue()
 						if nim.diseqcMode.getValue() == "single":			#single
-							setVoltageTone = nim.simpleDiSEqCSetVoltageTone.getValue()
 							if nim.simpleSingleSendDiSEqC.getValue():
-								self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcA.orbital_position, toneburstmode = diseqcParam.NO, diseqcmode = diseqcParam.V1_0, setVoltageTone = setVoltageTone, diseqcpos = diseqcParam.AA, diseqc13V = nim.diseqc13V.getValue())
+								self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcA.orbital_position, toneburstmode = diseqcParam.NO, diseqcmode = diseqcParam.V1_0, diseqcpos = diseqcParam.AA, diseqc13V = nim.diseqc13V.getValue())
 							else:
-								self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcA.orbital_position, toneburstmode = diseqcParam.NO, diseqcmode = diseqcParam.NONE, setVoltageTone = setVoltageTone, diseqcpos = diseqcParam.SENDNO, diseqc13V = nim.diseqc13V.getValue())
+								self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcA.orbital_position, toneburstmode = diseqcParam.NO, diseqcmode = diseqcParam.NONE, diseqcpos = diseqcParam.SENDNO, diseqc13V = nim.diseqc13V.getValue())
 						elif nim.diseqcMode.getValue() == "toneburst_a_b":		#Toneburst A/B
-							setVoltageTone = nim.simpleDiSEqCSetVoltageTone.getValue()
-							self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcA.orbital_position, toneburstmode = diseqcParam.A, diseqcmode = diseqcParam.V1_0, setVoltageTone = setVoltageTone, diseqcpos = diseqcParam.SENDNO, diseqc13V = nim.diseqc13V.getValue())
-							self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcB.orbital_position, toneburstmode = diseqcParam.B, diseqcmode = diseqcParam.V1_0, setVoltageTone = setVoltageTone, diseqcpos = diseqcParam.SENDNO, diseqc13V = nim.diseqc13V.getValue())
+							self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcA.orbital_position, toneburstmode = diseqcParam.A, diseqcmode = diseqcParam.V1_0, diseqcpos = diseqcParam.SENDNO, diseqc13V = nim.diseqc13V.getValue())
+							self.addLNBSimple(sec, slotid = x, orbpos = nim.diseqcB.orbital_position, toneburstmode = diseqcParam.B, diseqcmode = diseqcParam.V1_0, diseqcpos = diseqcParam.SENDNO, diseqc13V = nim.diseqc13V.getValue())
 						elif nim.diseqcMode.getValue() == "diseqc_a_b":		#DiSEqC A/B
 							fastDiSEqC = nim.simpleDiSEqCOnlyOnSatChange.getValue()
 							setVoltageTone = nim.simpleDiSEqCSetVoltageTone.getValue()
@@ -355,7 +350,11 @@ class SecConfigure:
 					sec.setLNBLOFL(currLnb.lofl.getValue() * 1000)
 					sec.setLNBLOFH(currLnb.lofh.getValue() * 1000)
 					sec.setLNBThreshold(currLnb.threshold.getValue() * 1000)
-
+				elif currLnb.lof.getValue() == "circle":
+					sec.setLNBLOFL(10750000)
+					sec.setLNBLOFH(10750000)
+					sec.setLNBThreshold(12700000)
+					sec.setToneMode(switchParam.OFF)
 #				if currLnb.output_12v.getValue() == "0V":
 #					pass # nyi in drivers
 #				elif currLnb.output_12v.getValue() == "12V":
@@ -538,9 +537,8 @@ class NIM(object):
 		if self.isCompatible(what):
 			return True
 		for type in self.multi_type.values():
-			if type and what:
-				if what in self.compatible[type]:
-					return True
+			if what in self.compatible[type]:
+				return True
 		return False
 
 	def getType(self):
@@ -1046,7 +1044,7 @@ def InitSecParams():
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_BETWEEN_DISEQC_REPEATS, configElement.value))
 	config.sec.delay_between_diseqc_repeats = x
 
-	x = ConfigInteger(default=100, limits = (0, 9999))
+	x = ConfigInteger(default=50, limits = (0, 9999))
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_AFTER_LAST_DISEQC_CMD, configElement.value))
 	config.sec.delay_after_last_diseqc_command = x
 
@@ -1054,7 +1052,7 @@ def InitSecParams():
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_AFTER_TONEBURST, configElement.value))
 	config.sec.delay_after_toneburst = x
 
-	x = ConfigInteger(default=75, limits = (0, 9999))
+	x = ConfigInteger(default=20, limits = (0, 9999))
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_AFTER_VOLTAGE_CHANGE_BEFORE_SWITCH_CMDS, configElement.value))
 	config.sec.delay_after_change_voltage_before_switch_command = x
 
@@ -1126,7 +1124,8 @@ def InitNimManager(nimmgr):
 		"universal_lnb": _("Universal LNB"),
 		"unicable": _("Unicable"),
 		"c_band": _("C-Band"),
-		"user_defined": _("User defined")}
+		"user_defined": _("User defined"),
+		"circle": _("Circular")}
 
 	lnb_choices_default = "universal_lnb"
 
@@ -1327,7 +1326,6 @@ def InitNimManager(nimmgr):
 			section.latitude = ConfigFloat(default = [50,767], limits = [(0,359),(0,999)])
 			section.latitudeOrientation = ConfigSelection(latitude_orientation_choices, "north")
 			section.tuningstepsize = ConfigFloat(default = [0,360], limits = [(0,9),(0,999)])
-			section.rotorPositions = ConfigInteger(default = 49, limits = [1,999])
 			section.turningspeedH = ConfigFloat(default = [2,3], limits = [(0,9),(0,9)])
 			section.turningspeedV = ConfigFloat(default = [1,7], limits = [(0,9),(0,9)])
 			section.powerMeasurement = ConfigYesNo(default=True)
@@ -1379,7 +1377,7 @@ def InitNimManager(nimmgr):
 
 	def configModeChanged(configMode):
 		slot_id = configMode.slot_id
-		nim = config.Nims[slot_id]
+ 		nim = config.Nims[slot_id]
 		if configMode.getValue() == "advanced" and isinstance(nim.advanced, ConfigNothing):
 			# advanced config:
 			nim.advanced = ConfigSubsection()
@@ -1390,7 +1388,7 @@ def InitNimManager(nimmgr):
 			for x in nimmgr.satList:
 				tmp = ConfigSubsection()
 				tmp.voltage = ConfigSelection(advanced_voltage_choices, "polarization")
-				tmp.tonemode = ConfigSelection(advanced_tonemode_choices, "band")
+				tmp.tonemode = ConfigSelection(advanced_tonemode_choices, "off")
 				tmp.usals = ConfigYesNo(True)
 				tmp.rotorposition = ConfigInteger(default=1, limits=(1, 255))
 				lnb = ConfigSelection(advanced_lnb_choices, "0")
@@ -1430,7 +1428,7 @@ def InitNimManager(nimmgr):
 			nim.diseqc13V = ConfigYesNo(False)
 			nim.diseqcMode = ConfigSelection(diseqc_mode_choices, "single")
 			nim.connectedTo = ConfigSelection([(str(id), nimmgr.getNimDescription(id)) for id in nimmgr.getNimListOfType("DVB-S") if id != x])
-			nim.simpleSingleSendDiSEqC = ConfigYesNo(True)
+			nim.simpleSingleSendDiSEqC = ConfigYesNo(False)
 			nim.simpleDiSEqCSetVoltageTone = ConfigYesNo(True)
 			nim.simpleDiSEqCOnlyOnSatChange = ConfigYesNo(False)
 			nim.diseqcA = ConfigSatlist(list = diseqc_satlist_choices)
@@ -1443,7 +1441,6 @@ def InitNimManager(nimmgr):
 			nim.latitude = ConfigFloat(default=[50,767], limits=[(0,359),(0,999)])
 			nim.latitudeOrientation = ConfigSelection(latitude_orientation_choices, "north")
 			nim.tuningstepsize = ConfigFloat(default = [0,360], limits = [(0,9),(0,999)])
-			nim.rotorPositions = ConfigInteger(default = 49, limits = [1,999])
 			nim.turningspeedH = ConfigFloat(default = [2,3], limits = [(0,9),(0,9)])
 			nim.turningspeedV = ConfigFloat(default = [1,7], limits = [(0,9),(0,9)])
 			nim.powerMeasurement = ConfigYesNo(False)
@@ -1586,16 +1583,10 @@ def InitNimManager(nimmgr):
 		x = slot.slot
 		nim = config.Nims[x]
 		addMultiType = False
-		print"[NimManager] slot name=%s" % slot.description
 		try:
 			nim.multiType
 		except:
-			if slot.description.find("Sundtek SkyTV Ultimate III") > -1:
-				print"[NimManager] Sundtek SkyTV Ultimate III detected, multiType = False"
-				addMultiType = False
-			else:
-				print"[NimManager] multiType = True"
-				addMultiType = True
+			addMultiType = True
 		if slot.isMultiType() and addMultiType:
 			typeList = []
 			for id in slot.getMultiTypeList().keys():

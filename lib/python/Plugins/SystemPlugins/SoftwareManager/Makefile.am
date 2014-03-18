@@ -20,4 +20,8 @@ dist_install_DATA = \
 	remove.png \
 	update.png \
 	upgradeable.png \
-	upgrade.png
+	upgrade.png 
+
+ 
+
+

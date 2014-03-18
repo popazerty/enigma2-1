@@ -43,7 +43,7 @@ config.movielist = ConfigSubsection()
 config.movielist.curentlyplayingservice = ConfigText()
 config.movielist.show_live_tv_in_movielist = ConfigYesNo(default=True)
 config.movielist.fontsize = ConfigSelectionNumber(default = 0, stepwidth = 1, min = -8, max = 10, wraparound = True)
-config.movielist.itemsperpage = ConfigSelectionNumber(default = 20, stepwidth = 1, min = 3, max = 30, wraparound = True)
+config.movielist.itemsperpage = ConfigSelectionNumber(default = 15, stepwidth = 1, min = 3, max = 30, wraparound = True)
 config.movielist.useslim = ConfigYesNo(default=False)
 config.movielist.moviesort = ConfigInteger(default=MovieList.SORT_RECORDED)
 config.movielist.description = ConfigInteger(default=MovieList.SHOW_DESCRIPTION)
@@ -73,8 +73,12 @@ l_moviesort = [(str(MovieList.SORT_RECORDED), _("by date"), '03/02/01'),
 def defaultMoviePath():
 	result = config.usage.default_path.getValue()
 	if not os.path.isdir(result):
-		from Tools import Directories
-		return Directories.defaultRecordingLocation()
+		for mount in Components.Harddisk.getProcMounts():
+			if mount[1].startswith('/media/'):
+				result = mount[1]
+				if not result.endswith('/'):
+					result += '/'
+				break
 	return result
 
 def setPreferredTagEditor(te):
@@ -266,9 +270,9 @@ class MovieBrowserConfiguration(ConfigListScreen,Screen):
 		cfg = self.cfg
 		config.movielist.moviesort.setValue(int(cfg.moviesort.getValue()))
 		if cfg.description.getValue():
-			config.movielist.description.setValue(MovieList.SHOW_DESCRIPTION)
+			config.movielist.description.value = MovieList.SHOW_DESCRIPTION
 		else:
-			config.movielist.description.setValue(MovieList.HIDE_DESCRIPTION)
+			config.movielist.description.value = MovieList.HIDE_DESCRIPTION
 		if not config.movielist.settings_per_directory.getValue():
 			config.movielist.moviesort.save()
 			config.movielist.description.save()
@@ -325,7 +329,6 @@ class MovieContextMenu(Screen):
 		self["key_green"] = StaticText(_("OK"))
 		menu = []
 		menu.append((_("Settings") + "...", csel.configure))
-		menu.append((_("Device mounts") + "...", csel.showDeviceMounts))
 		menu.append((_("Network mounts") + "...", csel.showNetworkMounts))
 		menu.append((_("Add bookmark"), csel.do_addbookmark))
 		menu.append((_("Create directory"), csel.do_createdir))
@@ -449,13 +452,12 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		self.filePlayingTimer = eTimer()
 		self.filePlayingTimer.timeout.get().append(self.FilePlaying)
 
-		self.playingInForeground = None
 		# create optional description border and hide immediately
 		self["DescriptionBorder"] = Pixmap()
 		self["DescriptionBorder"].hide()
 
 		if not os.path.isdir(config.movielist.last_videodir.getValue()):
-			config.movielist.last_videodir.setValue(defaultMoviePath())
+			config.movielist.last_videodir.value = defaultMoviePath()
 			config.movielist.last_videodir.save()
 		self.setCurrentRef(config.movielist.last_videodir.getValue())
 
@@ -782,14 +784,9 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		self.reloadList()
 
 	def can_delete(self, item):
-		try:
-			if not item:
-				return False
-			return canDelete(item) or isTrashFolder(item[0])
-		except:
-
+		if not item:
 			return False
-
+		return canDelete(item) or isTrashFolder(item[0])
 	def can_move(self, item):
 		return canMove(item)
 	def can_default(self, item):
@@ -851,7 +848,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		if config.movielist.show_live_tv_in_movielist.getValue():
 			self.LivePlayTimer.start(100)
 
-	def hidewaitingtext(self):
+ 	def hidewaitingtext(self):
 		self.hidewaitingTimer.stop()
 		self["waitingtext"].hide()
 
@@ -980,20 +977,23 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 					from Screens.InfoBarGenerics import setResumePoint
 					setResumePoint(MoviePlayer.instance.session)
 				self.session.nav.stopService()
-				if playInBackground != current:
+				if playInBackground and playInBackground != current:
 					# come back to play the new one
 					self.callLater(self.preview)
-			elif playInForeground:
-				self.playingInForeground = playInForeground
-				self.list.playInForeground = None
+				if config.movielist.show_live_tv_in_movielist.getValue():
+					self.LivePlayTimer.start(100)
+				self.filePlayingTimer.start(100)
+			elif self.list.playInForeground:
 				from Screens.InfoBar import MoviePlayer
 				MoviePlayerInstance = MoviePlayer.instance
 				if MoviePlayerInstance is not None:
 					from Screens.InfoBarGenerics import setResumePoint
 					setResumePoint(MoviePlayer.instance.session)
+					MoviePlayerInstance.close()
 				self.session.nav.stopService()
-				if playInForeground != current:
-					self.callLater(self.preview)
+				if config.movielist.show_live_tv_in_movielist.getValue():
+					self.LivePlayTimer.start(100)
+				self.filePlayingTimer.start(100)
 			else:
 				self.list.playInBackground = current
 				self.session.nav.playService(current)
@@ -1100,9 +1100,9 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		except Exception, e:
 			print "Failed to save settings to %s: %s" % (path, e)
 		# Also set config items, in case the user has a read-only disk
-		config.movielist.moviesort.setValue(self.settings["moviesort"])
-		config.movielist.description.setValue(self.settings["description"])
-		config.usage.on_movie_eof.setValue(self.settings["movieoff"])
+		config.movielist.moviesort.value = self.settings["moviesort"]
+		config.movielist.description.value = self.settings["description"]
+		config.usage.on_movie_eof.value = self.settings["movieoff"]
 
 	def loadLocalSettings(self):
 		'Load settings, called when entering a directory'
@@ -1143,9 +1143,9 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		if self.settings["movieoff"] != self.movieOff:
 			self.movieOff = self.settings["movieoff"]
 			needUpdate = True
-		config.movielist.moviesort.setValue(self.settings["moviesort"])
-		config.movielist.description.setValue(self.settings["description"])
-		config.usage.on_movie_eof.setValue(self.settings["movieoff"])
+		config.movielist.moviesort.value = self.settings["moviesort"]
+		config.movielist.description.value = self.settings["description"]
+		config.usage.on_movie_eof.value = self.settings["movieoff"]
 		return needUpdate
 
 	def sortBy(self, newType):
@@ -1168,13 +1168,6 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 			self.session.nav.stopService()
 			self.callLater(self.abort)
 			return
-
-		if self.playingInForeground:
-			self.list.playInForeground = self.playingInForeground
-			self.session.nav.stopService()
-			self.close(self.playingInForeground)
-			return
-
 		self.saveconfig()
 		from Screens.InfoBar import InfoBar
 		infobar = InfoBar.instance
@@ -1184,7 +1177,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		self.close(None)
 
 	def saveconfig(self):
-		config.movielist.last_selected_tags.setValue(self.selected_tags)
+		config.movielist.last_selected_tags.value = self.selected_tags
 
 	def configure(self):
 		self.session.openWithCallback(self.configureDone, MovieBrowserConfiguration)
@@ -1230,7 +1223,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 	def reloadWithDelay(self):
 		if not os.path.isdir(config.movielist.last_videodir.getValue()):
 			path = defaultMoviePath()
-			config.movielist.last_videodir.setValue(path)
+			config.movielist.last_videodir.value = path
 			config.movielist.last_videodir.save()
 			self.setCurrentRef(path)
 			self["freeDiskSpace"].path = path
@@ -1282,7 +1275,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		currentDir = config.movielist.last_videodir.getValue()
 		if res != currentDir:
 			if os.path.isdir(res):
-				config.movielist.last_videodir.setValue(res)
+				config.movielist.last_videodir.value = res
 				config.movielist.last_videodir.save()
 				self.loadLocalSettings()
 				self.setCurrentRef(res)
@@ -1336,7 +1329,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 			# TODO: Some error checking maybe, don't wanna crash on KeyError
 			self.selected_tags = self.tags[tag[0]]
 			if self.selected_tags_ele:
-				self.selected_tags_ele.setValue(tag[0])
+				self.selected_tags_ele.value = tag[0]
 				self.selected_tags_ele.save()
 			self.saveconfig()
 			self.reloadList(home = True)
@@ -1428,14 +1421,14 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		path = config.movielist.last_videodir.getValue()
 		bookmarks = config.movielist.videodirs.getValue()
 		bookmarks.remove(path)
-		config.movielist.videodirs.setValue(bookmarks)
+		config.movielist.videodirs.value = bookmarks
 		config.movielist.videodirs.save()
 
 	def can_createdir(self, item):
 		return True
 	def do_createdir(self):
-		from Screens.VirtualKeyBoard import VirtualKeyBoard
-		self.session.openWithCallback(self.createDirCallback, VirtualKeyBoard,
+		from Screens.InputBox import InputBox
+		self.session.openWithCallback(self.createDirCallback, InputBox,
 			title = _("Please enter name of the new directory"),
 			text = "")
 	def createDirCallback(self, name):
@@ -1476,8 +1469,8 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		else:
 			info = item[1]
 			name = info.getName(item[0])
-		from Screens.VirtualKeyBoard import VirtualKeyBoard
-		self.session.openWithCallback(self.renameCallback, VirtualKeyBoard,
+		from Screens.InputBox import InputBox
+		self.session.openWithCallback(self.renameCallback, InputBox,
 			title = _("Rename"),
 			text = name)
 
@@ -1777,7 +1770,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 				if cur_path.find('.Trash') != -1:
 					are_you_sure = _("Do you really want to permamently remove '%s' from trash can ?") % (name)
 				else:
-					are_you_sure = _("Do you really want to delete %s?") % (name)
+					are_you_sure = _("Do you really want to delete %s ?") % (name)
 				msg = ''
 			mbox=self.session.openWithCallback(self.deleteConfirmed, MessageBox, msg + are_you_sure)
 			mbox.setTitle(self.getTitle())
@@ -1830,10 +1823,6 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 	def showNetworkMounts(self):
 		import NetworkSetup
 		self.session.open(NetworkSetup.NetworkMountsMenu)
-
-	def showDeviceMounts(self):
-		from Plugins.Extensions.Infopanel.MountManager import HddMount
-		self.session.open(HddMount)
 
 	def showActionFeedback(self, text):
 		if self.feedbackTimer is None:

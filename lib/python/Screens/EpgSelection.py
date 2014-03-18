@@ -75,7 +75,6 @@ class EPGSelection(Screen, HelpableScreen):
 		self.eventviewWasShown = False
 		self.currch = None
 		self.session.pipshown = False
-		self.cureventindex = None
 		if plugin_PiPServiceRelation_installed:
 			self.pipServiceRelation = getRelationDict()
 		else:
@@ -496,21 +495,14 @@ class EPGSelection(Screen, HelpableScreen):
 		elif self.type == EPG_TYPE_MULTI:
 			self['list'].fillMultiEPG(self.services, self.ask_time)
 		elif self.type == EPG_TYPE_SINGLE or self.type == EPG_TYPE_ENHANCED or self.type == EPG_TYPE_INFOBAR:
-			try:
-				if self.type == EPG_TYPE_SINGLE:
-					service = self.currentService
-				elif self.type == EPG_TYPE_ENHANCED or self.type == EPG_TYPE_INFOBAR:
-					service = ServiceReference(self.servicelist.getCurrentSelection())
-				if not self.cureventindex:
-					index = self['list'].getCurrentIndex()
-				else:
-					index = self.cureventindex
-					self.cureventindex = None
-				self['list'].fillSingleEPG(service)
-				self['list'].sortSingleEPG(int(config.epgselection.sort.getValue()))
-				self['list'].setCurrentIndex(index)
-			except:
-				pass
+			if self.type == EPG_TYPE_SINGLE:
+				service = self.currentService
+			elif self.type == EPG_TYPE_ENHANCED or self.type == EPG_TYPE_INFOBAR:
+				service = ServiceReference(self.servicelist.getCurrentSelection())
+			index = self['list'].getCurrentIndex()
+			self['list'].fillSingleEPG(service)
+			self['list'].sortSingleEPG(int(config.epgselection.sort.getValue()))
+			self['list'].setCurrentIndex(index)
 
 	def moveUp(self):
 		self['list'].moveTo(self['list'].instance.moveUp)
@@ -716,9 +708,6 @@ class EPGSelection(Screen, HelpableScreen):
 			self.infoKeyPressed(True)
 
 	def closeScreen(self):
-		if self.type == None:
-			self.close()
-			return
 		if self.type == EPG_TYPE_SINGLE:
 			self.close()
 			return # stop and do not continue.
@@ -944,7 +933,6 @@ class EPGSelection(Screen, HelpableScreen):
 
 	def timerAdd(self):
 		cur = self['list'].getCurrent()
-		self.cureventindex = self['list'].getCurrentIndex()
 		event = cur[0]
 		serviceref = cur[1]
 		if event is None:
@@ -954,8 +942,8 @@ class EPGSelection(Screen, HelpableScreen):
 		for timer in self.session.nav.RecordTimer.timer_list:
 			if timer.eit == eventid and timer.service_ref.ref.toString() == refstr:
 				cb_func = lambda ret: self.removeTimer(timer)
-				menu = [(_("Yes"), 'CALLFUNC', cb_func), (_("No"), 'CALLFUNC', self.ChoiceBoxCB)]
-				self.ChoiceBoxDialog = self.session.instantiateDialog(MessageBox, text=_('Do you really want to remove the timer for %s?') % event.getEventName(), list=menu, skin_name="RemoveTimerQuestion", picon=False)
+				menu = [(_("Yes"), 'CALLFUNC', cb_func), (_("No"), 'CALLFUNC', self.ChoiceBoxCB, self.ChoiceBoxNull)]
+				self.ChoiceBoxDialog = self.session.instantiateDialog(ChoiceBox, text=_('Do you really want to remove the timer for %s?') % event.getEventName(), list=menu, skin_name="RemoveTimerQuestion")
 				self.showChoiceBoxDialog()
 				break
 		else:
@@ -978,7 +966,10 @@ class EPGSelection(Screen, HelpableScreen):
 		else:
 			self['key_green'].setText(_('Add Timer'))
 			self.key_green_choice = self.ADD_TIMER
-		self.refreshlist()
+		try:
+			self.refreshlist()
+		except:
+			pass
 
 	def finishSanityCorrection(self, answer):
 		self.finishedAdd(answer)
@@ -989,7 +980,10 @@ class EPGSelection(Screen, HelpableScreen):
 		self['key_green'].setText(_('Add Timer'))
 		self.key_green_choice = self.ADD_TIMER
 		self.closeChoiceBoxDialog()
-		self.refreshlist()
+		try:
+			self.refreshlist()
+		except:
+			pass
 
 	def RecordTimerQuestion(self):
 		cur = self['list'].getCurrent()
@@ -1002,13 +996,13 @@ class EPGSelection(Screen, HelpableScreen):
 		for timer in self.session.nav.RecordTimer.timer_list:
 			if timer.eit == eventid and timer.service_ref.ref.toString() == refstr:
 				cb_func = lambda ret: self.removeTimer(timer)
-				menu = [(_("Yes"), 'CALLFUNC', cb_func), (_("No"), 'CALLFUNC', self.ChoiceBoxCB)]
-				self.ChoiceBoxDialog = self.session.instantiateDialog(MessageBox, text=_('Do you really want to remove the timer for %s?') % event.getEventName(), list=menu, skin_name="RemoveTimerQuestion", picon=False)
+				menu = [(_("Yes"), 'CALLFUNC', cb_func), (_("No"), 'CALLFUNC', self.ChoiceBoxCB, self.ChoiceBoxNull)]
+				self.ChoiceBoxDialog = self.session.instantiateDialog(ChoiceBox, text=_('Do you really want to remove the timer for %s?') % event.getEventName(), list=menu, skin_name="RemoveTimerQuestion")
 				self.showChoiceBoxDialog()
 				break
 		else:
-			menu = [(_("Add Timer"), 'CALLFUNC', self.ChoiceBoxCB, self.doRecordTimer), (_("Add AutoTimer"), 'CALLFUNC', self.ChoiceBoxCB, self.addAutoTimerSilent)]
-			self.ChoiceBoxDialog = self.session.instantiateDialog(ChoiceBox, title="%s?" % event.getEventName(), list=menu, keys=['green', 'blue'], skin_name="RecordTimerQuestion")
+			menu = [(_("Record once"), 'CALLFUNC', self.ChoiceBoxCB, self.doRecordTimer), (_("Add AutoTimer"), 'CALLFUNC', self.ChoiceBoxCB, self.addAutoTimerSilent)]
+			self.ChoiceBoxDialog = self.session.instantiateDialog(ChoiceBox, title="%s?" % event.getEventName(), list=menu, skin_name="RecordTimerQuestion")
 			serviceref = eServiceReference(str(self['list'].getCurrent()[1]))
 			posy = self['list'].getSelectionPosition(serviceref)
 			self.ChoiceBoxDialog.instance.move(ePoint(posy[0]-self.ChoiceBoxDialog.instance.size().width(),self.instance.position().y()+posy[1]))
@@ -1024,18 +1018,20 @@ class EPGSelection(Screen, HelpableScreen):
 		self.longbuttonpressed = True
 		self.doZapTimer()
 
+	def ChoiceBoxNull(self):
+		return
+
 	def ChoiceBoxCB(self, choice):
-		if choice:
+		if choice[3]:
 			try:
-				choice()
+				choice[3]()
 			except:
-				choice
+				choice[3]
 		self.closeChoiceBoxDialog()
 
 	def showChoiceBoxDialog(self):
 		self['okactions'].setEnabled(False)
-		if self.has_key('epgcursoractions'):
-			self['epgcursoractions'].setEnabled(False)
+		self['epgcursoractions'].setEnabled(False)
 		self['colouractions'].setEnabled(False)
 		self['recordingactions'].setEnabled(False)
 		self['epgactions'].setEnabled(False)
@@ -1051,8 +1047,7 @@ class EPGSelection(Screen, HelpableScreen):
 			self.ChoiceBoxDialog['actions'].execEnd()
 			self.session.deleteDialog(self.ChoiceBoxDialog)
 		self['okactions'].setEnabled(True)
-		if self.has_key('epgcursoractions'):
-			self['epgcursoractions'].setEnabled(True)
+		self['epgcursoractions'].setEnabled(True)
 		self['colouractions'].setEnabled(True)
 		self['recordingactions'].setEnabled(True)
 		self['epgactions'].setEnabled(True)

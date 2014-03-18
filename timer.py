@@ -95,8 +95,6 @@ class TimerEntry:
 	# check if a timer entry must be skipped
 	def shouldSkip(self):
 		if self.disabled:
-			if self.end <= time() and not "PowerTimerEntry" in `self`:
-				self.disabled = False
 			return True
 		if "PowerTimerEntry" in `self`:
 			if (self.timerType == 3 or self.timerType == 4) and self.autosleeprepeat != 'once':
@@ -162,11 +160,6 @@ class Timer:
 
 	def cleanup(self):
 		self.processed_timers = [entry for entry in self.processed_timers if entry.disabled]
-
-	def cleanupDisabled(self):
-		disabled_timers = [entry for entry in self.processed_timers if entry.disabled]
-		for timer in disabled_timers:
-			timer.shouldSkip()
 
 	def cleanupDaily(self, days):
 		limit = time() - (days * 3600 * 24)

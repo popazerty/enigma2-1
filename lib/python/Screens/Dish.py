@@ -20,11 +20,8 @@ class Dish(Screen):
 		self["turnTime"] = Label("")
 		self["posFrom"] = Label("")
 		self["posGoto"] = Label("")
-		self["From"] = Label(_("From :"))
-		self["Goto"] = Label(_("Goto :"))
-		self["Tuner"] = Label(_("Tuner :"))
-		self["tunerName"] = Label("")
-		self["turnSpeed"] = Label("")
+		self["From"] = Label (_("From :"))
+		self["Goto"] = Label (_("Goto :"))
 
 		self.rotorTimer = eTimer()
 		self.rotorTimer.callback.append(self.updateRotorMovingState)
@@ -33,7 +30,6 @@ class Dish(Screen):
 		self.showTimer = eTimer()
 		self.showTimer.callback.append(self.hide)
 
-		self.showdish = config.usage.showdish.getValue()
 		config.usage.showdish.addNotifier(self.configChanged)
 		self.configChanged(config.usage.showdish)
 
@@ -65,9 +61,8 @@ class Dish(Screen):
 				self.hide()
 
 	def turnTimerLoop(self):
-		if self.total_time:
-			self.turn_time -= 1
-			self["turnTime"].setText(self.FormatTurnTime(self.turn_time))
+		self.turn_time -= 1
+		self["turnTime"].setText(self.FormatTurnTime(self.turn_time))
 
 	def __onShow(self):
 		self.__state = self.STATE_SHOWN
@@ -79,13 +74,8 @@ class Dish(Screen):
 
 		self["posFrom"].setText(self.OrbToStr(prev_rotor_pos))
 		self["posGoto"].setText(self.OrbToStr(self.rotor_pos))
-		self["tunerName"].setText(self.getTunerName())
-		if self.total_time == 0:
-			self["turnTime"].setText("")
-			self["turnSpeed"].setText("")
-		else:
-			self["turnTime"].setText(self.FormatTurnTime(self.turn_time))
-			self["turnSpeed"].setText(str(self.getTurningSpeed(self.cur_polar)) + chr(176) + _("/s"))
+		self["turnTime"].setText(self.FormatTurnTime(self.turn_time))
+
 		self.turnTimer.start(1000, False)
 
 	def __onHide(self):
@@ -108,7 +98,7 @@ class Dish(Screen):
 		if tuner_type and tuner_type.find("DVB-S") != -1:
 			self.cur_orbpos = data.get("orbital_position", INVALID_POSITION)
 			if self.cur_orbpos != INVALID_POSITION:
-				config.misc.lastrotorposition.setValue(self.cur_orbpos)
+				config.misc.lastrotorposition.value = self.cur_orbpos
 				config.misc.lastrotorposition.save()
 			self.cur_polar  = data.get("polarization", 0)
 			self.rotorTimer.start(500, False)
@@ -120,8 +110,8 @@ class Dish(Screen):
 			self.hide()
 
 	def configChanged(self, configElement):
-		self.showdish = configElement.getValue()
-		if configElement.getValue() == "off":
+		self.showdish = configElement.value
+		if configElement.value == "off":
 			self["Dishpixmap"].setConnect(lambda: False)
 		else:
 			self["Dishpixmap"].setConnect(eDVBSatelliteEquipmentControl.getInstance().isRotorMoving)
@@ -142,35 +132,22 @@ class Dish(Screen):
 				mrt = 3600 - mrt
 			if (mrt % 10):
 				mrt += 10
-			mrt = (mrt * 1000 / self.getTurningSpeed(pol) ) / 10000 + 3
-		return mrt
+			( turningspeedH, turningspeedV ) = self.getTurningSpeed()
+			if pol in (1, 3):	# vertical
+				mrt = (mrt * 1000 / turningspeedV ) / 10000
+			else:			# horizontal
+				mrt = (mrt * 1000 / turningspeedH ) / 10000
+		return mrt + 3
 
-	def getTurningSpeed(self, pol=0):
-		tuner = self.getCurrentTuner()
-		if tuner is not None:
-			nim = config.Nims[tuner]
-			if pol in (1, 3): # vertical
-				return nim.turningspeedV.float
-			return nim.turningspeedH.float
-		if pol in (1, 3):
-			return 1.0
-		return 1.5
+	def getTurningSpeed(self):
+		tuner_number = self.currentTunerInfo().get("tuner_number")
+		nim = config.Nims[tuner_number]
+		return (nim.turningspeedH.float, nim.turningspeedV.float)
 
-	def getCurrentTuner(self):
+	def currentTunerInfo(self):
 		service = self.session.nav.getCurrentService()
 		feinfo = service and service.frontendInfo()
-		tuner = feinfo and feinfo.getFrontendData()
-		if tuner is not None:
-			return tuner.get("tuner_number")
-		return None
-
-	def getTunerName(self):
-		nr = self.getCurrentTuner()
-		if nr is not None:
-			from Components.NimManager import nimmanager
-			nims = nimmanager.nimList()
-			return str(nims[nr].split(':')[:1][0].split(' ')[1])
-		return ""
+		return feinfo and feinfo.getFrontendData()
 
 	def OrbToStr(self, orbpos):
 		if orbpos == INVALID_POSITION:

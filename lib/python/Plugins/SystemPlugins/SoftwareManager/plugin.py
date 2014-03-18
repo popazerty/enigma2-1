@@ -156,8 +156,8 @@ class UpdatePluginMenu(Screen):
 		if self.menu == 0:
 			print "building menu entries"
 			self.list.append(("install-extensions", _("Manage extensions"), _("\nManage extensions or plugins for your %s %s") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			self.list.append(("software-update", _("Software update"), _("\nOnline update of your %s %s software.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			self.list.append(("software-restore", _("Software restore"), _("\nRestore your %s %s with a new firmware.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
+			#self.list.append(("software-update", _("Software update"), _("\nOnline update of your %s %s software.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
+			#self.list.append(("software-restore", _("Software restore"), _("\nRestore your %s %s with a new firmware.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
 			if not getBoxType().startswith('az') and not getBoxType().startswith('dream') and not getBoxType().startswith('ebox') and not getBoxType() == 'gb800solo':
 				self.list.append(("flash-online", _("Flash Online"), _("\nFlash on the fly your %s %s.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
 			self.list.append(("backup-image", _("Backup Image"), _("\nBackup your running %s %s image to HDD or USB.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
@@ -1455,6 +1455,8 @@ class UpdatePlugin(Screen):
 		self.processed_packages = []
 		self.total_packages = None
 		self.skin_path = plugin_path
+		self.TraficCheck = False
+		self.TraficResult = False
 		self.CheckDateDone = False
 
 		self.activity = 0
@@ -1504,6 +1506,60 @@ class UpdatePlugin(Screen):
 		else:
 			self.close()
 			return
+
+	def checkTraficLight(self):
+		from urllib import urlopen
+		import socket
+		currentTimeoutDefault = socket.getdefaulttimeout()
+		socket.setdefaulttimeout(3)
+		message = ""
+		picon = None
+		default = True
+		doUpdate = True
+		# TODO: Use Twisted's URL fetcher, urlopen is evil. And it can
+		# run in parallel to the package update.
+		try:
+			urlopenATV = "http://ampel.mynonpublic.com/Ampel/index.php"
+			d = urlopen(urlopenATV)
+			tmpStatus = d.read()
+			if (os.path.exists("/etc/.beta") and 'rot.png' in tmpStatus) or 'gelb.png' in tmpStatus:
+				message = _("Caution update not yet tested !!") + "\n" + _("Update at your own risk") + "\n\n" + _("For more information see http://www.opena.tv") + "\n\n"# + _("Last Status Date") + ": "  + statusDate + "\n\n"
+				picon = MessageBox.TYPE_ERROR
+				default = False
+			elif 'rot.png' in tmpStatus:
+				message = _("Update is reported as faulty !!") + "\n" + _("Aborting updateprogress") + "\n\n" + _("For more information see http://www.opena.tv")# + "\n\n" + _("Last Status Date") + ": " + statusDate
+				picon = MessageBox.TYPE_ERROR
+				default = False
+				doUpdate = False
+		except:
+			message = _("The status of the current update could not be checked because http://www.opena.tv could not be reached for some reason") + "\n"
+			picon = MessageBox.TYPE_ERROR
+			default = False
+		socket.setdefaulttimeout(currentTimeoutDefault)
+
+		if default:
+		        # We'll ask later
+		        self.runUpgrade(True)
+		else:
+			if doUpdate:
+				# Ask for Update, 
+				message += _("Do you want to update your box?")+"\n"+_("After pressing OK, please wait!")
+				self.session.openWithCallback(self.runUpgrade, MessageBox, message, default = default, picon = picon)
+			else:
+				# Don't Update RED LIGHT !!
+				self.session.open(MessageBox, message, picon, timeout = 20)
+				self.runUpgrade(False)
+
+	def runUpgrade(self, result):
+		self.TraficResult = result
+		if result:
+			self.TraficCheck = True
+			self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE_LIST)
+		else:
+			self.TraficCheck = False
+			self.activityTimer.stop()
+			self.activityslider.setValue(0)
+			self.exit()
 
 	def doActivityTimer(self):
 		if not self.CheckDateDone:
@@ -1559,13 +1615,21 @@ class UpdatePlugin(Screen):
 				self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE_LIST)
 			elif self.ipkg.currentCommand == IpkgComponent.CMD_UPGRADE_LIST:
 				self.total_packages = len(self.ipkg.getFetchedList())
-				if self.total_packages:
-					message = _("Do you want to update your %s %s?") % (getMachineBrand(), getMachineName()) + "                 \n(%s " % self.total_packages + _("Packages") + ")"
-					if config.plugins.softwaremanager.updatetype.getValue() == "cold":
-						choices = [(_("Show new Packages"), "show"), (_("Unattended upgrade without GUI and reboot system"), "cold"), (_("Cancel"), "")]
-					else:
-						choices = [(_("Show new Packages"), "show"), (_("Upgrade and ask to reboot"), "hot"), (_("Cancel"), "")]
-					self.session.openWithCallback(self.startActualUpgrade, ChoiceBox, title=message, list=choices)
+				if self.total_packages and not self.TraficCheck:
+					self.checkTraficLight()
+					return
+				if self.total_packages and self.TraficCheck and self.TraficResult:
+					#message = _("Do you want to update your %s %s?") % (getMachineBrand(), getMachineName()) + "                 \n(%s " % self.total_packages + _("Packages") + ")"
+					try:
+						if config.plugins.softwaremanager.updatetype.getValue() == "cold":
+							self.startActualUpgrade("cold")
+						#	choices = [(_("Show new Packages"), "show"), (_("Unattended upgrade without GUI and reboot system"), "cold"), (_("Cancel"), "")]
+						else:
+							self.startActualUpgrade("hot")
+					except:
+						self.startActualUpgrade("hot")
+					#	choices = [(_("Show new Packages"), "show"), (_("Upgrade and ask to reboot"), "hot"), (_("Cancel"), "")]
+					#self.session.openWithCallback(self.startActualUpgrade, ChoiceBox, title=message, list=choices)
 				else:
 					self.session.openWithCallback(self.close, MessageBox, _("Nothing to upgrade"), type=MessageBox.TYPE_INFO, timeout=10, close_on_any_key=True)
 			elif self.error == 0:

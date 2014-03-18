@@ -1,4 +1,4 @@
-installdir = $(pkglibdir)/python/Plugins/Extensions/Odinpanel/pics
+installdir = $(pkglibdir)/python/Plugins/Extensions/Infopanel/pics
 
 install_PYTHON = *.png
 

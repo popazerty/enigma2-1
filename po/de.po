@@ -5,15 +5,15 @@ msgstr ""
 "Project-Id-Version: tuxbox-enigma 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-11-05 14:38+0000\n"
-"PO-Revision-Date: 2013-10-20 13:22+0100\n"
-"Last-Translator: husky <husky@mail.to>\n"
-"Language-Team: openATV\n"
+"PO-Revision-Date: 2013-10-20 19:41+0100\n"
+"Last-Translator: mcron <mcron@hotmail.de>\n"
+"Language-Team: openSWF\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.5.5\n"
+"X-Generator: Poedit 1.5.4\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
 
 #
@@ -3376,7 +3376,7 @@ msgstr "Lüfter %d PWM"
 msgid "Fan %d Voltage"
 msgstr "Lüfter %d Spannung"
 
-msgid "Fan Control"
+msgid "FAN Control"
 msgstr "Lüfterkontrolle"
 
 msgid "Fan basic action"
@@ -5192,6 +5192,9 @@ msgid "OSD name request"
 msgstr "OSD Spracheinstellung"
 
 #
+msgid "User interface"
+msgstr "Benutzeroberfläche"
+
 msgid "User interface visibility"
 msgstr "Benutzer Interface Deckkraft"
 
@@ -5427,7 +5430,7 @@ msgid "Picture in graphics"
 msgstr "Mini-TV Bild im grafischen EPG anzeigen"
 
 #
-msgid "PicturePlayer"
+msgid "Picture player"
 msgstr "Bildbetrachter"
 
 #
@@ -14551,16 +14554,16 @@ msgstr ""
 "Möchten Sie gleich neustarten ?"
 
 msgid "LCD Skin-Selector"
-msgstr "LCD Skin-Auswahl"
+msgstr "LCD-Skin-Auswahl"
 
 msgid "Setup your LCD"
 msgstr "Einstellen des LCDs"
 
 msgid "LCD Skin Setup"
-msgstr "LCD Skin Auswahl"
+msgstr "Skin Auswahl"
 
 msgid "Skin setup"
-msgstr "LCD Skin Auswahl"
+msgstr "Skin Auswahl"
 
 msgid "LCD scroll speed"
 msgstr "LCD Scollgeschwindigkeit"
@@ -14818,14 +14821,13 @@ msgstr "Wenn aktiviert, werden die Picons in der Kanalliste angezeigt."
 
 #
 msgid "Flash Online a new image"
-msgstr "Online/Offline flashen"
+msgstr "Online/Offline Flashen"
 
 msgid "Flash on the fly your your Receiver software."
-msgstr ""
-"Flashen Sie online oder von einer lokalen Quelle ihre Receiver Software."
+msgstr "Flashen Online oder Local Ihrer Receiver software."
 
 msgid "Flash Online"
-msgstr "Flashen Online/Lokal"
+msgstr "Flashen Online/Local"
 
 msgid ""
 "No /hdd found !!\n"
@@ -14840,7 +14842,7 @@ msgstr ""
 
 # /SoftwareManager/plugin.py
 msgid "Flash On the Fly"
-msgstr "Flashen   Online / Lokal"
+msgstr "Flashen   Online / Local"
 
 # /SoftwareManager/Flash_online.py
 msgid ""
@@ -14848,15 +14850,15 @@ msgid ""
 "Flash on the fly your %s %s."
 msgstr ""
 "\n"
-"Flashen   Online / Lokal Ihrer %s %s."
+"Flashen   Online / Local Ihrer %s %s."
 
 # /SoftwareManager/Flash_online.py
 msgid "Online = Download a image and flash it"
-msgstr "Image online laden und flashen."
+msgstr "Image online laden und Flashen."
 
 # /SoftwareManager/Flash_online.py
 msgid "Local = Flash a image from local path /hdd/images"
-msgstr "Image von HDD oder USB flashen."
+msgstr "Image von HDD oder USB Flashen."
 
 # /SoftwareManager/Flash_online.py
 msgid "Flash On the fly (select a image)"
@@ -14907,34 +14909,6 @@ msgstr ""
 "Bitte installieren Sie ofgwrite nach /usr/bin/ofgwrite.\n"
 "\n"
 "Plugin wird beendet."
-
-msgid "Download Failed !!"
-msgstr "Herunterladen gescheitert !!"
-
-msgid "Simulate (no write)"
-msgstr "Simulation (kein Schreibvorgang)"
-
-msgid "Show only found image and mtd partitions.\n"
-msgstr "Zeige nur verfügbare Images und MTD Partitionen.\n"
-
-msgid "ofgwrite will stop enigma2 now to run the flash.\n"
-msgstr "ofgwrite stoppt jetzt Enigma2 um den Flashvorgang zu starten.\n"
-
-msgid "Your STB will freeze during the flashing process.\n"
-msgstr ""
-"Während des Flashvorganges ist Ihr Receiver unbedienbar und das Bild wird "
-"stoppen.\n"
-
-msgid "Please: DO NOT reboot your STB and turn off the power.\n"
-msgstr "Bitte: Den Receiver keinesfalls neustarten oder ausschalten!\n"
-
-msgid "The image or kernel will be flashing and auto booted in few minutes.\n"
-msgstr ""
-"Image oder Kernel werden geflasht - Ihr Receiver startet in wenigen Minuten "
-"neu.\n"
-
-msgid "Local"
-msgstr "Lokal"
 
 #
 msgid "Show MiniTV in the Front Display"

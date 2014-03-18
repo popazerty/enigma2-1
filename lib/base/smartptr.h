@@ -6,11 +6,25 @@
 #include <string.h>
 #include <lib/python/swig.h>
 
+inline void ptrAssert(void *p) { if (!p) *(unsigned long*)0=0; }
+
 template<class T>
 class ePtr
 {
 protected:
 	T *ptr;
+	char m_ptrStr[sizeof(void*)*2+1];
+	void updatePtrStr()
+	{
+		if (ptr) {
+			if (sizeof(void*) > 4)
+				sprintf(m_ptrStr, "%llx", (unsigned long long)ptr);
+			else
+				sprintf(m_ptrStr, "%lx", (unsigned long)ptr);
+		}
+		else
+			strcpy(m_ptrStr, "NIL");
+	}
 public:
 	T &operator*() { return *ptr; }
 	ePtr(): ptr(0)
@@ -49,19 +63,17 @@ public:
 		if (ptr)
 			ptr->Release();
 	}
-	/* Horribly misnamed now, but why waste >9 bytes on each object just
-	 * to satisfy one ServiceEventTracker which doesn't even care about
-	 * the actual type it returns. */
-	unsigned int getPtrString() const
+	char *getPtrString()
 	{
-		return (unsigned int)ptr;
+		updatePtrStr();
+		return m_ptrStr;
 	}
 #ifndef SWIG
 	T* grabRef() { if (!ptr) return 0; ptr->AddRef(); return ptr; }
-	T* &ptrref() { return ptr; }
+	T* &ptrref() { ASSERT(!ptr); return ptr; }
 	operator bool() const { return !!this->ptr; }
 #endif
-	T* operator->() const { return ptr; }
+	T* operator->() const { ptrAssert(ptr); return ptr; }
 	operator T*() const { return this->ptr; }
 };
 
@@ -133,9 +145,9 @@ public:
 	}
 #ifndef SWIG
 	T* grabRef() { if (!ptr) return 0; ptr->AddRef(); ptr->AddUse(); return ptr; }
-	T* &ptrref() { return ptr; }
+	T* &ptrref() { ASSERT(!ptr); return ptr; }
 #endif
-	T* operator->() const { return ptr; }
+	T* operator->() const { ptrAssert(ptr); return ptr; }
 	operator T*() const { return this->ptr; }
 };
 
@@ -178,12 +190,12 @@ public:
 		ePtr<T>::operator=(c);
 		return *this;
 	}
-	ePtrHelper<T> operator->() { return ePtrHelper<T>(ptr); }
+	ePtrHelper<T> operator->() { ptrAssert(ptr); return ePtrHelper<T>(ptr); }
 			/* for const objects, we don't need the helper, as they can't */
 			/* be changed outside the program flow. at least this is */
 			/* what the compiler assumes, so in case you're using const */
 			/* eMutablePtrs note that they have to be const. */
-	const T* operator->() const { return ptr; }
+	const T* operator->() const { ptrAssert(ptr); return ptr; }
 };
 #endif
 

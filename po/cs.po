@@ -828,16 +828,16 @@ msgid "Add provider"
 msgstr "přidat poskytovatele"
 
 msgid "Add recording (enter recording duration)"
-msgstr "Nahrávání (zadat počet minut)"
+msgstr ""
 
 msgid "Add recording (enter recording endtime)"
-msgstr "Nahrávání (zadat čas konce nahrávání)"
+msgstr ""
 
 msgid "Add recording (indefinitely)"
-msgstr "Nahrávání (na dobu neurčitou)"
+msgstr ""
 
 msgid "Add recording (stop after current event)"
-msgstr "Nahrávání (stop po aktuálním pořadu)"
+msgstr ""
 
 #
 #, fuzzy
@@ -914,7 +914,7 @@ msgid "Advanced video enhancement setup"
 msgstr "Rozšířené nastavení pro video"
 
 msgid "Advanced video setup"
-msgstr "Rozšířené video nastavení"
+msgstr ""
 
 #
 msgid "After event"

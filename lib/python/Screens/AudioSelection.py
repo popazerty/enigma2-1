@@ -23,7 +23,7 @@ class AudioSelection(Screen, ConfigListScreen):
 		self["streams"] = List([])
 		self["key_red"] = Boolean(False)
 		self["key_green"] = Boolean(False)
-		self["key_yellow"] = Boolean(False)
+		self["key_yellow"] = Boolean(True)
 		self["key_blue"] = Boolean(False)
 
 		ConfigListScreen.__init__(self, [])
@@ -41,8 +41,8 @@ class AudioSelection(Screen, ConfigListScreen):
 			"red": self.keyRed,
 			"green": self.keyGreen,
 			"yellow": self.keyYellow,
-			"subtitleSelection": self.keySubtitle,
-			"audioSelection": self.keyAudio,
+			"subtitleSelection": self.keyYellow,
+			"audioSelection": self.keyYellow,
 			"blue": self.keyBlue,
 			"ok": self.keyOk,
 			"cancel": self.cancel,
@@ -384,13 +384,6 @@ class AudioSelection(Screen, ConfigListScreen):
 
 	def openAutoLanguageSetup(self):
 		self.session.open(Setup, "autolanguagesetup")
-		
-	def keySubtitle(self):
-		if self.settings.menupage.getValue() == PAGE_SUBTITLES:
-			self.cancel()
-
-	def keyAudio(self):
-		pass
 
 	def cancel(self):
 		self.close(0)
@@ -436,7 +429,7 @@ class QuickSubtitlesConfigMenu(ConfigListScreen, Screen):
 		else: 		# pango
 			menu = [
 				getConfigMenuItem("config.subtitles.pango_subtitles_delay"),
-				getConfigMenuItem("config.subtitles.pango_subtitle_colors"),
+				getConfigMenuItem("config.subtitles.pango_subtitles_yellow"),
 				getConfigMenuItem("config.subtitles.subtitle_fontsize"),
 				getConfigMenuItem("config.subtitles.subtitle_position"),
 				getConfigMenuItem("config.subtitles.subtitle_alignment"),

@@ -8,14 +8,11 @@ from Components.Sources.StaticText import StaticText
 from Components.Pixmap import Pixmap
 from Components.Language_cache import LANG_TEXT
 from enigma import eTimer
-
 from Screens.Rc import Rc
-
+from Screens.Setup import Setup
 from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN, SCOPE_LANGUAGE
 from Tools.LoadPixmap import LoadPixmap
 import gettext
-
-inWizzard = False
 
 def LanguageEntryComponent(file, name, index):
 	png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + index + ".png"))
@@ -56,7 +53,7 @@ class LanguageSelection(Screen):
 			"green": self.save,
 			"yellow": self.updateCache,
 		}, -1)
-
+	    
 	def updateCache(self):
 		print"updateCache"
 		self["languages"].setList([('update cache','Updating cache, please wait...',None)])
@@ -81,12 +78,7 @@ class LanguageSelection(Screen):
 
 	def save(self):
 		self.run()
-		global inWizzard
-		if inWizzard:
-			inWizzard = False
-			self.close()
-		else:
-			self.close(self.oldActiveLanguage != config.osd.language.value)
+		self.close()
 
 	def cancel(self):
 		language.activateLanguage(self.oldActiveLanguage)
@@ -125,7 +117,7 @@ class LanguageSelection(Screen):
 
 	def updateList(self):
 		languageList = language.getLanguageList()
-		if not languageList: # no language available => display only english
+		if not languageList: # no language available => display only german
 			list = [ LanguageEntryComponent("en", "English (US)", "en_US") ]
 		else:
 			list = [ LanguageEntryComponent(file = x[1][2].lower(), name = x[1][0], index = x[0]) for x in languageList]
@@ -139,8 +131,6 @@ class LanguageWizard(LanguageSelection, Rc):
 	def __init__(self, session):
 		LanguageSelection.__init__(self, session)
 		Rc.__init__(self)
-		global inWizzard
-		inWizzard = True
 		self.onLayoutFinish.append(self.selectKeys)
 
 		self["wizard"] = Pixmap()

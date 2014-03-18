@@ -1,41 +1,53 @@
-if AZBOX
-SUBDIRS = azboxme azboxhd azboxelite
+if DM8000
+SUBDIRS = dmm0
 endif
 
-if DREAMBOX
-SUBDIRS = dmm0 dmm1 dmm2
+if DM7020HD
+SUBDIRS = dmm1
+endif
+
+if DM800
+SUBDIRS = dmm2
+endif
+
+if DM800SE
+SUBDIRS = dmm2
+endif
+
+if DM800HD
+SUBDIRS = dmm2
+endif
+
+if EBOX5000
+SUBDIRS = ebox5000
 endif
 
 if E3HD
 SUBDIRS = e3hd
 endif
 
-if EBOX
-SUBDIRS = ebox5000
+if ET4X00
+SUBDIRS = et4x00
 endif
 
-if XTREND
-SUBDIRS = et4x00 et6x00 et6500 et9x00 et9500
+if ET5X00
+SUBDIRS = et6x00
+endif
+
+if ET6X00
+SUBDIRS = et6x00 et6500
+endif
+
+if ET9X00
+SUBDIRS = et9x00 et9500
 endif
 
 if GIGABLUE
 SUBDIRS = gb
 endif
 
-if GBQUAD
-SUBDIRS = gb
-endif
-
 if IQON
 SUBDIRS = iqon
-endif
-
-if JEPSSEN
-SUBDIRS = mediabox
-endif
-
-if EDISION
-SUBDIRS = optimuss
 endif
 
 if IXUSSONE
@@ -46,12 +58,12 @@ if IXUSSZERO
 SUBDIRS = ixusszero
 endif
 
-if IXUSSDUO
-SUBDIRS = ixusszero
+if ODINM7
+SUBDIRS = odinm7
 endif
 
-if ODIN
-SUBDIRS = odinm9 odinm7 odinm6
+if ODINM9
+SUBDIRS = odinm9
 endif
 
 if TECHNOMATE
@@ -59,11 +71,11 @@ SUBDIRS = tm
 endif
 
 if VENTON
-SUBDIRS = ini0 ini1 ini2 ini3 ini4
+SUBDIRS = ini0 ini1 ini2 ini3
 endif
 
 if INI
-SUBDIRS = ini0 ini1 ini2 ini3 ini4
+SUBDIRS = ini0 ini1 ini2 ini3
 endif
 
 if VUSOLO
@@ -87,10 +99,9 @@ SUBDIRS = vu2
 endif
 
 if VUDUO2
-SUBDIRS = vu3
+SUBDIRS = vu
 endif
 
 if XP1000
 SUBDIRS = xp1000
 endif
-

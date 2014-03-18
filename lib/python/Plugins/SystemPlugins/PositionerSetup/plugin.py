@@ -28,6 +28,45 @@ import log
 import rotor_calc
 
 class PositionerSetup(Screen):
+	skin = """
+		<screen position="center,center" size="560,400" title="Positioner setup" >
+			<ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" transparent="1" alphatest="on" />
+			<ePixmap pixmap="buttons/green.png" position="140,0" size="140,40" transparent="1" alphatest="on" />
+			<ePixmap pixmap="buttons/yellow.png" position="280,0" size="140,40" transparent="1" alphatest="on" />
+			<ePixmap pixmap="buttons/blue.png" position="420,0" size="140,40" transparent="1" alphatest="on" />
+
+			<widget name="key_red" position="0,0" size="140,40" zPosition="1" halign="center" valign="center" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2"/>
+			<widget name="key_green" position="140,0" size="140,40" zPosition="1" halign="center" valign="center" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2"/>
+			<widget name="key_yellow" position="280,0" size="140,40" zPosition="1" halign="center" valign="center" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2"/>
+			<widget name="key_blue" position="420,0" size="140,40" zPosition="1" halign="center" valign="center" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2"/>
+
+			<widget name="list" position="120,50" size="320,215" font="Regular;20" />
+
+			<widget name="snr_db" position="70,265" size="150,22" halign="center" valign="center" font="Regular;20" foregroundColor="white"/>
+			<eLabel text="SNR:" position="10,290" size="60,22" font="Regular;20" foregroundColor="white"/>
+			<eLabel text="BER:" position="10,315" size="60,22" font="Regular;20" foregroundColor="white"/>
+			<eLabel text="Lock:" position="10,340" size="60,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="snr_percentage" position="230,290" size="60,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="ber_value" position="230,315" size="60,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="lock_state" position="70,340" size="150,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="snr_bar" position="70,290" size="150,22" foregroundColor="white"/>
+			<widget name="ber_bar" position="70,315" size="150,22" foregroundColor="white"/>
+			<eLabel text="FEC:" position="10,365" size="60,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="fec_value" position="70,365" size="150,22" font="Regular;20" foregroundColor="white"/>
+			
+			<eLabel text="Frequency:" position="320,290" size="120,22" font="Regular;20" foregroundColor="white"/>
+			<eLabel text="Polarisation:" position="320,315" size="120,22" font="Regular;20" foregroundColor="white"/>
+			<eLabel text="Symbol rate:" position="320,340" size="120,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="frequency_value" position="440,290" size="120,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="polarisation" position="440,315" size="120,22" font="Regular;20" foregroundColor="white"/>
+			<widget name="symbolrate_value" position="440,340" size="120,22" font="Regular;20" foregroundColor="white"/>
+
+			<ePixmap alphatest="on" pixmap="icons/clock.png" position="480,383" size="14,14" zPosition="3"/>
+			<widget font="Regular;18" halign="left" position="505,380" render="Label" size="55,20" source="global.CurrentTime" transparent="1" valign="center" zPosition="3">
+				<convert type="ClockToText">Default</convert>
+			</widget>
+			<widget name="status_bar" position="10,380" size="460,20" font="Regular;18" foregroundColor="white"/>
+		</screen>"""
 
 	@staticmethod
 	def satposition2metric(position):
@@ -100,7 +139,6 @@ class PositionerSetup(Screen):
 					del session.pip
 					if not self.openFrontend():
 						self.frontend = None # in normal case this should not happen
-						del self.raw_channel
 
 		self.frontendStatus = { }
 		self.diseqc = Diseqc(self.frontend)
@@ -232,7 +270,6 @@ class PositionerSetup(Screen):
 			self.sitelat = lnb.latitude.float
 			self.latitudeOrientation = lnb.latitudeOrientation.value
 			self.tuningstepsize = lnb.tuningstepsize.float
-			self.rotorPositions = lnb.rotorPositions.value
 			self.turningspeedH = lnb.turningspeedH.float
 			self.turningspeedV = lnb.turningspeedV.float
 		except: # some reasonable defaults from NimManager
@@ -241,7 +278,6 @@ class PositionerSetup(Screen):
 			self.sitelat = 50.767
 			self.latitudeOrientation = 'north'
 			self.tuningstepsize = 0.36
-			self.rotorPositions = 49
 			self.turningspeedH = 2.3
 			self.turningspeedV = 1.7
 		self.sitelat = PositionerSetup.orbital2metric(self.sitelat, self.latitudeOrientation)
@@ -277,7 +313,6 @@ class PositionerSetup(Screen):
 			self.sitelat = PositionerSetup.orbital2metric(self.sitelat, self.latitudeOrientation)
 			self.sitelon = PositionerSetup.orbital2metric(self.sitelon, self.longitudeOrientation)
 			self.tuningstepsize = nim.tuningstepsize.float
-			self.rotorPositions = nim.rotorPositions.value
 			self.turningspeedH = nim.turningspeedH.float
 			self.turningspeedV = nim.turningspeedV.float
 		else:	# it is advanced
@@ -293,8 +328,7 @@ class PositionerSetup(Screen):
 		self.positioner_move = ConfigNothing()
 		self.positioner_finemove = ConfigNothing()
 		self.positioner_limits = ConfigNothing()
-		self.positioner_storage = ConfigInteger(default = rotorposition, limits = (1, self.rotorPositions))
-		self.allocatedIndices = []
+		self.positioner_storage = ConfigInteger(default = rotorposition, limits = (1, 99))
 		m = PositionerSetup.satposition2metric(orb_pos)
 		self.orbitalposition = ConfigFloat(default = [int(m[0] / 10), m[0] % 10], limits = [(0,180),(0,9)])
 		self.orientation = ConfigSelection([("east", _("East")), ("west", _("West"))], m[1])
@@ -512,26 +546,19 @@ class PositionerSetup(Screen):
 		elif entry == "storage":
 			if self.advanced:
 				self.printMsg(_("Allocate unused memory index"))
-				while(True):
-					if not len(self.allocatedIndices):
-						for sat in self.availablesats:
-							self.allocatedIndices.append(int(self.advancedsats[sat].rotorposition.value))
-						if len(self.allocatedIndices) == self.rotorPositions:
-							self.statusMsg(_("No free index available"), timeout = self.STATUS_MSG_TIMEOUT)
-							break
-					index = 1
-					for i in sorted(self.allocatedIndices):
-						if i != index:
-							break
-						index += 1
-					if index <= self.rotorPositions:
-						self.positioner_storage.value = index
-						self["list"].invalidateCurrent()
-						self.allocatedIndices.append(index)
-						self.statusMsg((_("Index allocated:") + " %2d") % index, timeout = self.STATUS_MSG_TIMEOUT)
+				indices = []
+				for sat in self.availablesats:
+					indices.append(int(self.advancedsats[sat].rotorposition.value))
+				index = 1
+				for i in sorted(indices):
+					if i != index:
 						break
-					else:
-						self.allocatedIndices = []
+					index += 1
+				if index <= 99:
+					self.positioner_storage.value = index
+					self.statusMsg((_("Index allocated:") + " %2d") % index, timeout = self.STATUS_MSG_TIMEOUT)
+				else:
+					self.statusMsg(_("No free index available"), timeout = self.STATUS_MSG_TIMEOUT)
 
 	def recalcConfirmed(self, yesno):
 		if yesno:
@@ -572,7 +599,6 @@ class PositionerSetup(Screen):
 			if orb_pos in self.availablesats:
 				rotorposition = int(self.advancedsats[orb_pos].rotorposition.value)
 				self.positioner_storage.value = rotorposition
-				self.allocatedIndices = []
 			self.setLNB(self.getLNBfromConfig(orb_pos))
 
 	def isLocked(self):
