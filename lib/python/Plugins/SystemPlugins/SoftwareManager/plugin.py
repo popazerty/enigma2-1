@@ -18,18 +18,19 @@ from Components.Harddisk import harddiskmanager
 from Components.config import config,getConfigListEntry, ConfigSubsection, ConfigText, ConfigLocations, ConfigYesNo, ConfigSelection
 from Components.ConfigList import ConfigListScreen
 from Components.Console import Console
+from Components.Label import Label
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
 from Components.SelectionList import SelectionList
 from Components.PluginComponent import plugins
-from Plugins.Extensions.Infopanel.SoftwarePanel import SoftwarePanel
+#from Components.About import about
 from Components.PackageInfo import PackageInfoHandler
 from Components.Language import language
 from Components.AVSwitch import AVSwitch
 from Components.Task import job_manager
-from Tools.Directories import pathExists, fileExists, resolveFilename, SCOPE_PLUGINS, SCOPE_CURRENT_PLUGIN, SCOPE_ACTIVE_SKIN, SCOPE_METADIR, SCOPE_CURRENT_SKIN
+from Tools.Directories import pathExists, fileExists, resolveFilename, SCOPE_PLUGINS, SCOPE_CURRENT_PLUGIN, SCOPE_ACTIVE_SKIN, SCOPE_METADIR
 from Tools.LoadPixmap import LoadPixmap
 from Tools.NumericalTextInput import NumericalTextInput
-from enigma import eTimer, RT_HALIGN_LEFT, RT_VALIGN_CENTER, eListboxPythonMultiContent, eListbox, gFont, getDesktop, ePicLoad, eRCInput, getPrevAsciiCode, eEnv, iRecordableService, getBoxType, getEnigmaVersionString, getMachineBrand, getMachineName
+from enigma import eTimer, RT_HALIGN_LEFT, RT_VALIGN_CENTER, eListboxPythonMultiContent, eListbox, gFont, getDesktop, ePicLoad, eRCInput, getPrevAsciiCode, eEnv, iRecordableService, getEnigmaVersionString
 from cPickle import dump, load
 from os import path as os_path, system as os_system, unlink, stat, mkdir, popen, makedirs, listdir, access, rename, remove, W_OK, R_OK, F_OK
 from time import time, gmtime, strftime, localtime
@@ -45,22 +46,12 @@ from BackupRestore import BackupSelection, RestoreMenu, BackupScreen, RestoreScr
 from SoftwareTools import iSoftwareTools
 import os
 
-if os.path.exists("/usr/lib/enigma2/python/Plugins/Extensions/dFlash"):
-	from Plugins.Extensions.dFlash.plugin import dFlash
-	DFLASH = True
-else:
-	DFLASH = False
-
 config.plugins.configurationbackup = ConfigSubsection()
-if getBoxType() == "odinm9" :
-	config.plugins.configurationbackup.backuplocation = ConfigText(default = '/media/backup/', visible_width = 50, fixed_size = False)
-else:
-	config.plugins.configurationbackup.backuplocation = ConfigText(default = '/media/hdd/', visible_width = 50, fixed_size = False)
-config.plugins.configurationbackup.backupdirs = ConfigLocations(default=[eEnv.resolve('${sysconfdir}/enigma2/'), '/etc/CCcam.cfg', '/usr/keys/CCcam.cfg',
+config.plugins.configurationbackup.backuplocation = ConfigText(default = '/media/hdd/', visible_width = 50, fixed_size = False)
+config.plugins.configurationbackup.backupdirs = ConfigLocations(default=[eEnv.resolve('${sysconfdir}/enigma2/'),
 																		 '/etc/network/interfaces', '/etc/wpa_supplicant.conf', '/etc/wpa_supplicant.ath0.conf',
 																		 '/etc/wpa_supplicant.wlan0.conf', '/etc/resolv.conf', '/etc/default_gw', '/etc/hostname',
 																		 eEnv.resolve("${datadir}/enigma2/keymap.usr"), eEnv.resolve("${datadir}/enigma2/keymap.ntr")])
-
 
 config.plugins.softwaremanager = ConfigSubsection()
 config.plugins.softwaremanager.overwriteSettingsFiles = ConfigYesNo(default=False)
@@ -112,8 +103,8 @@ def load_cache(cache_file):
 	fd.close()
 	return cache_data
 
-
 class UpdatePluginMenu(Screen):
+
 	skin = """
 		<screen name="UpdatePluginMenu" position="center,center" size="610,410" >
 			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
@@ -132,7 +123,7 @@ class UpdatePluginMenu(Screen):
 			<widget source="menu" render="Listbox" position="360,50" size="240,300" scrollbarMode="showNever" selectionDisabled="1">
 				<convert type="TemplatedMultiContent">
 					{"template": [
-							MultiContentEntryText(pos = (2, 2), size = (240, 300), flags = RT_HALIGN_CENTER|RT_VALIGN_CENTER|RT_WRAP, text = 2), # index 2 is the Description,
+							MultiContentEntryText(pos = (2, 2), size = (240, 300), flags = RT_HALIGN_CENTER|RT_WRAP, text = 2), # index 2 is the Description,
 						],
 					"fonts": [gFont("Regular", 22)],
 					"itemHeight": 300
@@ -148,6 +139,7 @@ class UpdatePluginMenu(Screen):
 		self.skin_path = plugin_path
 		self.menu = args
 		self.list = []
+		self["hdfStatusPic"] = Pixmap()
 		self.oktext = _("\nPress OK on your remote control to continue.")
 		self.menutext = _("Press MENU on your remote control for additional options.")
 		self.infotext = _("Press INFO on your remote control for additional information.")
@@ -155,15 +147,14 @@ class UpdatePluginMenu(Screen):
 		self.backupdirs = ' '.join( config.plugins.configurationbackup.backupdirs.getValue() )
 		if self.menu == 0:
 			print "building menu entries"
-			self.list.append(("install-extensions", _("Manage extensions"), _("\nManage extensions or plugins for your %s %s") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			#self.list.append(("software-update", _("Software update"), _("\nOnline update of your %s %s software.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			#self.list.append(("software-restore", _("Software restore"), _("\nRestore your %s %s with a new firmware.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			if not getBoxType().startswith('az') and not getBoxType().startswith('dream') and not getBoxType().startswith('ebox') and not getBoxType() == 'gb800solo':
-				self.list.append(("flash-online", _("Flash Online"), _("\nFlash on the fly your %s %s.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			self.list.append(("backup-image", _("Backup Image"), _("\nBackup your running %s %s image to HDD or USB.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			self.list.append(("system-backup", _("Backup system settings"), _("\nBackup your %s %s settings.") % (getMachineBrand(), getMachineName()) + self.oktext + "\n\n" + self.infotext, None))
-			self.list.append(("system-restore",_("Restore system settings"), _("\nRestore your %s %s settings.") % (getMachineBrand(), getMachineName()) + self.oktext, None))
-			self.list.append(("ipkg-install", _("Install local extension"),  _("\nScan for local extensions and install them.") + self.oktext, None))
+			self.list.append(("install-extensions", _("Manage extensions"), _("\nManage extensions or plugins for your Receiver" ) + self.oktext, None))
+			self.list.append(("software-update", _("Software update"), _("\nOnline update of your Receiver software." ) + self.oktext, None))
+			self.list.append(("flash-online", _("Flash Online"), _("\nFlash on the fly your your Receiver software.") + self.oktext, None))
+			self.list.append(("software-restore", _("Software restore"), _("\nRestore your Receiver with a new firmware." ) + self.oktext, None))
+			self.list.append(("backup-image", _("Backup Image"), _("\nBackup your running Receiver image to HDD or USB." ) + self.oktext, None))
+			self.list.append(("system-backup", _("Backup system settings"), _("\nBackup your Receiver settings." ) + self.oktext + "\n\n" + self.infotext, None))
+			self.list.append(("system-restore",_("Restore system settings"), _("\nRestore your Receiver settings." ) + self.oktext, None))
+			self.list.append(("ipkg-install", _("Install local extension"),  _("\nScan for local extensions and install them." ) + self.oktext, None))
 			for p in plugins.getPlugins(PluginDescriptor.WHERE_SOFTWAREMANAGER):
 				if p.__call__.has_key("SoftwareSupported"):
 					callFnc = p.__call__["SoftwareSupported"](None)
@@ -248,7 +239,7 @@ class UpdatePluginMenu(Screen):
 
 	def layoutFinished(self):
 		idx = 0
-		self["menu"].index = idx
+		self["menu"].index = idx	
 
 	def setWindowTitle(self):
 		self.setTitle(_("Software management"))
@@ -289,7 +280,8 @@ class UpdatePluginMenu(Screen):
 			currentEntry = current[0]
 			if self.menu == 0:
 				if (currentEntry == "software-update"):
-					self.session.open(SoftwarePanel, self.skin_path)
+					self.session.open(UpdatePlugin, self.skin_path)
+					#self.checkTraficLight()
 				elif (currentEntry == "software-restore"):
 					self.session.open(ImageWizard)
 				elif (currentEntry == "install-extensions"):
@@ -297,10 +289,7 @@ class UpdatePluginMenu(Screen):
 				elif (currentEntry == "flash-online"):
 					self.session.open(FlashOnline)
 				elif (currentEntry == "backup-image"):
-					if DFLASH == True:
-						self.session.open(dFlash)
-					else:
-						self.session.open(ImageBackup)
+					self.session.open(ImageBackup)
 				elif (currentEntry == "system-backup"):
 					self.session.openWithCallback(self.backupDone,BackupScreen, runBackup = True)
 				elif (currentEntry == "system-restore"):
@@ -388,9 +377,9 @@ class SoftwareManagerSetup(Screen, ConfigListScreen):
 			<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
 			<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" transparent="1" />
 			<widget source="key_blue" render="Label" position="420,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" transparent="1" />
-			<widget name="config" position="5,50" size="550,290" scrollbarMode="showOnDemand" />
-			<ePixmap pixmap="skin_default/div-h.png" position="0,300" zPosition="1" size="560,2" />
-			<widget source="introduction" render="Label" position="5,310" size="550,80" zPosition="10" font="Regular;21" halign="center" valign="center" backgroundColor="#25062748" transparent="1" />
+			<widget name="config" position="5,50" size="550,350" scrollbarMode="showOnDemand" />
+			<ePixmap pixmap="skin_default/div-h.png" position="0,400" zPosition="1" size="560,2" />
+			<widget source="introduction" render="Label" position="5,410" size="550,30" zPosition="10" font="Regular;21" halign="center" valign="center" backgroundColor="#25062748" transparent="1" />
 		</screen>"""
 
 	def __init__(self, session, skin_path = None):
@@ -443,8 +432,6 @@ class SoftwareManagerSetup(Screen, ConfigListScreen):
 		self.overwriteBootlogofilesEntry = getConfigListEntry(_("Overwrite Bootlogo Files ?"), config.plugins.softwaremanager.overwriteBootlogoFiles)
 		self.overwriteSpinnerfilesEntry = getConfigListEntry(_("Overwrite Spinner Files ?"), config.plugins.softwaremanager.overwriteSpinnerFiles)
 		self.updatetypeEntry  = getConfigListEntry(_("Select Software Update"), config.plugins.softwaremanager.updatetype)
-		if getBoxType().startswith('et'): 
-			self.list.append(self.updatetypeEntry)
 		self.list.append(self.overwriteConfigfilesEntry)
 		self.list.append(self.overwriteSettingsfilesEntry)
 		self.list.append(self.overwriteDriversfilesEntry)
@@ -1115,7 +1102,7 @@ class PluginManagerInfo(Screen):
 				elif cmd == 2:
 					info = args['package']
 				else:
-					info = _("%s %s software because updates are available.") % (getMachineBrand(), getMachineName())
+					info = _("Receiver software because updates are available.")
 
 				self.list.append(self.buildEntryComponent(action,info))
 			self['list'].setList(self.list)
@@ -1225,7 +1212,7 @@ class PluginManagerHelp(Screen):
 
 class PluginDetails(Screen, PackageInfoHandler):
 	skin = """
-		<screen name="PluginDetails" position="center,center" size="600,440" >
+		<screen name="PluginDetails" position="center,center" size="600,440" title="Plugin details" >
 			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
 			<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
 			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
@@ -1483,11 +1470,11 @@ class UpdatePlugin(Screen):
 		imageDate = date(int(tmpdate[0:4]), int(tmpdate[5:7]), int(tmpdate[8:10]))
 		datedelay = imageDate +  timedelta(days=30)
 		message = _("Your image is out of date!\n\n"
-				"After such a long time, there is a risk that your %s %s will not\n"
-				"boot after online-update, or will show disfunction in running Image.\n\n"
-				"A new flash will increase the stability\n\n"
-				"An online update is done at your own risk !!\n\n\n"
-				"Do you still want to update?") % (getMachineBrand(), getMachineName())
+						"After such a long time, there is a risk that your Receiver will not\n"
+						"boot after online-update, or will show disfunction in running Image.\n\n"
+						"A new flash will increase the stability\n\n"
+						"An online update is done at your own risk !!\n\n\n"
+						"Do you still want to update?")
 
 		if datedelay > date.today():
 			self.updating = True
@@ -1507,48 +1494,53 @@ class UpdatePlugin(Screen):
 			self.close()
 			return
 
-	def checkTraficLight(self):
-		from urllib import urlopen
-		import socket
-		currentTimeoutDefault = socket.getdefaulttimeout()
-		socket.setdefaulttimeout(3)
-		message = ""
-		picon = None
-		default = True
-		doUpdate = True
+	#def checkTraficLight(self):
+	#	from urllib import urlopen
+	#	import socket
+	#	currentTimeoutDefault = socket.getdefaulttimeout()
+	#	socket.setdefaulttimeout(3)
+	#	message = ""
+	#	picon = None
+	#	default = True
+	#	doUpdate = True
 		# TODO: Use Twisted's URL fetcher, urlopen is evil. And it can
 		# run in parallel to the package update.
-		try:
-			urlopenATV = "http://ampel.mynonpublic.com/Ampel/index.php"
-			d = urlopen(urlopenATV)
-			tmpStatus = d.read()
-			if (os.path.exists("/etc/.beta") and 'rot.png' in tmpStatus) or 'gelb.png' in tmpStatus:
-				message = _("Caution update not yet tested !!") + "\n" + _("Update at your own risk") + "\n\n" + _("For more information see http://www.opena.tv") + "\n\n"# + _("Last Status Date") + ": "  + statusDate + "\n\n"
-				picon = MessageBox.TYPE_ERROR
-				default = False
-			elif 'rot.png' in tmpStatus:
-				message = _("Update is reported as faulty !!") + "\n" + _("Aborting updateprogress") + "\n\n" + _("For more information see http://www.opena.tv")# + "\n\n" + _("Last Status Date") + ": " + statusDate
-				picon = MessageBox.TYPE_ERROR
-				default = False
-				doUpdate = False
-		except:
-			message = _("The status of the current update could not be checked because http://www.opena.tv could not be reached for some reason") + "\n"
-			picon = MessageBox.TYPE_ERROR
-			default = False
-		socket.setdefaulttimeout(currentTimeoutDefault)
+	#	try:
+	#		urlopenSTATUS = "http://status.openmips.com/index.php"
+	#		d = urlopen(urlopenSTATUS)
+	#		tmpStatus = d.read()
+	#		if config.softwareupdate.updatebeta.getValue() and 'gelb.png' in tmpStatus:
+	#			message = _("Caution update not tested yet !!") + "\n" + _("Update at your own risk") + "\n\n" + _("For more information see http://www.openmips.com") + "\n\n"# + _("Last Status Date") + ": "  + statusDate + "\n\n"
+	#			picon = MessageBox.TYPE_ERROR
+	#			default = False
+	#		elif 'rot.png' in tmpStatus:
+	#			if config.softwareupdate.updateisunstable.getValue():
+	#				message = _("Update is reported as faulty !!") + "\n" + _("But you have activated \"Install unstable updates\"") + "\n" + _("Update anyway?")# + "\n\n" + _("Last Status Date") + ": " + statusDate
+	#				picon = MessageBox.TYPE_ERROR
+	#				default = False
+	#			else:
+	#				message = _("Update is reported as faulty !!") + "\n" + _("Aborting updateprogress") + "\n\n" + _("For more information see http://www.openmips.com")# + "\n\n" + _("Last Status Date") + ": " + statusDate
+	#				picon = MessageBox.TYPE_ERROR
+	#				default = False
+	#				doUpdate = False
+	#	except:
+	#		message = _("The status of the current update could not be checked because http://www.openmips.com could not be reached for some reason") + "\n"
+	#		picon = MessageBox.TYPE_ERROR
+	#		default = False
+	#	socket.setdefaulttimeout(currentTimeoutDefault)
 
-		if default:
+	#	if default:
 		        # We'll ask later
-		        self.runUpgrade(True)
-		else:
-			if doUpdate:
+	#	        self.runUpgrade(True)
+	#	else:
+	#		if doUpdate:
 				# Ask for Update, 
-				message += _("Do you want to update your box?")+"\n"+_("After pressing OK, please wait!")
-				self.session.openWithCallback(self.runUpgrade, MessageBox, message, default = default, picon = picon)
-			else:
+	#			message += _("Do you want to update your Receiver?")+"\n"+_("After pressing OK, please wait!")
+	#			self.session.openWithCallback(self.runUpgrade, MessageBox, message, default = default, picon = picon)
+	#		else:
 				# Don't Update RED LIGHT !!
-				self.session.open(MessageBox, message, picon, timeout = 20)
-				self.runUpgrade(False)
+	#			self.session.open(MessageBox, message, picon, timeout = 20)
+	#			self.runUpgrade(False)
 
 	def runUpgrade(self, result):
 		self.TraficResult = result
@@ -1615,21 +1607,16 @@ class UpdatePlugin(Screen):
 				self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE_LIST)
 			elif self.ipkg.currentCommand == IpkgComponent.CMD_UPGRADE_LIST:
 				self.total_packages = len(self.ipkg.getFetchedList())
-				if self.total_packages and not self.TraficCheck:
-					self.checkTraficLight()
-					return
+				#if self.total_packages and not self.TraficCheck:
+				#	self.checkTraficLight()
+				#	return
 				if self.total_packages and self.TraficCheck and self.TraficResult:
-					#message = _("Do you want to update your %s %s?") % (getMachineBrand(), getMachineName()) + "                 \n(%s " % self.total_packages + _("Packages") + ")"
-					try:
-						if config.plugins.softwaremanager.updatetype.getValue() == "cold":
-							self.startActualUpgrade("cold")
-						#	choices = [(_("Show new Packages"), "show"), (_("Unattended upgrade without GUI and reboot system"), "cold"), (_("Cancel"), "")]
-						else:
-							self.startActualUpgrade("hot")
-					except:
-						self.startActualUpgrade("hot")
-					#	choices = [(_("Show new Packages"), "show"), (_("Upgrade and ask to reboot"), "hot"), (_("Cancel"), "")]
-					#self.session.openWithCallback(self.startActualUpgrade, ChoiceBox, title=message, list=choices)
+					message = _("Do you want to update your Receiver?") + "                 \n(%s " % self.total_packages + _("Packages") + ")"
+					if config.plugins.softwaremanager.updatetype.getValue() == "cold":
+						choices = [(_("Show new Packages"), "show"), (_("Unattended upgrade without GUI and reboot system"), "cold"), (_("Cancel"), "")]
+					else:
+						choices = [(_("Show new Packages"), "show"), (_("Upgrade and ask to reboot"), "hot"), (_("Cancel"), "")]
+					self.session.openWithCallback(self.startActualUpgrade, ChoiceBox, title=message, list=choices)
 				else:
 					self.session.openWithCallback(self.close, MessageBox, _("Nothing to upgrade"), type=MessageBox.TYPE_INFO, timeout=10, close_on_any_key=True)
 			elif self.error == 0:
@@ -1641,11 +1628,11 @@ class UpdatePlugin(Screen):
 			else:
 				self.activityTimer.stop()
 				self.activityslider.setValue(0)
-				error = _("your %s %s might be unusable now. Please consult the manual for further assistance before rebooting your %s %s.") % (getMachineBrand(), getMachineName())
+				error = _("your Receiver might be unusable now. Please consult the manual for further assistance before rebooting your Receiver.")
 				if self.packages == 0:
 					error = _("No packages were upgraded yet. So you can check your network and try again.")
 				if self.updating:
-					error = _("Your %s %s isn't connected to the internet properly. Please check it and try again.") % (getMachineBrand(), getMachineName())
+					error = _("Your Receiver isn't connected to the internet properly. Please check it and try again.")
 				self.status.setText(_("Error") +  " - " + error)
 		#print event, "-", param
 		pass
@@ -1669,7 +1656,7 @@ class UpdatePlugin(Screen):
 	def exit(self):
 		if not self.ipkg.isRunning():
 			if self.packages != 0 and self.error == 0:
-				self.session.openWithCallback(self.exitAnswer, MessageBox, _("Upgrade finished.") +" "+_("Do you want to reboot your %s %s?") % (getMachineBrand(), getMachineName()))
+				self.session.openWithCallback(self.exitAnswer, MessageBox, _("Upgrade finished.") +" "+_("Do you want to reboot your Receiver?"))
 			else:
 				self.close()
 		else:
@@ -1685,7 +1672,7 @@ class UpdatePlugin(Screen):
 
 class IPKGMenu(Screen):
 	skin = """
-		<screen name="IPKGMenu" position="center,center" size="560,400" >
+		<screen name="IPKGMenu" position="center,center" size="560,400" title="Select upgrade source to edit." >
 			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
 			<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
 			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
@@ -2300,7 +2287,8 @@ class ShowUpdatePackages(Screen, NumericalTextInput):
 		self.onLayoutFinish.append(self.rebuildList)
 
 		rcinput = eRCInput.getInstance()
-		rcinput.setKeyboardMode(rcinput.kmAscii)		
+		rcinput.setKeyboardMode(rcinput.kmAscii)
+
 
 	def keyNumberGlobal(self, val):
 		key = self.getKey(val)
@@ -2339,7 +2327,7 @@ class ShowUpdatePackages(Screen, NumericalTextInput):
 	def setStatus(self,status = None):
 		if status:
 			self.statuslist = []
-			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/div-h.png"))
+			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
 			if status == 'update':
 				statuspng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/upgrade.png"))
 				self.statuslist.append(( _("Package list update"), '', _("Trying to download a new updatelist. Please wait..." ),'',statuspng, divpng ))
@@ -2362,7 +2350,7 @@ class ShowUpdatePackages(Screen, NumericalTextInput):
 		pass
 	
 	def buildEntryComponent(self, name, version, description, state):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
 		if not description:
 			description = "No description available."
 		if state == 'installed':
@@ -2411,9 +2399,9 @@ def Plugins(path, **kwargs):
 	global plugin_path
 	plugin_path = path
 	list = [
-		PluginDescriptor(name=_("Software management"), description=_("Manage your %s %s's software") % (getMachineBrand(), getMachineName()), where = PluginDescriptor.WHERE_MENU, needsRestart = False, fnc=startSetup),
+		PluginDescriptor(name=_("Software management"), description=_("Manage your Receiver's software"), where = PluginDescriptor.WHERE_MENU, needsRestart = False, fnc=startSetup),
 		PluginDescriptor(name=_("Ipkg"), where = PluginDescriptor.WHERE_FILESCAN, needsRestart = False, fnc = filescan)
 	]
 	if config.usage.setup_level.index >= 2: # expert+
-		list.append(PluginDescriptor(name=_("Software management"), description=_("Manage your %s %s's software") % (getMachineBrand(), getMachineName()), where = PluginDescriptor.WHERE_EXTENSIONSMENU, needsRestart = False, fnc=UpgradeMain))
+		list.append(PluginDescriptor(name=_("Software management"), description=_("Manage your Receiver's software"), where = PluginDescriptor.WHERE_EXTENSIONSMENU, needsRestart = False, fnc=UpgradeMain))
 	return list

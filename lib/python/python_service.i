@@ -122,6 +122,28 @@ PyObject *getInfoObject(int w)
 	Py_INCREF(Py_None);
 	return Py_None;
 }
+
+PyObject *getAITApplications()
+{
+	ePyObject tuple = PyTuple_New(2);
+	std::map<int, std::string> aitlist;
+	self->getAITApplications(aitlist);
+	if (!aitlist.empty())
+	{
+		ePyObject l = PyList_New(0);
+		for (std::map<int, std::string>::iterator it=aitlist.begin(); it!=aitlist.end(); ++it)
+		{
+			ePyObject tuple = PyTuple_New(2);
+			PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(it->first));
+			PyTuple_SET_ITEM(tuple, 1, PyString_FromString(it->second.c_str()));
+			PyList_Append(l, tuple);
+			Py_DECREF(tuple);
+		}
+		return l;
+	}
+	Py_INCREF(Py_None);
+	return Py_None;
+}
 };
 
 %ignore iServiceInformation::getInfoObject;
@@ -275,6 +297,7 @@ RESULT enableSubtitles(eWidget *parent, PyObject *tuple)
 	track.pid = -1;
 	track.page_number = 0;
 	track.magazine_number = 0;
+	track.language_code = "und";
 
 	if (PyTuple_Check(tuple))
 	{
@@ -305,6 +328,13 @@ RESULT enableSubtitles(eWidget *parent, PyObject *tuple)
 		if (PyInt_Check(entry))
 		{
 			track.magazine_number = PyInt_AsLong(entry);
+		}
+		if (tuplesize==5){
+			entry = PyTuple_GET_ITEM(tuple, 4);
+			if (PyString_Check(entry))
+			{
+				track.language_code = PyString_AsString(entry);
+			}
 		}
 	}
 
@@ -352,11 +382,12 @@ PyObject *getCachedSubtitle()
 	struct iSubtitleOutput::SubtitleTrack track;
 	if (self->getCachedSubtitle(track) >= 0)
 	{
-		ePyObject tuple = PyTuple_New(4);
+		ePyObject tuple = PyTuple_New(5);
 		PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(track.type));
 		PyTuple_SET_ITEM(tuple, 1, PyInt_FromLong(track.pid));
 		PyTuple_SET_ITEM(tuple, 2, PyInt_FromLong(track.page_number));
 		PyTuple_SET_ITEM(tuple, 3, PyInt_FromLong(track.magazine_number));
+		PyTuple_SET_ITEM(tuple, 4, PyString_FromString(track.language_code.c_str()));
 		return tuple;
 	}
 	Py_INCREF(Py_None);

@@ -5,6 +5,7 @@ class evfd
 {
 protected:
 	static evfd *instance;
+	int file_vfd;
 #ifdef SWIG
 	evfd();
 	~evfd();
@@ -17,8 +18,8 @@ public:
 	void init();
 	static evfd* getInstance();
 
-	void vfd_symbol_network(int net);
-	void vfd_symbol_circle(int cir);
+	void vfd_write_string(char * string);
+	void vfd_led(char * led);
 };
 
 

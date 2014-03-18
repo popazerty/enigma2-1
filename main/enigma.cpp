@@ -61,6 +61,7 @@ void keyEvent(const eRCKey &key)
 
 	ePtr<eActionMap> ptr;
 	eActionMap::getInstance(ptr);
+	/*eDebug("key.code : %02x \n", key.code);*/
 
 	if ((key.code == last.code) && (key.producer == last.producer) && key.flags & eRCKey::flagRepeat)
 		num_repeat++;
@@ -115,7 +116,7 @@ public:
 		m_epgcache = new eEPGCache();
 		m_mgr->setChannelList(m_dvbdb);
 	}
-
+	
 	~eMain()
 	{
 		m_dvbdb->saveServicelist();
@@ -127,14 +128,6 @@ int exit_code;
 
 int main(int argc, char **argv)
 {
-	printf("Distro:  %s\n", DISTRO);
-	printf("Version: %s\n", IMAGEVERSION);
-	printf("Build:   %s\n", IMAGEBUILD);
-	printf("Brand:   %s\n", MACHINE_BRAND);
-	printf("Boxtype: %s\n", BOXTYPE);
-	printf("Machine: %s\n", MACHINE_NAME);
-	printf("Drivers: %s\n", DRIVERDATE);
-
 #ifdef MEMLEAK_CHECK
 	atexit(DumpUnfreed);
 #endif
@@ -148,7 +141,7 @@ int main(int argc, char **argv)
 	// set pythonpath if unset
 	setenv("PYTHONPATH", eEnv::resolve("${libdir}/enigma2/python").c_str(), 0);
 	printf("PYTHONPATH: %s\n", getenv("PYTHONPATH"));
-
+	
 	bsodLogInit();
 
 	ePython python;
@@ -157,15 +150,15 @@ int main(int argc, char **argv)
 #if 1
 	ePtr<gMainDC> my_dc;
 	gMainDC::getInstance(my_dc);
-
+	
 	//int double_buffer = my_dc->haveDoubleBuffering();
 
 	ePtr<gLCDDC> my_lcd_dc;
 	gLCDDC::getInstance(my_lcd_dc);
 
 
-	/* ok, this is currently hardcoded for arabic. */
-	/* some characters are wrong in the regular font, force them to use the replacement font */
+		/* ok, this is currently hardcoded for arabic. */
+			/* some characters are wrong in the regular font, force them to use the replacement font */
 	for (int i = 0x60c; i <= 0x66d; ++i)
 		eTextPara::forceReplacementGlyph(i);
 	eTextPara::forceReplacementGlyph(0xfdf2);
@@ -183,7 +176,7 @@ int main(int argc, char **argv)
 		eDebug(" - double buffering found, enable buffered graphics mode.");
 		dsk.setCompositionMode(eWidgetDesktop::cmBuffered);
 	} */
-
+	
 	wdsk = &dsk;
 	lcddsk = &dsk_lcd;
 
@@ -196,10 +189,10 @@ int main(int argc, char **argv)
 		/* redrawing is done in an idle-timer, so we have to set the context */
 	dsk.setRedrawTask(main);
 	dsk_lcd.setRedrawTask(main);
-
-
+	
+	
 	eDebug("Loading spinners...");
-
+	
 	{
 		int i;
 #define MAX_SPINNER 64
@@ -208,10 +201,10 @@ int main(int argc, char **argv)
 		{
 			char filename[64];
 			std::string rfilename;
-			snprintf(filename, sizeof(filename), "${datadir}/enigma2/spinner/wait%d.png", i + 1);
+			snprintf(filename, sizeof(filename), "${datadir}/enigma2/skin_default/spinner/wait%d.png", i + 1);
 			rfilename = eEnv::resolve(filename);
 			loadPNG(wait[i], rfilename.c_str());
-
+			
 			if (!wait[i])
 			{
 				if (!i)
@@ -221,22 +214,18 @@ int main(int argc, char **argv)
 				break;
 			}
 		}
-		/*if (i)
-			my_dc->setSpinner(eRect(ePoint(608, 328), wait[0]->size()), wait, i);
-		else
-			my_dc->setSpinner(eRect(608, 328, 0, 0), wait, 1);*/
 		if (i)
-			my_dc->setSpinner(eRect(ePoint(25, 25), wait[0]->size()), wait, i);
+			my_dc->setSpinner(eRect(ePoint(100, 100), wait[0]->size()), wait, i);
 		else
-			my_dc->setSpinner(eRect(25, 25, 0, 0), wait, 1);
+			my_dc->setSpinner(eRect(100, 100, 0, 0), wait, 1);
 	}
-
+	
 	gRC::getInstance()->setSpinnerDC(my_dc);
 
 	eRCInput::getInstance()->keyEvent.connect(slot(keyEvent));
-
+	
 	printf("executing main\n");
-
+	
 	bsodCatchSignals();
 
 	setIoPrio(IOPRIO_CLASS_BE, 3);
@@ -244,7 +233,7 @@ int main(int argc, char **argv)
 	/* start at full size */
 	eVideoWidget::setFullsize(true);
 
-	// python.execute("mytest", "__main__");
+//	python.execute("mytest", "__main__");
 	python.execFile(eEnv::resolve("${libdir}/enigma2/python/mytest.py").c_str());
 
 	/* restore both decoders to full size */
@@ -255,7 +244,7 @@ int main(int argc, char **argv)
 		eDebug("(exit code 5)");
 		bsodFatal(0);
 	}
-
+	
 	dsk.paint();
 	dsk_lcd.paint();
 
@@ -327,157 +316,6 @@ const char *getEnigmaVersionString()
 {
 	std::string date = enigma2_date;
 	return std::string(date).c_str();
-}
-
-const char *getDistro()
-{
-	return DISTRO;
-}
-
-const char *getMachineBrand()
-{
-	FILE *boxtype_file;
-	char boxtype_name[20];
-
-	// for OEM resellers
-	if((boxtype_file = fopen("/proc/stb/info/boxtype", "r")) != NULL)
-	{
-		fgets(boxtype_name, sizeof(boxtype_name), boxtype_file);
-		fclose(boxtype_file);
-
-		if((strcmp(boxtype_name, "ini-1000\n") == 0)  || (strcmp(boxtype_name, "ini-3000\n") == 0) || (strcmp(boxtype_name, "ini-5000\n") == 0) || (strcmp(boxtype_name, "ini-7000\n") == 0) || (strcmp(boxtype_name, "ini-7012\n") == 0))
-		{
-			return "UNiBOX";
-		}
-		else if((strcmp(boxtype_name, "ini-1000sv\n") == 0) || (strcmp(boxtype_name, "ini-5000sv\n") == 0))
-		{
-			return "Miraclebox";
-		}
-		else if((strcmp(boxtype_name, "ini-1000ru\n") == 0) || (strcmp(boxtype_name, "ini-5000ru\n") == 0) || (strcmp(boxtype_name, "ini-9000ru\n") == 0))
-		{
-			return "Sezam";
-		}
-		else if((strcmp(boxtype_name, "ini-1000ru\n") == 0) || (strcmp(boxtype_name, "ini-5000ru\n") == 0))
-		{
-			return "Sezam";
-		}
-		else if((strcmp(boxtype_name, "ini-1000de\n") == 0))
-		{
-			return "GM";
-		}		
-		else if((strcmp(boxtype_name, "xp1000s\n") == 0))
-		{
-			return "Octagon";
-		}
-		else
-		{
-			return MACHINE_BRAND;
-		}
-	}
-	return MACHINE_BRAND; // to avoid if no /proc/stb/info/boxtype
-}
-
-const char *getMachineName()
-{
-	FILE *boxtype_file;
-	char boxtype_name[20];
-
-	// for OEM resellers
-	if((boxtype_file = fopen("/proc/stb/info/boxtype", "r")) != NULL)
-	{
-		fgets(boxtype_name, sizeof(boxtype_name), boxtype_file);
-		fclose(boxtype_file);
-
-		if(strcmp(boxtype_name, "ini-1000\n") == 0) 
-		{
-			return "HD-e";
-		}
-		else if(strcmp(boxtype_name, "ini-3000\n") == 0) 
-		{
-			return "HD-1";
-		}
-		else if(strcmp(boxtype_name, "ini-5000\n") == 0) 
-		{
-			return "HD-2";
-		}
-		else if(strcmp(boxtype_name, "ini-7000\n") == 0) 
-		{
-			return "HD-3";
-		}
-		else if(strcmp(boxtype_name, "ini-7012\n") == 0) 
-		{
-			return "HD-3";
-		}
-		else if(strcmp(boxtype_name, "ini-1000sv\n") == 0) 
-		{
-			return "Premium Mini";
-		}
-		else if(strcmp(boxtype_name, "ini-5000sv\n") == 0) 
-		{
-			return "Premium Twin";
-		}
-		else if(strcmp(boxtype_name, "ini-1000ru\n") == 0) 
-		{
-			return "HD-1000";
-		} 
-		else if(strcmp(boxtype_name, "ini-5000ru\n") == 0) 
-		{
-			return "HD-5000";
-		}
-		else if(strcmp(boxtype_name, "ini-9000ru\n") == 0) 
-		{
-			return "Marvel";
-		}
-		else if(strcmp(boxtype_name, "ini-1000de\n") == 0) 
-		{
-			return "Xpeed LX";
-		}
-		else if(strcmp(boxtype_name, "ini-9000de\n") == 0) 
-		{
-			return "Xpeed LX-3";
-		}
-		else if(strcmp(boxtype_name, "xp1000s\n") == 0) 
-		{
-			return "SF8 HD";
-		}	
-		else
-		{
-			return MACHINE_NAME;
-		}
-	}
-	return MACHINE_NAME; // to avoid if no /proc/stb/info/boxtype
-}
-
-const char *getImageVersionString()
-{
-	return IMAGEVERSION;
-}
-
-const char *getBuildVersionString()
-{
-	return IMAGEBUILD;
-}
-
-const char *getDriverDateString()
-{
-	return DRIVERDATE;
-}
-
-const char *getBoxType()
-{
-  	// hack way to not change all in code
-	if(strcmp(BOXTYPE, "sezamhdx") == 0) 
-	{
-		return "ventonhdx";
-	}
-	else if(strcmp(BOXTYPE, "sezamhde") == 0) 
-	{
-		return "inihde";
-	}
-	else
-	{
-		return BOXTYPE;
-	}
 }
 
 #include <malloc.h>

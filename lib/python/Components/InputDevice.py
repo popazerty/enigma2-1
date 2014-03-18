@@ -3,6 +3,7 @@ from os import listdir, open as os_open, close as os_close, write as os_write, O
 from Tools.Directories import pathExists
 from fcntl import ioctl
 import struct
+from boxbranding import getBoxType
 
 # asm-generic/ioctl.h
 IOC_NRBITS = 8L
@@ -37,8 +38,6 @@ class inputDevices:
 				self.fd = os_open("/dev/input/" + evdev, O_RDWR | O_NONBLOCK)
 				self.name = ioctl(self.fd, EVIOCGNAME(256), buffer)
 				self.name = self.name[:self.name.find("\0")]
-				if str(self.name).find("Keyboard") != -1:
-					self.name = 'keyboard'
 				os_close(self.fd)
 			except (IOError,OSError), err:
 				print '[iInputDevices] getInputDevices  <ERROR: ioctl(EVIOCGNAME): ' + str(err) + ' >'
@@ -49,11 +48,11 @@ class inputDevices:
 
 
 	def getInputDeviceType(self,name):
-		if name.find("remote control") != -1:
+		if "remote control" in name:
 			return "remote"
-		elif name.find("keyboard") != -1:
+		elif "keyboard" in name:
 			return "keyboard"
-		elif name.find("mouse") != -1:
+		elif "mouse" in name:
 			return "mouse"
 		else:
 			print "Unknown device type:",name
@@ -205,9 +204,11 @@ class RcTypeControl():
 			self.boxType = fd.read()
 			fd.close()
 
-			if config.plugins.remotecontroltype.rctype.getValue() != 0:
-				self.writeRcType(config.plugins.remotecontroltype.rctype.getValue())
+			if config.plugins.remotecontroltype.rctype.value != 0:
+				self.writeRcType(config.plugins.remotecontroltype.rctype.value)
 		else:
+			self.isSupported = False
+		if getBoxType().startswith('gb'):
 			self.isSupported = False
 
 	def multipleRcSupported(self):

@@ -1,7 +1,6 @@
 from enigma import eDVBResourceManager
 from Tools.Directories import fileExists, resolveFilename, SCOPE_SKIN
 from Tools.HardwareInfo import HardwareInfo
-from os import path
 
 SystemInfo = { }
 
@@ -28,9 +27,10 @@ def countFrontpanelLEDs():
 
 SystemInfo["NumFrontpanelLEDs"] = countFrontpanelLEDs()
 SystemInfo["FrontpanelDisplay"] = fileExists("/dev/dbox/oled0") or fileExists("/dev/dbox/lcd0")
-SystemInfo["OledDisplay"] = fileExists("/dev/dbox/oled0")
+SystemInfo["FrontpanelDisplayGrayscale"] = fileExists("/dev/dbox/oled0")
 SystemInfo["LcdDisplay"] = fileExists("/dev/dbox/lcd0")
 SystemInfo["DeepstandbySupport"] = HardwareInfo().get_device_name() != "dm800"
-SystemInfo["WOL"] = fileExists("/proc/stb/fp/wol")
-SystemInfo["HDMICEC"] = (path.exists("/dev/hdmi_cec") or path.exists("/dev/misc/hdmi_cec0")) and fileExists("/usr/lib/enigma2/python/Plugins/SystemPlugins/HdmiCEC/plugin.pyo")
-SystemInfo["SABSetup"] = fileExists("/usr/lib/enigma2/python/Plugins/SystemPlugins/SABnzbd/plugin.pyo")
+SystemInfo["OledDisplay"] = fileExists(resolveFilename(SCOPE_SKIN, 'lcd_skin/skin_lcd_default.xml'))
+SystemInfo["GBWOL"] = fileExists("/usr/bin/gigablue_wol")
+SystemInfo["Fan"] = fileExists("/proc/stb/fp/fan")
+SystemInfo["FanPWM"] = SystemInfo["Fan"] and fileExists("/proc/stb/fp/fan_pwm")

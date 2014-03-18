@@ -87,6 +87,24 @@ void eRCDeviceInputDev::handleCode(long rccode)
 			return;
 		}
 	}
+	
+#if KEY_F2_TO_KEY_F6
+	if (ev->code == KEY_F2)
+	{
+		/* Gigablue New Remote rc has a KEY_PIP key, which sends KEY_F2 events. Correct this, so we do not have to place hacks in the keymaps. */
+		ev->code = KEY_F6;
+		
+	}
+#endif
+	
+#if KEY_GUIDE_TO_KEY_EPG
+	if (ev->code == KEY_HELP)
+	{
+		/* GB800 rc has a KEY_GUIDE key, which sends KEY_HELP events. Correct this, so we do not have to place hacks in the keymaps. */
+		ev->code = KEY_EPG;
+		
+	}
+#endif	
 
 #if KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE
 	if (ev->code == KEY_PLAY)

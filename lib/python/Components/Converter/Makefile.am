@@ -5,8 +5,6 @@ install_PYTHON = \
 	Poll.py RemainingToText.py StringList.py ServiceName.py FrontendInfo.py ServiceInfo.py \
 	ConditionalShowHide.py ServicePosition.py ValueRange.py RdsInfo.py Streaming.py \
 	StaticMultiList.py ServiceTime.py MovieInfo.py MenuEntryCompare.py StringListSelection.py \
-	ServiceOrbitalPosition.py CryptoInfo.py TextCase.py \
+	ServiceOrbitalPosition.py CryptoInfo.py TextCase.py ExtendedServiceInfo.py \
 	ValueBitTest.py TunerInfo.py ConfigEntryTest.py TemplatedMultiContent.py ProgressToText.py \
-	EGAnalogic.py EGClockToText.py EGExtraInfo.py EGServiceName.py ExtendedServiceInfo.py ExtraTuner.py \
-	Combine.py SensorToText.py ValueToPixmap.py PliExtraInfo.py genre.py \
-	DMCHDCaidDisplay.py ExtremeInfo.py SmartInfo.py
+	Combine.py SensorToText.py ValueToPixmap.py PliExtraInfo.py genre.py ChannelNumbers.py

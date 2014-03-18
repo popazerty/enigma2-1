@@ -3,7 +3,7 @@ from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.ScrollLabel import ScrollLabel
 
-class Console(Screen):
+class Console(Screen):	
 	def __init__(self, session, title = "Console", cmdlist = None, finishedCallback = None, closeOnSuccess = False):
 		Screen.__init__(self, session)
 
@@ -11,26 +11,37 @@ class Console(Screen):
 		self.closeOnSuccess = closeOnSuccess
 		self.errorOcurred = False
 
+		self.Shown = True
 		self["text"] = ScrollLabel("")
-		self["actions"] = ActionMap(["WizardActions", "DirectionActions"],
+		self["actions"] = ActionMap(["ColorActions", "WizardActions", "DirectionActions"], 
 		{
 			"ok": self.cancel,
 			"back": self.cancel,
 			"up": self["text"].pageUp,
-			"down": self["text"].pageDown
-		}, -1)
-
+			"down": self["text"].pageDown,
+			"yellow": self.yellow,
+		}, -2)
+		
 		self.cmdlist = cmdlist
 		self.newtitle = title
-
+		
 		self.onShown.append(self.updateTitle)
-
+		
 		self.container = eConsoleAppContainer()
 		self.run = 0
 		self.container.appClosed.append(self.runFinished)
 		self.container.dataAvail.append(self.dataAvail)
 		self.onLayoutFinish.append(self.startRun) # dont start before gui is finished
 
+	def yellow(self):
+		print 'Yellow pressed'
+		if self.Shown == True:
+				self.hide()
+				self.Shown = False
+		else:
+				self.show()
+				self.Shown = True
+				
 	def updateTitle(self):
 		self.setTitle(self.newtitle)
 
@@ -50,7 +61,7 @@ class Console(Screen):
 		else:
 			lastpage = self["text"].isAtLastPage()
 			str = self["text"].getText()
-			str += _("Execution finished!!")
+			str += _("Execution finished!!");
 			self["text"].setText(str)
 			if lastpage:
 				self["text"].lastPage()

@@ -1,6 +1,6 @@
 from bisect import insort
-from time import time, localtime, mktime
-from enigma import eTimer, eActionMap
+from time import strftime, time, localtime, mktime
+from enigma import eTimer
 import datetime
 
 class TimerEntry:
@@ -22,7 +22,6 @@ class TimerEntry:
 		self.backoff = 0
 
 		self.disabled = False
-		self.failed = False
 
 	def resetState(self):
 		self.state = self.StateWaiting
@@ -96,17 +95,7 @@ class TimerEntry:
 	def shouldSkip(self):
 		if self.disabled:
 			return True
-		if "PowerTimerEntry" in `self`:
-			if (self.timerType == 3 or self.timerType == 4) and self.autosleeprepeat != 'once':
-				return False
-			elif self.begin >= time() and (self.timerType == 3 or self.timerType == 4) and self.autosleeprepeat == 'once':
-				return False
-			elif (self.timerType == 3 or self.timerType == 4) and self.autosleeprepeat == 'once' and self.state != TimerEntry.StatePrepared:
-				return True
-			else:
-				return self.end <= time() and self.state == TimerEntry.StateWaiting and self.timerType != 3 and self.timerType != 4
-		else:
-			return self.end <= time() and (self.state == TimerEntry.StateWaiting or self.state == TimerEntry.StateFailed)
+		return self.end <= time() and (self.state == TimerEntry.StateWaiting or self.state == TimerEntry.StateFailed)
 
 	def abort(self):
 		self.end = time()
@@ -121,9 +110,6 @@ class TimerEntry:
 	# must be overridden!
 	def getNextActivation():
 		pass
-
-	def fail(self):
-		self.faileded = True
 
 	def disable(self):
 		self.disabled = True
@@ -234,6 +220,7 @@ class Timer:
 		self.setNextActivation(now, min)
 
 	def timeChanged(self, timer):
+		print "time changed"
 		timer.timeChanged()
 		if timer.state == TimerEntry.StateEnded:
 			self.processed_timers.remove(timer)
@@ -246,11 +233,6 @@ class Timer:
 		# give the timer a chance to re-enqueue
 		if timer.state == TimerEntry.StateEnded:
 			timer.state = TimerEntry.StateWaiting
-		elif "PowerTimerEntry" in `timer` and (timer.timerType == 3 or timer.timerType == 4):
-			if timer.state > 0:
-				eActionMap.getInstance().unbindAction('', timer.keyPressed)
-			timer.state = TimerEntry.StateWaiting
-
 		self.addTimerEntry(timer)
 
 	def doActivate(self, w):

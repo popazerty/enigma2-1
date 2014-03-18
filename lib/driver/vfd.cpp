@@ -12,6 +12,8 @@
 #include <lib/base/eerror.h>
 #include <lib/driver/vfd.h>
 
+#define VFD_DEVICE "/proc/vfd"
+
 evfd* evfd::instance = NULL;
 
 evfd* evfd::getInstance()
@@ -23,13 +25,15 @@ evfd* evfd::getInstance()
 
 evfd::evfd()
 {
+	file_vfd = 0;
 }
+
 
 int vfd_init( void )
 {
 	evfd vfd;
-	vfd.vfd_symbol_network(0);
-	vfd.vfd_symbol_circle(0);
+	vfd.vfd_led("1");
+	char str[]="RED";
 	return 0;
 }
 
@@ -43,25 +47,28 @@ evfd::~evfd()
 {
 }
 
-void evfd::vfd_symbol_network(int net)
+void evfd::vfd_led(char * led)
 {
 	FILE *f;
-	if((f = fopen("/proc/stb/lcd/symbol_network","w")) == NULL) {
-		eDebug("cannot open /proc/stb/lcd/symbol_network (%m)");
+	if((f = fopen("/proc/stb/fp/led0_pattern","w")) == NULL) {
+		eDebug("cannot open /proc/stb/fp/led0_pattern (%m)");
 		return;
-	}	
-	fprintf(f,"%i", net);
+	}
+	
+	fprintf(f,"%s", led);
 	fclose(f);
 }
 
-void evfd::vfd_symbol_circle(int cir)
+void evfd::vfd_write_string(char * str)
 {
 	FILE *f;
-	if((f = fopen("/proc/stb/lcd/symbol_circle","w")) == NULL) {
-		eDebug("cannotopen /proc/stb/lcd/symbol_circle (%m)");
+	if((f = fopen("/proc/vfd","w")) == NULL) {
+		eDebug("cannotopen /proc/vfd (%m)");
 	
 		return;
 	}
-	fprintf(f,"%i", cir);
+	
+	fprintf(f,"%s", str);
+	
 	fclose(f);
 }

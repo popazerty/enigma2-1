@@ -1,24 +1,23 @@
 #!/bin/sh
 
+if [ `cat /etc/hostname | cut -c 1-2`=="gb" ]; then
+	echo 'Gigablue' > /proc/stb/info/model
+	cat /etc/model > /proc/stb/info/gbmodel
+fi
+
+rm -rf /dev/dbox/oled0
+
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
-# start softcam
-emu=`cat /etc/enigma2/settings | grep config.softcam.actCam=  | cut -d = -f2`	
 
-if [ -e /etc/.nhd2 ] && [ -e @bindir@/$emu ]; then
-	@bindir@/$emu &
-fi
-############################################################################
 if [ -x @bindir@/showiframe ]; then
 	if [ -f @sysconfdir@/enigma2/backdrop.mvi ]; then
 		@bindir@/showiframe @sysconfdir@/enigma2/backdrop.mvi
-	elif [ -f @datadir@/backdrop.mvi ]; then
-		if [ -e /etc/.nhd2 ]; then
-			@bindir@/showiframe @datadir@/backdrop1.mvi
-		else 
-			@bindir@/showiframe @datadir@/backdrop.mvi
-		fi
+	elif [ -f @sysconfdir@/enigma2/bootlogo.mvi ]; then
+		@bindir@/showiframe @sysconfdir@/enigma2/bootlogo.mvi
+	elif [ -f @datadir@/bootlogo.mvi ]; then
+		@bindir@/showiframe @datadir@/bootlogo.mvi
 	fi
 fi
 
@@ -38,19 +37,18 @@ else
 	LIBS="/usr/lib/libopen.so.0.0.0"
 fi
 
-#check for receiver specific passthrough helper lib
-if [ -e @libdir@/libpassthrough.so ]; then
-	LIBS="$LIBS @libdir@/libpassthrough.so"
+sync
+
+if [ "$(grep config.crash.enabledebug /etc/enigma2/settings)" == "config.crash.enabledebug=true" ]; then
+	if [ "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" != "" -a -d "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" ]; then
+		LD_PRELOAD=$LIBS @bindir@/enigma2 &> $(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')Enigma2-debug-$(date +%Y%m%d_%H-%M-%S).log
+	else
+		LD_PRELOAD=$LIBS @bindir@/enigma2 &> /home/root/logs/Enigma2-debug-$(date +%Y%m%d_%H-%M-%S).log
+	fi
+else
+	LD_PRELOAD=$LIBS @bindir@/enigma2
 fi
 
-sync
-# boot enigma2 or neutrino
-if [ -e /etc/.e2 ]; then
-	LD_PRELOAD=$LIBS @bindir@/enigma2
-elif [ -e /etc/.nhd2 ]; then
-	LD_PRELOAD=$LIBS @bindir@/neutrino
- 
-fi
 # enigma2 exit codes:
 #
 # 1 - halt
@@ -79,14 +77,14 @@ case $ret in
 		/sbin/reboot
 		;;
 	42)
-		python /usr/lib/enigma2/python/upgrade.pyo
+		# bind the console (when available)
+		[ -f /sys/class/vtconsole/vtcon1/bind ] && echo 1 > /sys/class/vtconsole/vtcon1/bind
+		opkg upgrade 2>&1 | tee /home/root/ipkgupgrade.log
+		/sbin/reboot
 		;;
 	43)
-		init 1
-		;;
-	44)
-		# little hack but it will be fixed soon in drivers
-		/usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/wait.mvi && echo fpupload > /dev/dbox/oled0 && sleep 3 && cat /tmp/micom.bin > /dev/mcu && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/reboot.mvi && sleep 200000
+		echo "    " > /dev/lcd0
+		/usr/bin/gigablue_wol
 		;;
 	*)
 		;;
