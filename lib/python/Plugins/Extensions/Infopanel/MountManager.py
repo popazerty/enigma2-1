@@ -3,7 +3,6 @@ from . import _
 
 from Screens.Screen import Screen
 from enigma import eTimer
-from boxbranding import getMachineBrand, getMachineName
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
 from Components.ActionMap import ActionMap
@@ -68,12 +67,17 @@ class HddMount(Screen):
 		if len(self.list) == 0:
 			return
 		self.sel = self['list'].getCurrent()
-		mountp = self.sel[3]
-		if mountp.find('/media/hdd') < 0:
-			self["key_red"].setText(_("Use as HDD"))
-		else:
-			self["key_red"].setText(" ")
-			
+		seldev = self.sel
+		for line in self.sel:
+			try:
+				line = line.strip()
+				if line.find('Mount') >= 0:
+					if line.find('/media/hdd') < 0:
+						self["key_red"].setText(_("Use as HDD"))
+				else:
+					self["key_red"].setText(" ")
+			except:
+				pass
 		if self.sel:
 			try:
 				name = str(self.sel[0])
@@ -114,44 +118,43 @@ class HddMount(Screen):
 		self['lab1'].hide()
 
 	def buildMy_rec(self, device):
-		device2 = ''
 		try:
-			if device.find('1') > 1:
+			if device.find('1') > 0:
 				device2 = device.replace('1', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('2') > 1:
+			if device.find('2') > 0:
 				device2 = device.replace('2', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('3') > 1:
+			if device.find('3') > 0:
 				device2 = device.replace('3', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('4') > 1:
+			if device.find('4') > 0:
 				device2 = device.replace('4', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('5') > 1:
+			if device.find('5') > 0:
 				device2 = device.replace('5', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('6') > 1:
+			if device.find('6') > 0:
 				device2 = device.replace('6', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('7') > 1:
+			if device.find('7') > 0:
 				device2 = device.replace('7', '')
 		except:
 			device2 = ''
 		try:
-			if device.find('8') > 1:
+			if device.find('8') > 0:
 				device2 = device.replace('8', '')
 		except:
 			device2 = ''
@@ -232,9 +235,7 @@ class HddMount(Screen):
 				rw = ""
 			des += '\t' + _("Mount: ") + d1 + '\n' + _("Device: ") + '/dev/' + device + '\t' + _("Type: ") + dtype + rw
 			png = LoadPixmap(mypixmap)
-			mountP = d1
-			deviceP = '/dev/' + device
-			res = (name, des, png, mountP, deviceP)
+			res = (name, des, png)
 			self.list.append(res)
 
 	def SetupMounts(self):
@@ -243,8 +244,11 @@ class HddMount(Screen):
 	def Mount(self):
 		sel = self['list'].getCurrent()
 		if sel:
-			mountp = sel[3]
-			device = sel[4]
+			des = sel[1]
+			des = des.replace('\n', '\t')
+			parts = des.strip().split('\t')
+			mountp = parts[1].replace(_("Mount: "), '')
+			device = parts[2].replace(_("Device: "), '')
 			system ('mount ' + device)
 			mountok = False
 			f = open('/proc/mounts', 'r')
@@ -258,8 +262,11 @@ class HddMount(Screen):
 	def Unmount(self):
 		sel = self['list'].getCurrent()
 		if sel:
-			mountp = sel[3]
-			device = sel[4]
+			des = sel[1]
+			des = des.replace('\n', '\t')
+			parts = des.strip().split('\t')
+			mountp = parts[1].replace(_("Mount: "), '')
+			device = parts[2].replace(_("Device: "), '')
 			system ('umount ' + mountp)
 			try:
 				mounts = open("/proc/mounts")
@@ -276,15 +283,12 @@ class HddMount(Screen):
 	def saveMypoints(self):
 		sel = self['list'].getCurrent()
 		if sel:
-			self.mountp = sel[3]
-			self.device = sel[4]
+			parts = sel[1].split()
+			self.device = parts[4].split(':')[1]
+			self.mountp = parts[3]
 			if self.mountp.find('/media/hdd') < 0:
+				self.Console.ePopen('umount /media/hdd')
 				self.Console.ePopen('umount ' + self.device)
-				if not path.exists('/media/hdd'):
-					mkdir('/media/hdd', 0755)
-				else:
-					self.Console.ePopen('umount /media/hdd')
-				self.Console.ePopen('mount ' + self.device + ' /media/hdd')
 				self.Console.ePopen("/sbin/blkid | grep " + self.device, self.add_fstab, [self.device, self.mountp])
 			else:
 				self.session.open(MessageBox, _("This Device is already mounted as HDD."), MessageBox.TYPE_INFO, timeout = 10, close_on_any_key = True)

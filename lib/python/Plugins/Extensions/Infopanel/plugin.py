@@ -5,9 +5,12 @@ from Components.SelectionList import SelectionList
 from Screens.NetworkSetup import *
 from enigma import *
 from Screens.Standby import *
+from Screens.LogManager import *
 from Screens.MessageBox import MessageBox
+from Plugins.SystemPlugins.SoftwareManager.Flash_online import FlashOnline
 from Components.ActionMap import ActionMap, NumberActionMap, HelpableActionMap 
 from Screens.Screen import Screen
+from GlobalActions import globalActionMap
 from Screens.ChoiceBox import ChoiceBox
 from Tools.BoundFunction import boundFunction
 from Tools.LoadPixmap import LoadPixmap
@@ -26,7 +29,6 @@ from Components.ActionMap import ActionMap
 from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
 from __init__ import _
-from boxbranding import getBoxType, getMachineName, getMachineBrand, getBrandOEM
 
 import os
 import sys
@@ -58,9 +60,11 @@ if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/MultiQuickButton/p
 
 from Plugins.Extensions.Infopanel.CronManager import *
 from Plugins.Extensions.Infopanel.ScriptRunner import *
+from Plugins.Extensions.Infopanel.Neutrino import *
 from Plugins.Extensions.Infopanel.MountManager import *
 from Plugins.Extensions.Infopanel.SoftcamPanel import *
 from Plugins.Extensions.Infopanel.CamStart import *
+from Plugins.Extensions.Infopanel.QuickMenu import QuickMenu
 from Plugins.Extensions.Infopanel.CamCheck import *
 from Plugins.Extensions.Infopanel.sundtek import *
 from Plugins.Extensions.Infopanel.SwapManager import Swap, SwapAutostart
@@ -70,7 +74,7 @@ from Plugins.SystemPlugins.SoftwareManager.BackupRestore import BackupScreen, Re
 def Check_Softcam():
 	found = False
 	for x in os.listdir('/etc'):
-		if x.find('.emu') > -1:
+		if x.find('.conf') > -1:
 			found = True
 			break;
 	return found
@@ -117,22 +121,12 @@ def command(comandline, strip=1):
   os.system("rm /tmp/command.txt")
   return comandline
 
-boxversion = getBoxType()
-machinename = getMachineName()
-machinebrand = getMachineBrand()
-OEMname = getBrandOEM()
-
-INFO_Panel_Version = 'Info-Panel V1.2'
-print "[Info-Panel] machinebrand: %s"  % (machinebrand)
-print "[Info-Panel] machinename: %s"  % (machinename)
-print "[Info-Panel] oem name: %s"  % (OEMname)
-print "[Info-Panel] boxtype: %s"  % (boxversion)
+INFO_Panel_Version = 'Info-Panel V2.0 (mod by mcron)'
+boxversion = command('cat /etc/image-version | grep box_type | cut -d = -f2')
+print "[Info-Panel] boxversion: %s"  % (boxversion)
 panel = open("/tmp/infopanel.ver", "w")
 panel.write(INFO_Panel_Version + '\n')
-panel.write("Machinebrand: %s " % (machinebrand)+ '\n')
-panel.write("Machinename: %s " % (machinename)+ '\n')
-panel.write("oem name: %s " % (OEMname)+ '\n')
-panel.write("Boxtype: %s " % (boxversion)+ '\n')
+panel.write("Boxversion: %s " % (boxversion)+ '\n')
 try:
 	panel.write("Keymap: %s " % (config.usage.keymap.getValue())+ '\n')
 except:
@@ -178,25 +172,29 @@ def Plugins(**kwargs):
 	return [
 
 	#// show Infopanel in Main Menu
-	PluginDescriptor(name="Info Panel", description="Info panel GUI 27/12/2013", where = PluginDescriptor.WHERE_MENU, fnc = Apanel),
+	PluginDescriptor(name="Info Panel", description="Info panel GUI 12/11/2012", where = PluginDescriptor.WHERE_MENU, fnc = Apanel),
 	#// autostart
 	PluginDescriptor(where = [PluginDescriptor.WHERE_SESSIONSTART,PluginDescriptor.WHERE_AUTOSTART],fnc = camstart),
 	#// SwapAutostart
 	PluginDescriptor(where = [PluginDescriptor.WHERE_SESSIONSTART,PluginDescriptor.WHERE_AUTOSTART],fnc = SwapAutostart),
 	#// show Infopanel in EXTENSIONS Menu
-	PluginDescriptor(name="Info Panel", description="Info panel GUI 27/12/2013", where = PluginDescriptor.WHERE_EXTENSIONSMENU, fnc = main) ]
+	PluginDescriptor(name="Info Panel", description="Info panel GUI 12/11/2012", where = PluginDescriptor.WHERE_EXTENSIONSMENU, fnc = main) ]
 
 
 
 #############------- SKINS --------############################
 
-MENU_SKIN = """<screen position="center,center" size="500,370" title="INFO Panel" >
-	<widget source="global.CurrentTime" render="Label" position="0, 340" size="500,24" font="Regular;20" foregroundColor="#FFFFFF" halign="right" transparent="1" zPosition="5">
+MENU_SKIN = """<screen position="center,center" size="950,470" title="INFO Panel" >
+	<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/Infopanel/pics/redlogo.png" position="0,380" size="950,84" alphatest="on" zPosition="1"/>
+	<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/Infopanel/pics/alliance.png" position="670,255" size="100,67" alphatest="on" zPosition="1"/>
+	<ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/Infopanel/pics/openswf_info.png" position="510,11" size="550,354" alphatest="on" zPosition="1"/>
+		<widget source="global.CurrentTime" render="Label" position="450, 340" size="500,24" font="Regular;20" foregroundColor="#FFFFFF" halign="right" transparent="1" zPosition="5">
 		<convert type="ClockToText">>Format%H:%M:%S</convert>
 	</widget>
-	<eLabel backgroundColor="#56C856" position="0,330" size="500,1" zPosition="0" />
+	<eLabel backgroundColor="#56C856" position="0,330" size="950,1" zPosition="0" />
 	<widget name="Mlist" position="10,10" size="480,300" zPosition="1" scrollbarMode="showOnDemand" backgroundColor="#251e1f20" transparent="1" />
 	<widget name="label1" position="10,340" size="490,25" font="Regular;20" transparent="1" foregroundColor="#f2e000" halign="left" />
+
 </screen>"""
 
 CONFIG_SKIN = """<screen position="center,center" size="600,440" title="PANEL Config" >
@@ -224,8 +222,8 @@ class PanelList(MenuList):
 
 def MenuEntryItem(entry):
 	res = [entry]
-	res.append(MultiContentEntryPixmapAlphaTest(pos=(10, 5), size=(40, 40), png=entry[0]))  # png vorn
-	res.append(MultiContentEntryText(pos=(60, 10), size=(440, 40), font=0, text=entry[1]))  # menupunkt
+	res.append(MultiContentEntryPixmapAlphaTest(pos=(0, 5), size=(100, 40), png=entry[0]))  # png vorn
+	res.append(MultiContentEntryText(pos=(110, 10), size=(440, 40), font=0, text=entry[1]))  # menupunkt
 	return res
 ###################  Max Test ###################
 
@@ -235,13 +233,13 @@ from Screens.InfoBarGenerics import InfoBarPiP
 #g
 
 def InfoEntryComponent(file):
-	png = LoadPixmap(cached = True, path = resolveFilename(SCOPE_CURRENT_SKIN, "icons/" + file + ".png"));
+	png = LoadPixmap(cached = True, path = resolveFilename(SCOPE_CURRENT_SKIN, "pics/" + file + ".png"));
 	if png == None:
-		png = LoadPixmap("/usr/lib/enigma2/python/Plugins/Extensions/Infopanel/icons/" + file + ".png")
+		png = LoadPixmap("/usr/lib/enigma2/python/Plugins/Extensions/Infopanel/pics/" + file + ".png")
 		if png == None:
-			png = LoadPixmap(cached = True, path = resolveFilename(SCOPE_CURRENT_SKIN, "icons/default.png"));
+			png = LoadPixmap(cached = True, path = resolveFilename(SCOPE_CURRENT_SKIN, "pics/default.png"));
 			if png == None:
-				png = LoadPixmap("/usr/lib/enigma2/python/Plugins/Extensions/Infopanel/icons/default.png")
+				png = LoadPixmap("/usr/lib/enigma2/python/Plugins/Extensions/Infopanel/pics/default.png")
 	res = (png)
 	return res
 
@@ -286,12 +284,13 @@ class Infopanel(Screen, InfoBarPiP):
 		self.Mlist = []
 		if Check_Softcam():
 			self.Mlist.append(MenuEntryItem((InfoEntryComponent('SoftcamPanel'), _("SoftcamPanel"), 'SoftcamPanel')))
-			self.Mlist.append(MenuEntryItem((InfoEntryComponent('SoftcamPanelSetup'), _("Softcam-Panel Setup"), 'Softcam-Panel Setup')))
-		#self.Mlist.append(MenuEntryItem((InfoEntryComponent ("SoftwareManager" ), _("Software update"), ("software-update"))))
-		self.Mlist.append(MenuEntryItem((InfoEntryComponent ("SoftwareManager" ), _("Software Manager"), ("software-manager"))))
-		self.Mlist.append(MenuEntryItem((InfoEntryComponent('RedPanel'), _("RedPanel"), 'RedPanel')))
-		self.Mlist.append(MenuEntryItem((InfoEntryComponent('Yellow-Key-Action'), _("Yellow-Key-Action"), 'Yellow-Key-Action')))
-		self.Mlist.append(MenuEntryItem((InfoEntryComponent('KeymapSel'), _("Keymap Selection"), 'KeymapSel')))	
+			self.Mlist.append(MenuEntryItem((InfoEntryComponent('Softcam-PanelSetup'), _("Softcam-PanelSetup"), 'Softcam-PanelSetup')))
+		self.Mlist.append(MenuEntryItem((InfoEntryComponent ("ImageFlash" ), _("Image-Flasher"), ("ImageFlash"))))
+		self.Mlist.append(MenuEntryItem((InfoEntryComponent ("QuickMenu" ), _("Quick-Menu"), ("QuickMenu"))))
+		self.Mlist.append(MenuEntryItem((InfoEntryComponent ("LogManager" ), _("Log-Manager"), ("LogManager"))))
+		self.Mlist.append(MenuEntryItem((InfoEntryComponent ("NeutrinoHD2" ), _("NeutrinoHD2"), ("NeutrinoHD2"))))
+		self.Mlist.append(MenuEntryItem((InfoEntryComponent ("SoftwareManager" ), _("Software-Manager"), ("software-manager"))))
+		self.Mlist.append(MenuEntryItem((InfoEntryComponent('KeymapSel'), _("Keymap-Selection"), 'KeymapSel')))	
 		self.Mlist.append(MenuEntryItem((InfoEntryComponent('Plugins'), _("Plugins"), 'Plugins')))
 		self.Mlist.append(MenuEntryItem((InfoEntryComponent('Infos'), _("Infos"), 'Infos')))
 		self.onChangedEntry = []
@@ -387,9 +386,9 @@ class Infopanel(Screen, InfoBarPiP):
 		elif menu == "InfoPanel":
 			self.session.open(Info, "InfoPanel")
 		elif menu == "Info":
-			self.session.open(Info, "SystemInfo")
-		elif menu == "ImageVersion":
-			self.session.open(Info, "ImageVersion")
+			self.session.open(Info, "Sytem_info")
+		elif menu == "Default":
+			self.session.open(Info, "Default")
 		elif menu == "FreeSpace":
 			self.session.open(Info, "FreeSpace")
 		elif menu == "Network":
@@ -414,7 +413,7 @@ class Infopanel(Screen, InfoBarPiP):
 			self.session.open(Info, "Partitions")
 		elif menu == "Swap":
 			self.session.open(Info, "Swap")
-		elif menu == "SystemInfo":
+		elif menu == "System_Info":
 			self.System()
 		elif menu == "CronManager":
 			self.session.open(CronManager)	
@@ -450,10 +449,18 @@ class Infopanel(Screen, InfoBarPiP):
 			self.session.open(RedPanel)
 		elif menu == "Yellow-Key-Action":
 			self.session.open(YellowPanel)
-		elif menu == "Softcam-Panel Setup":
+		elif menu == "Softcam-PanelSetup":
 			self.session.open(ShowSoftcamPanelExtensions)
 		elif menu == "KeymapSel":
 			self.session.open(KeymapSel)
+		elif menu == "NeutrinoHD2":
+			self.session.open(Neutrino)
+		elif menu == "QuickMenu":
+			self.session.open(QuickMenu)
+		elif menu == "LogManager":
+			self.session.open(LogManager)
+		elif menu == "ImageFlash":
+			self.session.open(FlashOnline)
 		else:
 			pass
 
@@ -485,13 +492,13 @@ class Infopanel(Screen, InfoBarPiP):
 		self.oldmlist1 = []
 		self.oldmlist = self.Mlist
 		self.tlist.append(MenuEntryItem((InfoEntryComponent('InfoPanel'), _("InfoPanel"), 'InfoPanel')))
-		self.tlist.append(MenuEntryItem((InfoEntryComponent('ImageVersion'), _("Image-Version"), 'ImageVersion')))
+		self.tlist.append(MenuEntryItem((InfoEntryComponent('Default'), _("Default"), 'Default')))
 		self.tlist.append(MenuEntryItem((InfoEntryComponent('FreeSpace'), _("FreeSpace"), 'FreeSpace')))
 		self.tlist.append(MenuEntryItem((InfoEntryComponent('Kernel'), _("Kernel"), 'Kernel')))
 		self.tlist.append(MenuEntryItem((InfoEntryComponent('Mounts'), _("Mounts"), 'Mounts')))
 		self.tlist.append(MenuEntryItem((InfoEntryComponent('Network'), _("Network"), 'Network')))
 		self.tlist.append(MenuEntryItem((InfoEntryComponent('Ram'), _("Ram"), 'Ram')))
-		self.tlist.append(MenuEntryItem((InfoEntryComponent('SystemInfo'), _("SystemInfo"), 'SystemInfo')))
+		self.tlist.append(MenuEntryItem((InfoEntryComponent('System_Info'), _("System_Info"), 'System_Info')))
 		self["Mlist"].moveToIndex(0)
 		self["Mlist"].l.setList(self.tlist)
 		self.oldmlist1 = self.tlist
@@ -766,6 +773,7 @@ class RedPanel(ConfigListScreen, Screen):
 		else:
 			self.close()
 
+
 class YellowPanel(ConfigListScreen, Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
@@ -852,7 +860,6 @@ class YellowPanel(ConfigListScreen, Screen):
 			self.session.openWithCallback(self.cancelConfirm, MessageBox, _("Really close without saving settings?"))
 		else:
 			self.close()
-
 class ShowSoftcamPanelExtensions(ConfigListScreen, Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
@@ -984,10 +991,10 @@ class Info(Screen):
 		self["label1"] =  ScrollLabel()
 		if info == "InfoPanel":
 			self.InfoPanel()
-		if info == "SystemInfo":
-			self.SystemInfo()
-		elif info == "ImageVersion":
-			self.ImageVersion()
+		if info == "Sytem_info":
+			self.Sytem_info()
+		elif info == "Default":
+			self.Default()
 		elif info == "FreeSpace":
 			self.FreeSpace()
 		elif info == "Mounts":
@@ -1048,7 +1055,7 @@ class Info(Screen):
 		except:
 			self["label1"].setText(_("an internal error has occur"))
 
-	def SystemInfo(self):
+	def Sytem_info(self):
 		try:
 			self["label2"].setText(_("Image Info"))
 			info1 = self.Do_cmd("cat", "/etc/version", None)
@@ -1057,9 +1064,10 @@ class Info(Screen):
 		except:
 			self["label1"].setText(_("an internal error has occur"))
 
-	def ImageVersion(self):
+	def Default(self):
+
 		try:
-			self["label2"].setText(_("Image Version"))
+			self["label2"].setText(_("Default"))
 			now = datetime.now()
 			info1 = 'Date = ' + now.strftime("%d-%B-%Y") + "\n"
 			info2 = 'Time = ' + now.strftime("%H:%M:%S") + "\n"
@@ -1234,4 +1242,6 @@ class Info(Screen):
 		except:
 			o = ''
 			return o
+
+
 
