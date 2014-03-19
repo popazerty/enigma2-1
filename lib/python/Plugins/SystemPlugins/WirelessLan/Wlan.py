@@ -139,7 +139,7 @@ class wpaSupplicant:
 		wepkeytype = config.plugins.wlan.wepkeytype.value
 		psk = config.plugins.wlan.psk.value
 		fp = file(getWlanConfigName(iface), 'w')
-		fp.write('#WPA Supplicant Configuration by STB-GUI\n')
+		fp.write('#WPA Supplicant Configuration by enigma2\n')
 		fp.write('ctrl_interface=/var/run/wpa_supplicant\n')
 		fp.write('eapol_version=1\n')
 		fp.write('fast_reauth=1\n')
@@ -157,10 +157,9 @@ class wpaSupplicant:
 				fp.write('\tpairwise=TKIP\n')
 				fp.write('\tgroup=TKIP\n')
 			elif encryption == 'WPA2':
-				fp.write('\tkey_mgmt=WPA-PSK\n')
 				fp.write('\tproto=RSN\n')
- 				fp.write('\tpairwise=CCMP TKIP\n')
-				fp.write('\tgroup=CCMP TKIP\n')
+				fp.write('\tpairwise=CCMP\n')
+				fp.write('\tgroup=CCMP\n')
 			else:
 				fp.write('\tproto=WPA RSN\n')
 				fp.write('\tpairwise=CCMP TKIP\n')

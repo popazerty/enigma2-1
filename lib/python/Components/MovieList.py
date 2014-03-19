@@ -186,16 +186,8 @@ class MovieList(GUIComponent):
 		return self._playInBackground
 
 	def set_playInBackground(self, value):
-		if self._playInBackground is not value:
-			index = self.findService(self._playInBackground)
-			if index is not None:
-				self.invalidateItem(index)
-				self.l.invalidateEntry(index)
-			index = self.findService(value)
-			if index is not None:
-				self.invalidateItem(index)
-				self.l.invalidateEntry(index)
-			self._playInBackground = value
+		self._playInBackground = value
+		self.reload()
 
 	playInBackground = property(get_playInBackground, set_playInBackground)
 
@@ -507,18 +499,11 @@ class MovieList(GUIComponent):
 		self.l.setList(self.list)
 
 	def removeService(self, service):
-		index = self.findService(service)
-		if index is not None:
-			del self.list[index]
-			self.l.setList(self.list)
-
-	def findService(self, service):
-		if service is None:
-			return None
 		for index, l in enumerate(self.list):
 			if l[0] == service:
-				return index
-		return None
+				del self.list[index]
+				break
+		self.l.setList(self.list)
 
 	def __len__(self):
 		return len(self.list)
@@ -700,10 +685,12 @@ class MovieList(GUIComponent):
 		return (1, -x[2])
 
 	def moveTo(self, serviceref):
-		index = self.findService(serviceref)
-		if index is not None:
-			self.instance.moveSelectionTo(index)
-			return True
+		count = 0
+		for x in self.list:
+			if x[0] == serviceref:
+				self.instance.moveSelectionTo(count)
+				return True
+			count += 1
 		return False
 	
 	def moveDown(self):

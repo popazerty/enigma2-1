@@ -1,18 +1,20 @@
-from enigma import eServiceCenter, eServiceReference, eTimer, pNavigation, getBestPlayableServiceReference, iPlayableService
+from enigma import eServiceCenter, eServiceReference, eTimer, pNavigation, getBestPlayableServiceReference, iPlayableService, eActionMap
 from Components.ParentalControl import parentalControl
 from Components.config import config
 from Tools.BoundFunction import boundFunction
 from Tools.StbHardware import setFPWakeuptime, getFPWakeuptime, getFPWasTimerWakeup
-from time import time
+from Tools import Notifications
+from time import time, localtime
 import RecordTimer
 import Screens.Standby
 import NavigationInstance
 import ServiceReference
 from Screens.InfoBar import InfoBar
+from sys import maxint
 
 # TODO: remove pNavgation, eNavigation and rewrite this stuff in python.
 class Navigation:
-	def __init__(self, nextRecordTimerAfterEventActionAuto=False):
+	def __init__(self):
 		if NavigationInstance.instance is not None:
 			raise NavigationInstance.instance
 
@@ -31,84 +33,12 @@ class Navigation:
 		self.currentlyPlayingServiceOrGroup = None
 		self.currentlyPlayingService = None
 		self.RecordTimer = RecordTimer.RecordTimer()
-		self.nextRecordTimerAfterEventActionAuto = nextRecordTimerAfterEventActionAuto
-		self.__wasTimerWakeup = False
-		self.__wasRecTimerWakeup = False
-		self.syncCount = 0
-
-		wasTimerWakeup = getFPWasTimerWakeup()
-		if not wasTimerWakeup: #work-around for boxes where driver not sent was_timer_wakeup signal to e2
-			print"[NAVIGATION] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
-			print"[NAVIGATION] current Time=%s" % time()
-			print"[NAVIGATION] timediff=%s" % abs(self.RecordTimer.getNextRecordingTime() - time())
-
-			if time() <= 31536000: # check for NTP-time sync, if no sync, wait for transponder time
-				self.timesynctimer = eTimer()
-				self.timesynctimer.callback.append(self.TimeSynctimer)
-				self.timesynctimer.start(5000, True)
-				print"[NAVIGATION] wait for time sync"
-				
-			elif abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360: # if there is a recording sheduled in the next 5 mins, set the wasTimerWakeup flag
-				wasTimerWakeup = True
-				f = open("/tmp/was_timer_wakeup_workaround.txt", "w")
-				file = f.write(str(wasTimerWakeup))
-				f.close()
-
-		print"[NAVIGATION] wasTimerWakeup = %s" % wasTimerWakeup
-
-		if wasTimerWakeup:
-			self.__wasTimerWakeup = True
-			if time() <= 31536000:
-				self.timesynctimer = eTimer()
-				self.timesynctimer.callback.append(self.TimeSynctimer)
-				self.timesynctimer.start(5000, True)
-				print"[NAVIGATION] wait for time sync"
-	
-			elif nextRecordTimerAfterEventActionAuto and abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
-				self.__wasRecTimerWakeup = True
-				print 'RECTIMER: wakeup to standby detected.'
-				f = open("/tmp/was_rectimer_wakeup", "w")
-				f.write('1')
-				f.close()
-				# as we woke the box to record, place the box in standby.
-				self.standbytimer = eTimer()
-				self.standbytimer.callback.append(self.gotostandby)
-				self.standbytimer.start(15000, True)
+		self.__wasTimerWakeup = getFPWasTimerWakeup()
+		if self.__wasTimerWakeup:
+			RecordTimer.RecordTimerEntry.setWasInDeepStandby()
 
 	def wasTimerWakeup(self):
 		return self.__wasTimerWakeup
-
-	def wasRecTimerWakeup(self):
-		return self.__wasRecTimerWakeup
-
-	def TimeSynctimer(self):
-		self.syncCount += 1
-		if self.nextRecordTimerAfterEventActionAuto and abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
-			self.__wasRecTimerWakeup = True
-			print 'RECTIMER: wakeup to standby detected.'
-			print"[NAVIGATION] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
-			print"[NAVIGATION] current Time=%s" % time()
-			print"[NAVIGATION] timediff=%s" % abs(self.RecordTimer.getNextRecordingTime() - time())
-			f = open("/tmp/was_rectimer_wakeup", "w")
-			f.write('1')
-			f.close()
-			self.gotostandby()
-		else:
-			if self.syncCount <= 24 and time() <= 31536000: # max 2 mins or when time is in sync
-				self.timesynctimer.start(5000, True)
-			else:
-				print"[NAVIGATION] No Recordings found, end work-around"
-
-		print"[NAVIGATION] wasTimerWakeup after time sync = %s, sync time = %s sec." % (self.__wasRecTimerWakeup, self.syncCount * 5)
-
-	def gotostandby(self):
-		from Tools import Notifications
-		Notifications.AddNotification(Screens.Standby.Standby)
-
-	def checkShutdownAfterRecording(self):
-		if len(self.getRecordings()) or abs(self.RecordTimer.getNextRecordingTime() - time()) <= 360:
-			if not Screens.Standby.inTryQuitMainloop: # not a shutdown messagebox is open
-				RecordTimer.RecordTimerEntry.TryQuitMainloop(False) # start shutdown handling
 
 	def dispatchEvent(self, i):
 		for x in self.event:
@@ -124,7 +54,7 @@ class Navigation:
 			x(rec_service, event)
 
 	def playService(self, ref, checkParentalControl=True, forceRestart=False):
-		oldref = self.currentlyPlayingServiceOrGroup
+		oldref = self.currentlyPlayingServiceReference
 		if ref and oldref and ref == oldref and not forceRestart:
 			print "ignore request to play already running service(1)"
 			return 0
@@ -132,11 +62,11 @@ class Navigation:
 		if ref is None:
 			self.stopService()
 			return 0
-		from Components.ServiceEventTracker import InfoBarCount
-		InfoBarInstance = InfoBarCount == 1 and InfoBar.instance
+		InfoBarInstance = InfoBar.instance
 		if not checkParentalControl or parentalControl.isServicePlayable(ref, boundFunction(self.playService, checkParentalControl=False, forceRestart=forceRestart)):
 			if ref.flags & eServiceReference.isGroup:
-				oldref = self.currentlyPlayingServiceReference or eServiceReference()
+				if not oldref:
+					oldref = eServiceReference()
 				playref = getBestPlayableServiceReference(ref, oldref)
 				print "playref", playref
 				if playref and oldref and playref == oldref and not forceRestart:
@@ -151,15 +81,15 @@ class Navigation:
 				self.pnav.stopService()
 				self.currentlyPlayingServiceReference = playref
 				self.currentlyPlayingServiceOrGroup = ref
-				if InfoBarInstance and InfoBarInstance.servicelist.servicelist.setCurrent(ref):
-					self.currentlyPlayingServiceOrGroup = InfoBarInstance.servicelist.servicelist.getCurrent()
+				if InfoBarInstance is not None:
+					InfoBarInstance.servicelist.servicelist.setCurrent(ref)
 				if self.pnav.playService(playref):
 					print "Failed to start", playref
 					self.currentlyPlayingServiceReference = None
 					self.currentlyPlayingServiceOrGroup = None
 				return 0
-		elif oldref and InfoBarInstance and InfoBarInstance.servicelist.servicelist.setCurrent(oldref):
-			self.currentlyPlayingServiceOrGroup = InfoBarInstance.servicelist.servicelist.getCurrent()
+		elif oldref:
+			InfoBarInstance.servicelist.servicelist.setCurrent(oldref)
 		return 1
 
 	def getCurrentlyPlayingServiceReference(self):

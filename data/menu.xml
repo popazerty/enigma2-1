@@ -13,10 +13,7 @@
 	<code> .. code .. </code>
 		"exec"s code
 -->
-		<menu level="0" text="Timers" entryID="timer_menu">
-			<id val="timermenu" />
-			<item weight="100" level="0" text="Timer" entryID="timer_edit"><screen module="TimerEdit" screen="TimerEditList" /></item>
-		</menu>
+		<item level="0" text="Timer" entryID="timer_edit"><screen module="TimerEdit" screen="TimerEditList" /></item>
 		<item level="1" text="VCR scart" entryID="scart_switch" configcondition="config.usage.show_vcr_scart" requires="ScartSwitch"><code>self.session.scart.VCRSbChanged(3)</code></item>
 
 		<menu level="0" text="Information" entryID="info_screen">
@@ -36,7 +33,6 @@
 			</menu>
 			<menu weight="5" level="0" text="System" entryID="system_selection">
 				<id val="system" />
-				<item requires="OledDisplay" level="0" text="LCD Skin Setup" entryID="vfd_setup"><screen module="LcdSkinSelector" screen="LCDSkinSelector"/></item>
 				<item level="0" entryID="usage_setup"><setup id="usage" /></item>
 				<item level="0" entryID="user_interface"><setup id="userinterface" /></item>
 				<item level="0" entryID="epg_settings"><setup id="epgsettings" /></item>
@@ -59,9 +55,11 @@
 				<item level="2" text="Recording paths" entryID="RecordPaths"><screen module="RecordPaths" screen="RecordPathsSettings" /></item>
 				<item level="0" text="Language" entryID="language_setup"><screen module="LanguageSelection" /></item>
 				<item level="0" entryID="timezone_setup"><setup id="timezone"/></item>
-				<item level="0" entryID="logs_setup"><setup id="logs" /></item>
 			</menu>
-			<item weight="10" level="1" text="Common Interface" entryID="ci_setup" requires="CommonInterface"><screen module="Ci" screen="CiSelection" /></item>
+			<menu weight="10" text="SoftCam / CI" entryID="cam_setup">
+				<id val="cam" />
+				<item weight="10" level="1" text="Common Interface" entryID="ci_setup" requires="CommonInterface"><screen module="Ci" screen="CiSelection" /></item>
+			</menu>
 			<item weight="15" level="0" text="Parental control" entryID="parental_setup"><screen module="ParentalControlSetup" screen="ParentalControlSetup" /></item>
 			<item weight="15" level="0" text="Factory reset" entryID="factory_reset">
 				<code>
@@ -78,12 +76,11 @@ self.session.openWithCallback(msgClosed, FactoryReset)
 		</menu>
 		<menu text="Standby / restart" entryID="standby_restart_list">
 			<id val="shutdown" />
-			<item text="Deep standby" requires="DeepstandbySupport" entryID="deep_standby"><screen module="Standby" screen="TryQuitMainloop">1</screen></item>
-			<item text="WOL standby" requires="GBWOL" entryID="deep_standby"><screen module="Standby" screen="TryQuitMainloop">43</screen></item>			
+			<item text="Sleep timer" entryID="sleep"><screen module="SleepTimerEdit" screen="SleepTimerEdit" /></item>
 			<item text="Standby" entryID="standby"><screen module="Standby" screen="Standby"/></item>
 			<item text="Restart" entryID="restart"><screen module="Standby" screen="TryQuitMainloop">2</screen></item>
 			<item text="Restart enigma" entryID="restart_enigma"><screen module="Standby" screen="TryQuitMainloop">3</screen></item>
-			<item text="Sleep timer" entryID="sleep"><screen module="SleepTimerEdit" screen="SleepTimerEdit" /></item>
+			<item text="Deep standby" requires="DeepstandbySupport" entryID="deep_standby"><screen module="Standby" screen="TryQuitMainloop">1</screen></item>
 			<item text="Shutdown" requires="!DeepstandbySupport" entryID="deep_standby"><screen module="Standby" screen="TryQuitMainloop">1</screen></item>
 		</menu>
 </menu>

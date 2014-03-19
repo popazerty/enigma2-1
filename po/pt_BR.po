@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: enigma2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-06 12:09+0200\n"
-"PO-Revision-Date: 2013-10-20 19:13-0300\n"
+"PO-Revision-Date: 2013-10-18 15:08-0300\n"
 "Last-Translator: Diogo <pingflood@gmail.com>\n"
 "Language-Team: Traduzido por Frank Viana <franksrviana@gmail.com>\n"
 "Language: pt_BR\n"
@@ -887,7 +887,7 @@ msgid "Backup is running..."
 msgstr "Backup em andamento..."
 
 msgid "Backup system settings"
-msgstr "Salvar configurações do sistema"
+msgstr "Configurar backup do sistema"
 
 msgid "Band"
 msgstr "Banda"
@@ -1043,7 +1043,7 @@ msgid "Change repeat and delay settings?"
 msgstr "Alterar as configurações de repetição e atraso?"
 
 msgid "Change service PIN"
-msgstr "Alterar senha dos canais"
+msgstr "Alterar senha dos serviços"
 
 msgid "Change service PINs"
 msgstr "Alterar senhas do serviço"
@@ -1937,7 +1937,7 @@ msgid "Display message before playing next movie"
 msgstr "Exibir mensagem antes do próximo vídeo"
 
 msgid "Display setup"
-msgstr "Painel frontal"
+msgstr "Visor externo"
 
 msgid "Do not change"
 msgstr "Não alterar"
@@ -2209,7 +2209,7 @@ msgid "End time"
 msgstr "Hora do fim"
 
 msgid "End time to ignore inactivity sleeptimer"
-msgstr "Ignorar o temporizador de inatividade até"
+msgstr "Hora final para ignorar o temporizador de inatividade"
 
 msgid "English"
 msgstr "Inglês"
@@ -2722,7 +2722,7 @@ msgid "In progress"
 msgstr "Em andamento"
 
 msgid "Inactivity Sleeptimer"
-msgstr "Evento pro inatividade"
+msgstr "Temporizador de inatividade"
 
 msgid "Include AIT in http streams"
 msgstr "Incluir AIT nos streams HTTP"
@@ -3395,7 +3395,7 @@ msgid "No HDD found or HDD not initialized!"
 msgstr "Disco rígido não encontrado ou não formatado!"
 
 msgid "No backup needed"
-msgstr "Não fazer backup"
+msgstr "Nenhum backup necessário"
 
 msgid "No cable tuner found!"
 msgstr "Tuner de cabo não encontrado!"
@@ -3541,7 +3541,7 @@ msgid "No, but restart from begin"
 msgstr "Não, voltar ao início"
 
 msgid "No, do nothing."
-msgstr "Não fazer nada"
+msgstr "Não fazer nada."
 
 msgid "No, just start my receiver"
 msgstr "Não, apenas iniciar o receptor"
@@ -4155,7 +4155,7 @@ msgid "Properties of current title"
 msgstr "Propriedades do título atual"
 
 msgid "Protect services"
-msgstr "Proteger canais"
+msgstr "Proteger serviços"
 
 msgid "Protect setup"
 msgstr "Proteger configurações"
@@ -4422,7 +4422,7 @@ msgid "Restore is running..."
 msgstr "Restauração em andamento..."
 
 msgid "Restore system settings"
-msgstr "Restaurar configurações do sistema"
+msgstr "Restaurar as configurações do sistema"
 
 msgid "Restoring..."
 msgstr "Restaurando..."
@@ -4685,10 +4685,10 @@ msgid "Select audio track"
 msgstr "Trilha de áudio"
 
 msgid "Select backup files"
-msgstr "Arquivos de backup"
+msgstr "Selecione os arquivos de backup"
 
 msgid "Select backup location"
-msgstr "Destino do backup"
+msgstr "Selecione o destino do backup"
 
 msgid "Select channel to record from"
 msgstr "Selecione o canal a ser gravado"
@@ -4709,7 +4709,7 @@ msgid "Select files for backup."
 msgstr "Selecione arquivos para backup."
 
 msgid "Select files/folders to backup"
-msgstr "Selecione arquivos/diretórios para backup"
+msgstr "Selecione arquivos/diretório para backup"
 
 msgid "Select input device"
 msgstr "Selecione o dispositivo de entrada"
@@ -4742,10 +4742,10 @@ msgid "Select the movie path"
 msgstr "Selecione o diretório de gravações"
 
 msgid "Select upgrade source"
-msgstr "Servidores de atualizações"
+msgstr "Selecione a fonte de atualizações."
 
 msgid "Select upgrade source to edit."
-msgstr "Selecione a fonte de atualizações para editar"
+msgstr "Selecione a fonte de atualizações para editar."
 
 msgid "Select video input with up/down buttons"
 msgstr "Selecione a entrada de vídeo com os botões de cima/baixo"
@@ -5223,7 +5223,8 @@ msgstr ""
 "Defina a hora inicial em que o temporizador de inatividade deve ser ignorado"
 
 msgid "Specify timeframe to ignore inactivity sleeptimer"
-msgstr "Somente intervalo"
+msgstr ""
+"Defina o intervalo em que o temporizador de inatividade deve ser ignorado"
 
 msgid "Split preview mode"
 msgstr "Modo de pré-visualização dividido"
@@ -5270,7 +5271,7 @@ msgid "Start time"
 msgstr "Hora de início"
 
 msgid "Start time to ignore inactivity sleeptimer"
-msgstr "Ignorar o temporizador de inatividade após"
+msgstr "Hora inicial para ignorar o temporizador de inatividade"
 
 msgid "Start timeshift"
 msgstr "Iniciar timeshift"
@@ -6082,7 +6083,7 @@ msgid "Update and ask to reboot"
 msgstr "Atualizar e reiniciar manualmente"
 
 msgid "Update and reboot (recommended)"
-msgstr "Atualizar e reiniciar automaticamente (recomendado)"
+msgstr "Atualizar e reiniciar (recomendado)"
 
 msgid "Update channel list only"
 msgstr "Atualizar apenas a lista de canais"
@@ -7184,7 +7185,7 @@ msgid "advertisement/shopping"
 msgstr "Propagandas/Compras"
 
 msgid "after "
-msgstr "após "
+msgstr "após"
 
 msgid "alphabetic"
 msgstr "Ordenar alfabeticamente"

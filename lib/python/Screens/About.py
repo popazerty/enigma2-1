@@ -5,35 +5,20 @@ from Components.Harddisk import harddiskmanager
 from Components.NimManager import nimmanager
 from Components.About import about
 from Components.ScrollLabel import ScrollLabel
-from Components.config import config
+from Components.Button import Button
 
 from Tools.StbHardware import getFPVersion
 
 class About(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
-		
-		if config.misc.boxtype.value == 'gb800solo':
-			AboutText = _("Hardware: ") + " GigaBlue HD 800solo\n"
-		elif config.misc.boxtype.value == 'gb800se':
-			AboutText = _("Hardware: ") + " GigaBlue HD 800se\n"
-		elif config.misc.boxtype.value == 'gb800ue':
-			AboutText = _("Hardware: ") + " GigaBlue HD 800ue\n"
-		elif config.misc.boxtype.value == 'gbquad':
-			AboutText = _("Hardware: ") + " GigaBlue HD Quad\n"
-		elif config.misc.boxtype.value == 'gbquadplus':
-			AboutText = _("Hardware: ") + " GigaBlue HD Quad Plus\n"			
-		elif config.misc.boxtype.value == 'gb800seplus':
-			AboutText = _("Hardware: ") + " GigaBlue HD 800se Plus\n"
-		elif config.misc.boxtype.value == 'gb800ueplus':
-			AboutText = _("Hardware: ") + " GigaBlue HD 800ue Plus\n"			
-		else:
-			AboutText = _("Hardware: ") + about.getHardwareTypeString() + "\n"
 
+
+		AboutText = _("Hardware: ") + about.getHardwareTypeString() + "\n"
 		AboutText += _("Image: ") + about.getImageTypeString() + "\n"
 		AboutText += _("Kernel version: ") + about.getKernelVersionString() + "\n"
 
-		EnigmaVersion = "GUI Build: " + about.getEnigmaVersionString()
+		EnigmaVersion = "Enigma: " + about.getEnigmaVersionString()
 		self["EnigmaVersion"] = StaticText(EnigmaVersion)
 		AboutText += EnigmaVersion + "\n"
 
@@ -80,6 +65,7 @@ class About(Screen):
 		self["hddA"] = StaticText(hddinfo)
 		AboutText += hddinfo
 		self["AboutScrollLabel"] = ScrollLabel(AboutText)
+		self["key_green"] = Button(_("Translations"))
 
 		self["actions"] = ActionMap(["SetupActions", "ColorActions", "DirectionActions"],
 			{

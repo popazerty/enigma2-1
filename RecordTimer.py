@@ -1,6 +1,6 @@
 import os
 from enigma import eEPGCache, getBestPlayableServiceReference, \
-	eServiceReference, iRecordableService, quitMainloop, eActionMap, setPreferredTuner
+	eServiceReference, iRecordableService, quitMainloop, eActionMap
 
 from Components.config import config
 from Components.UsageConfig import defaultMoviePath
@@ -68,12 +68,38 @@ def findSafeRecordPath(dirname):
 			return None
 	return dirname
 
-wasRecTimerWakeup = False
+def chechForRecordings():
+	if NavigationInstance.instance.getRecordings():
+		return True
+	rec_time = NavigationInstance.instance.RecordTimer.getNextTimerTime()
+	return rec_time > 0 and (rec_time - time()) < 360
 
 # please do not translate log messages
 class RecordTimerEntry(timer.TimerEntry, object):
 ######### the following static methods and members are only in use when the box is in (soft) standby
+	wasInStandby = False
+	wasInDeepStandby = False
 	receiveRecordEvents = False
+
+	@staticmethod
+	def keypress(key=None, flag=1):
+		if flag and (RecordTimerEntry.wasInStandby or RecordTimerEntry.wasInDeepStandby):
+			RecordTimerEntry.wasInStandby = False
+			RecordTimerEntry.wasInDeepStandby = False
+			eActionMap.getInstance().unbindAction('', RecordTimerEntry.keypress)
+
+	@staticmethod
+	def setWasInDeepStandby():
+		RecordTimerEntry.wasInDeepStandby = True
+		eActionMap.getInstance().bindAction('', -maxint - 1, RecordTimerEntry.keypress)
+
+	@staticmethod
+	def setWasInStandby():
+		if not RecordTimerEntry.wasInStandby:
+			if not RecordTimerEntry.wasInDeepStandby:
+				eActionMap.getInstance().bindAction('', -maxint - 1, RecordTimerEntry.keypress)
+			RecordTimerEntry.wasInDeepStandby = False
+			RecordTimerEntry.wasInStandby = True
 
 	@staticmethod
 	def shutdown():
@@ -83,14 +109,9 @@ class RecordTimerEntry(timer.TimerEntry, object):
 	def staticGotRecordEvent(recservice, event):
 		if event == iRecordableService.evEnd:
 			print "RecordTimer.staticGotRecordEvent(iRecordableService.evEnd)"
-			recordings = NavigationInstance.instance.getRecordings()
-			if not recordings: # no more recordings exist
-				rec_time = NavigationInstance.instance.RecordTimer.getNextRecordingTime()
-				if rec_time > 0 and (rec_time - time()) < 360:
-					print "another recording starts in", rec_time - time(), "seconds... do not shutdown yet"
-				else:
-					print "no starting records in the next 360 seconds... immediate shutdown"
-					RecordTimerEntry.shutdown() # immediate shutdown
+			if not chechForRecordings():
+				print "No recordings busy of sceduled within 6 minutes so shutdown"
+				RecordTimerEntry.shutdown() # immediate shutdown
 		elif event == iRecordableService.evStart:
 			print "RecordTimer.staticGotRecordEvent(iRecordableService.evStart)"
 
@@ -111,7 +132,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 			RecordTimerEntry.staticGotRecordEvent(None, iRecordableService.evEnd)
 #################################################################
 
-	def __init__(self, serviceref, begin, end, name, description, eit, disabled = False, justplay = False, afterEvent = AFTEREVENT.AUTO, checkOldTimers = False, dirname = None, tags = None, descramble = True, record_ecm = False, always_zap = False, isAutoTimer = False):
+	def __init__(self, serviceref, begin, end, name, description, eit, disabled = False, justplay = False, afterEvent = AFTEREVENT.AUTO, checkOldTimers = False, dirname = None, tags = None, descramble = True, record_ecm = False, always_zap = False):
 		timer.TimerEntry.__init__(self, int(begin), int(end))
 
 		if checkOldTimers == True:
@@ -123,7 +144,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		
 		assert isinstance(serviceref, ServiceReference)
 		
-		if serviceref and serviceref.isRecordable():
+		if serviceref.isRecordable():
 			self.service_ref = serviceref
 		else:
 			self.service_ref = ServiceReference(None)
@@ -145,16 +166,12 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		self.tags = tags or []
 		self.descramble = descramble
 		self.record_ecm = record_ecm
-		self.wasInStandby = False
-		self.isAutoTimer = isAutoTimer
 
-		self.needChangePriorityFrontend = config.usage.recording_frontend_priority.value != "-2" and config.usage.recording_frontend_priority.value != config.usage.frontend_priority.value
-		self.change_frontend = False
 		self.log_entries = []
 		self.resetState()
 
 	def __repr__(self):
-		return "RecordTimerEntry(name=%s, begin=%s, serviceref=%s, justplay=%s, isAutoTimer=%s)" % (self.name, ctime(self.begin), self.service_ref, self.justplay, self.isAutoTimer)
+		return "RecordTimerEntry(name=%s, begin=%s, serviceref=%s, justplay=%s)" % (self.name, ctime(self.begin), self.service_ref, self.justplay)
 
 	def log(self, code, msg):
 		self.log_entries.append((int(time()), code, msg))
@@ -209,12 +226,11 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				if not rec_ref:
 					self.log(1, "'get best playable service for group... record' failed")
 					return False
-			self.setRecordingPreferredTuner()
+				
 			self.record_service = rec_ref and NavigationInstance.instance.recordService(rec_ref)
 
 			if not self.record_service:
 				self.log(1, "'record service' failed")
-				self.setRecordingPreferredTuner(setdefault=True)
 				return False
 
 			if self.repeated:
@@ -247,7 +263,6 @@ class RecordTimerEntry(timer.TimerEntry, object):
 
 				NavigationInstance.instance.stopRecordService(self.record_service)
 				self.record_service = None
-				self.setRecordingPreferredTuner(setdefault=True)
 				return False
 			return True
 
@@ -267,19 +282,19 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		if next_state == 1:
 			if self.always_zap:
 				if Screens.Standby.inStandby:
-					self.wasInStandby = True
-					eActionMap.getInstance().bindAction('', -maxint - 1, self.keypress)
+					self.log(5, "wakeup and zap to recording service")
+					RecordTimerEntry.setWasInStandby()
 					#set service to zap after standby
 					Screens.Standby.inStandby.prev_running_service = self.service_ref.ref
 					Screens.Standby.inStandby.paused_service = None
 					#wakeup standby
 					Screens.Standby.inStandby.Power()
-					self.log(5, "wakeup and zap to recording service")
 				else:
+					if RecordTimerEntry.wasInDeepStandby:
+						RecordTimerEntry.setWasInStandby()
 					cur_zap_ref = NavigationInstance.instance.getCurrentlyPlayingServiceReference()
 					if cur_zap_ref and not cur_zap_ref.getPath():# we do not zap away if it is no live service
 						Notifications.AddNotification(MessageBox, _("In order to record a timer, the TV was switched to the recording service!\n"), type=MessageBox.TYPE_INFO, timeout=20)
-						self.setRecordingPreferredTuner()
 						self.failureCB(True)
 						self.log(5, "zap to recording service")
 
@@ -309,7 +324,6 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				cur_ref = NavigationInstance.instance.getCurrentlyPlayingServiceReference()
 				if cur_ref and not cur_ref.getPath():
 					if Screens.Standby.inStandby:
-						self.setRecordingPreferredTuner()
 						self.failureCB(True)
 					elif not config.recording.asktozap.value:
 						self.log(8, "asking user to zap away")
@@ -317,42 +331,44 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					else: # zap without asking
 						self.log(9, "zap without asking")
 						Notifications.AddNotification(MessageBox, _("In order to record a timer, the TV was switched to the recording service!\n"), type=MessageBox.TYPE_INFO, timeout=20)
-						self.setRecordingPreferredTuner()
 						self.failureCB(True)
 				elif cur_ref:
 					self.log(8, "currently running service is not a live service.. so stop it makes no sense")
 				else:
 					self.log(8, "currently no service running... so we dont need to stop it")
 			return False
+
 		elif next_state == self.StateRunning:
-			global wasRecTimerWakeup
-			if os.path.exists("/tmp/was_rectimer_wakeup") and not wasRecTimerWakeup:
-				wasRecTimerWakeup = int(open("/tmp/was_rectimer_wakeup", "r").read()) and True or False
-				os.remove("/tmp/was_rectimer_wakeup")
-
-			self.autostate = Screens.Standby.inStandby
-
 			# if this timer has been cancelled, just go to "end" state.
 			if self.cancelled:
 				return True
 			if self.justplay:
 				if Screens.Standby.inStandby:
-					self.wasInStandby = True
-					eActionMap.getInstance().bindAction('', -maxint - 1, self.keypress)
 					self.log(11, "wakeup and zap")
+					RecordTimerEntry.setWasInStandby()
 					#set service to zap after standby
 					Screens.Standby.inStandby.prev_running_service = self.service_ref.ref
 					Screens.Standby.inStandby.paused_service = None
 					#wakeup standby
 					Screens.Standby.inStandby.Power()
 				else:
+					if RecordTimerEntry.wasInDeepStandby:
+						RecordTimerEntry.setWasInStandby()
 					self.log(11, "zapping")
 					NavigationInstance.instance.playService(self.service_ref.ref)
 				return True
 			else:
 				self.log(11, "start recording")
+
+				if RecordTimerEntry.wasInDeepStandby:
+					RecordTimerEntry.keypress()
+					if Screens.Standby.inStandby: #In case some plugin did put the receiver already in standby
+						config.misc.standbyCounter.value = 0
+					else:
+						Notifications.AddNotification(Screens.Standby.Standby, StandbyCounterIncrease=False)
+
 				record_res = self.record_service.start()
-				self.setRecordingPreferredTuner(setdefault=True)
+				
 				if record_res:
 					self.log(13, "start record returned %d" % record_res)
 					self.do_backoff()
@@ -376,24 +392,19 @@ class RecordTimerEntry(timer.TimerEntry, object):
 			if not self.justplay:
 				NavigationInstance.instance.stopRecordService(self.record_service)
 				self.record_service = None
-			if self.afterEvent == AFTEREVENT.DEEPSTANDBY or (wasRecTimerWakeup and self.afterEvent == AFTEREVENT.AUTO):
-				if not Screens.Standby.inTryQuitMainloop: # not a shutdown messagebox is open
-					if Screens.Standby.inStandby: # in standby
-						RecordTimerEntry.TryQuitMainloop() # start shutdown handling without screen
-					else:
-						Notifications.AddNotificationWithCallback(self.sendTryQuitMainloopNotification, MessageBox, _("A finished record timer wants to shut down\nyour receiver. Shutdown now?"), timeout=20, default=True)
-			elif self.afterEvent == AFTEREVENT.STANDBY or (wasRecTimerWakeup or self.afterEvent == AFTEREVENT.AUTO) and self.wasInStandby:
-				if not Screens.Standby.inStandby: # not already in standby
-					Notifications.AddNotificationWithCallback(self.sendStandbyNotification, MessageBox, _("A finished record timer wants to set your\nreceiver to standby. Do that now?"), timeout=20, default=True)
-			self.keypress() #this ensures to unbind the keypress detection
+			if not chechForRecordings():
+				if self.afterEvent == AFTEREVENT.DEEPSTANDBY or self.afterEvent == AFTEREVENT.AUTO and (Screens.Standby.inStandby or RecordTimerEntry.wasInStandby) and not config.misc.standbyCounter.value:
+					if not Screens.Standby.inTryQuitMainloop:
+						if Screens.Standby.inStandby:
+							RecordTimerEntry.TryQuitMainloop()
+						else:
+							Notifications.AddNotificationWithCallback(self.sendTryQuitMainloopNotification, MessageBox, _("A finished record timer wants to shut down\nyour receiver. Shutdown now?"), timeout=20, default=True)
+				elif self.afterEvent == AFTEREVENT.STANDBY or self.afterEvent == AFTEREVENT.AUTO and RecordTimerEntry.wasInStandby:
+					if not Screens.Standby.inStandby:
+						Notifications.AddNotificationWithCallback(self.sendStandbyNotification, MessageBox, _("A finished record timer wants to set your\nreceiver to standby. Do that now?"), timeout=20, default=True)
+				else:
+					RecordTimerEntry.keypress()
 			return True
-
-	def keypress(self, key=None, flag=1):
-		if flag and self.wasInStandby:
-			if not config.misc.standbyCounter.value:
-				config.misc.standbyCounter.value += 1
-			self.wasInStandby = False
-			eActionMap.getInstance().unbindAction('', self.keypress)
 
 	def setAutoincreaseEnd(self, entry = None):
 		if not self.autoincrease:
@@ -401,7 +412,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		if entry is None:
 			new_end =  int(time()) + self.autoincreasetime
 		else:
-			new_end = entry.begin -30
+			new_end = entry.begin - 30
 
 		dummyentry = RecordTimerEntry(self.service_ref, self.begin, new_end, self.name, self.description, self.eit, disabled=True, justplay = self.justplay, afterEvent = self.afterEvent, dirname = self.dirname, tags = self.tags)
 		dummyentry.disabled = self.disabled
@@ -416,42 +427,25 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		self.end = new_end
 		return True
 
-	def setRecordingPreferredTuner(self, setdefault=False):
-		if self.needChangePriorityFrontend:
-			elem = None
-			if not self.change_frontend and not setdefault:
-				elem = config.usage.recording_frontend_priority.value
-				self.change_frontend = True
-			elif self.change_frontend and setdefault:
-				elem = config.usage.frontend_priority.value
-				self.change_frontend = False
-			if elem is not None:
-				setPreferredTuner(int(elem))
-
 	def sendStandbyNotification(self, answer):
+		RecordTimerEntry.keypress()
 		if answer:
 			Notifications.AddNotification(Screens.Standby.Standby)
 
 	def sendTryQuitMainloopNotification(self, answer):
+		RecordTimerEntry.keypress()
 		if answer:
 			Notifications.AddNotification(Screens.Standby.TryQuitMainloop, 1)
-		else:
-			global wasRecTimerWakeup
-			wasRecTimerWakeup = False
 
 	def getNextActivation(self):
-		self.isStillRecording = False
-		if self.state == self.StateEnded or self.state == self.StateFailed:
-			if self.end > time():
-				self.isStillRecording = True
+		if self.state == self.StateEnded:
 			return self.end
+		
 		next_state = self.state + 1
-		if next_state == self.StateEnded or next_state == self.StateFailed:
-			if self.end > time():
-				self.isStillRecording = True
-		return {self.StatePrepared: self.start_prepare,
-				self.StateRunning: self.begin,
-				self.StateEnded: self.end}[next_state]
+		
+		return {self.StatePrepared: self.start_prepare, 
+				self.StateRunning: self.begin, 
+				self.StateEnded: self.end }[next_state]
 
 	def failureCB(self, answer):
 		if answer == True:
@@ -541,11 +535,10 @@ def createTimer(xml):
 		tags = None
 	descramble = int(xml.get("descramble") or "1")
 	record_ecm = int(xml.get("record_ecm") or "0")
-	isAutoTimer = int(xml.get("isAutoTimer") or "0")
 
 	name = xml.get("name").encode("utf-8")
 	#filename = xml.get("filename").encode("utf-8")
-	entry = RecordTimerEntry(serviceref, begin, end, name, description, eit, disabled, justplay, afterevent, dirname = location, tags = tags, descramble = descramble, record_ecm = record_ecm, isAutoTimer = isAutoTimer, always_zap = always_zap)
+	entry = RecordTimerEntry(serviceref, begin, end, name, description, eit, disabled, justplay, afterevent, dirname = location, tags = tags, descramble = descramble, record_ecm = record_ecm, always_zap = always_zap)
 	entry.repeated = int(repeated)
 	
 	for l in xml.findall("log"):
@@ -597,9 +590,6 @@ class RecordTimer(timer.Timer):
 				self.cleanupDaily(config.recording.keep_timers.value)
 				insort(self.processed_timers, w)
 		self.stateChanged(w)
-	
-	def isRecTimerWakeup(self):
-		return wasRecTimerWakeup
 
 	def isRecording(self):
 		for timer in self.timer_list:
@@ -715,7 +705,6 @@ class RecordTimer(timer.Timer):
 			list.append(' always_zap="' + str(int(timer.always_zap)) + '"')
 			list.append(' descramble="' + str(int(timer.descramble)) + '"')
 			list.append(' record_ecm="' + str(int(timer.record_ecm)) + '"')
-			list.append(' isAutoTimer="' + str(int(timer.isAutoTimer)) + '"')
 			list.append('>\n')
 			
 			if config.recording.debug.value:
@@ -748,14 +737,6 @@ class RecordTimer(timer.Timer):
 				continue
 			return timer.begin
 		return -1
-
-	def getStillRecording(self):
-		isStillRecording = False
-		for timer in self.timer_list:
-			if timer.isStillRecording:
-				isStillRecording = True
-				break
-		return isStillRecording
 
 	def getNextRecordingTime(self):
 		now = time()
@@ -811,15 +792,10 @@ class RecordTimer(timer.Timer):
 		returnValue = None
 		type = 0
 		time_match = 0
-		isAutoTimer = False
 		bt = None
 		end = begin + duration
 		refstr = str(service)
 		for x in self.timer_list:
-			if x.isAutoTimer == 1:
-				isAutoTimer = True
-			else:
-				isAutoTimer = False
 			check = x.service_ref.ref.toString() == refstr
 			if not check:
 				sref = x.service_ref.ref
@@ -902,7 +878,7 @@ class RecordTimer(timer.Timer):
 							type = type_offset + 2
 				if time_match:
 					if type in (2,7,12): # When full recording do not look further
-						returnValue = (time_match, [type], isAutoTimer)
+						returnValue = (time_match, [type])
 						break
 					elif returnValue:
 						if type not in returnValue[1]:

@@ -37,7 +37,6 @@ class Language:
 		self.addLanguage("Lietuvių",    "lt", "LT")
 		self.addLanguage("Latviešu",    "lv", "LV")
 		self.addLanguage("Nederlands",  "nl", "NL")
-		self.addLanguage("Norsk Bokmål","nb", "NO")
 		self.addLanguage("Norsk",       "no", "NO")
 		self.addLanguage("Polski",      "pl", "PL")
 		self.addLanguage("Português",   "pt", "PT")
@@ -81,7 +80,6 @@ class Language:
 				pass
 		# HACK: sometimes python 2.7 reverts to the LC_TIME environment value, so make sure it has the correct value
 		os.environ["LC_TIME"] = self.getLanguage() + '.UTF-8'
-		os.environ["LANGUAGE"] = self.getLanguage() + '.UTF-8'
 
 	def activateLanguageIndex(self, index):
 		if index < len(self.langlist):

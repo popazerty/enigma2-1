@@ -120,7 +120,7 @@ class TimerEntry(Screen, ConfigListScreen):
 			self.timerentry_tags = self.timer.tags[:]
 			self.timerentry_tagsset = ConfigSelection(choices = [not self.timerentry_tags and "None" or " ".join(self.timerentry_tags)])
 
-			self.timerentry_repeated = ConfigSelection(default = repeated, choices = [("weekly", _("weekly")), ("daily", _("daily")), ("weekdays", _("Mon-Fri")), ("user", _("user defined"))])
+			self.timerentry_repeated = ConfigSelection(default = repeated, choices = [("daily", _("daily")), ("weekly", _("weekly")), ("weekdays", _("Mon-Fri")), ("user", _("user defined"))])
 			
 			self.timerentry_date = ConfigDateTime(default = self.timer.begin, formatstring = _("%d.%B %Y"), increment = 86400)
 			self.timerentry_starttime = ConfigClock(default = self.timer.begin)
@@ -229,13 +229,6 @@ class TimerEntry(Screen, ConfigListScreen):
 			self.keySelect()
 		else:
 			ConfigListScreen.keyRight(self)
-			self.newConfig()
-
-	def handleKeyFileCallback(self, answer):
-		if self["config"].getCurrent() in (self.channelEntry, self.tagsSet):
-			self.keySelect()
-		else:
-			ConfigListScreen.handleKeyFileCallback(self, answer)
 			self.newConfig()
 
 	def keySelect(self):

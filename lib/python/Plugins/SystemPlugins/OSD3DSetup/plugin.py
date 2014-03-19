@@ -2,15 +2,11 @@ from Screens.Screen import Screen
 from Components.ConfigList import ConfigListScreen
 from Components.config import config, ConfigSubsection, ConfigInteger, ConfigSelection, ConfigSlider, getConfigListEntry
 
-modelist = {"off": _("Off"), "auto": _("Auto"), "sidebyside": _("Side by Side"), "topandbottom": _("Top and Bottom")}
-if config.misc.boxtype.value == 'gb800se' or config.misc.boxtype.value == 'gb800solo' or config.misc.boxtype.value == 'gb800ue' or config.misc.boxtype.value == 'gb800ueplus' or config.misc.boxtype.value == 'gb800seplus':
-	setmodelist = {"mode1": _("Mode 1"), "mode2": _("Mode 2")}
+modelist = {"off": _("Off"), "auto": _("Auto"), "sidebyside": _("Side by side"), "topandbottom": _("Top and bottom")}
 
 config.plugins.OSD3DSetup = ConfigSubsection()
 config.plugins.OSD3DSetup.mode = ConfigSelection(choices = modelist, default = "auto")
 config.plugins.OSD3DSetup.znorm = ConfigInteger(default = 0)
-if config.misc.boxtype.value == 'gb800se' or config.misc.boxtype.value == 'gb800solo' or config.misc.boxtype.value == 'gb800ue' or config.misc.boxtype.value == 'gb800ueplus' or config.misc.boxtype.value == 'gb800seplus':
-	config.plugins.OSD3DSetup.setmode = ConfigSelection(choices = setmodelist, default = "mode1")
 
 PROC_ET_3DMODE = "/proc/stb/fb/3dmode"
 PROC_ET_ZNORM = "/proc/stb/fb/znorm"
@@ -53,17 +49,11 @@ class OSD3DSetupScreen(Screen, ConfigListScreen):
 
 		mode = config.plugins.OSD3DSetup.mode.value
 		znorm = config.plugins.OSD3DSetup.znorm.value
-		if config.misc.boxtype.value == 'gb800se' or config.misc.boxtype.value == 'gb800solo' or config.misc.boxtype.value == 'gb800ue' or config.misc.boxtype.value == 'gb800ueplus' or config.misc.boxtype.value == 'gb800seplus':		
-			setmode = config.plugins.OSD3DSetup.setmode.value
 
 		self.mode = ConfigSelection(choices = modelist, default = mode)
 		self.znorm = ConfigSlider(default = znorm + 50, increment = 1, limits = (0, 100))
-		if config.misc.boxtype.value == 'gb800se' or config.misc.boxtype.value == 'gb800solo' or config.misc.boxtype.value == 'gb800ue' or config.misc.boxtype.value == 'gb800ueplus' or config.misc.boxtype.value == 'gb800seplus':
-			self.setmode = ConfigSelection(choices = setmodelist, default = setmode)
-			self.list.append(getConfigListEntry(_("Setup mode"), self.setmode))
 		self.list.append(getConfigListEntry(_("3d mode"), self.mode))
 		self.list.append(getConfigListEntry(_("Depth"), self.znorm))
-		
 		self["config"].list = self.list
 		self["config"].l.setList(self.list)
 
@@ -81,8 +71,6 @@ class OSD3DSetupScreen(Screen, ConfigListScreen):
 	def keyGo(self):
 		config.plugins.OSD3DSetup.mode.value = self.mode.value
 		config.plugins.OSD3DSetup.znorm.value = int(self.znorm.value) - 50
-		if config.misc.boxtype.value == 'gb800se' or config.misc.boxtype.value == 'gb800solo' or config.misc.boxtype.value == 'gb800ue' or config.misc.boxtype.value == 'gb800ueplus' or config.misc.boxtype.value == 'gb800seplus':
-			config.plugins.OSD3DSetup.setmode.value = self.setmode.value
 		config.plugins.OSD3DSetup.save()
 		self.close()
 
@@ -117,35 +105,9 @@ def applySettings(mode, znorm):
 		file.close()
 	except:
 		return
-		
-def applySettings2(mode, znorm, setmode):
-	try:
-		if setmode == "mode1":
-			file = open("/proc/stb/fb/3dmode", "w")
-			file.write(mode)
-			file.close()
-			file = open("/proc/stb/fb/znorm", "w")
-			file.write('%d' % znorm)
-			file.close()
-		elif setmode == "mode2":
-			file = open("/proc/stb/fb/primary/3d","w")
-			if mode == "sidebyside" :
-				mode = "sbs"
-			elif mode == "topandbottom":
-				mode = "tab"
-			file.write(mode)
-			file.close()
-			file = open("/proc/stb/fb/primary/zoffset","w")
-			file.write('%d' % znorm)
-			file.close()
-	except:
-		return		
 
 def setConfiguredSettings():
-	if config.misc.boxtype.value == 'gb800se' or config.misc.boxtype.value == 'gb800solo' or config.misc.boxtype.value == 'gb800ue' or config.misc.boxtype.value == 'gb800ueplus' or config.misc.boxtype.value == 'gb800seplus':
-		applySettings2(config.plugins.OSD3DSetup.mode.value, int(config.plugins.OSD3DSetup.znorm.value), config.plugins.OSD3DSetup.setmode.value)
-	else:	
-		applySettings(config.plugins.OSD3DSetup.mode.value, int(config.plugins.OSD3DSetup.znorm.value))
+	applySettings(config.plugins.OSD3DSetup.mode.value, int(config.plugins.OSD3DSetup.znorm.value))
 
 def main(session, **kwargs):
 	session.open(OSD3DSetupScreen)

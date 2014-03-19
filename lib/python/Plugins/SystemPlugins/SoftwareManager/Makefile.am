@@ -7,9 +7,7 @@ install_PYTHON =	\
 	plugin.py \
 	BackupRestore.py \
 	ImageWizard.py \
-	SoftwareTools.py \
-	ImageBackup.py \
-	Flash_online.py
+	SoftwareTools.py
 
 dist_install_DATA = \
 	imagewizard.xml \
@@ -20,12 +18,4 @@ dist_install_DATA = \
 	remove.png \
 	update.png \
 	upgradeable.png \
-	upgrade.png \
-	backup-hdd.sh \
-	backup-usb.sh \
-	backup.sh
-	
-install-data-hook:
-	chmod +x $(DESTDIR)$(installdir)/backup-hdd.sh; \
-	chmod +x $(DESTDIR)$(installdir)/backup-usb.sh; \
-	chmod +x $(DESTDIR)$(installdir)/backup.sh
+	upgrade.png

@@ -1,4 +1,4 @@
-SUBDIRS = countries fonts extensions keymaps skin_default
+SUBDIRS = countries fonts extensions keymaps skin_default rc_models
 
 dist_pkgdata_DATA = \
 	encoding.conf \
@@ -19,14 +19,12 @@ dist_pkgdata_DATA = \
 
 if HAVE_TEXTLCD
 dist_pkgdata_DATA += skin_text.xml
+else
+if HAVE_COLORLCD
+dist_pkgdata_DATA += skin_display96.xml
+else
+dist_pkgdata_DATA += skin_display.xml
 endif
-
-if HAVE_COLORLCD220
-SUBDIRS += lcd220 lcd_skin220
-endif
-
-if HAVE_COLORLCD400
-SUBDIRS += lcd400 lcd_skin400
 endif
 
 skin_display.xml: skin_display_default.xml

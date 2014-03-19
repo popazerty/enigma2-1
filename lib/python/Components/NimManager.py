@@ -148,7 +148,7 @@ class SecConfigure:
 
 		for slot in nim_slots:
 			if slot.frontend_id is not None:
-				types = [type for type in ["DVB-C", "DVB-T2", "DVB-T", "DVB-S2", "DVB-S", "ATSC"] if eDVBResourceManager.getInstance().frontendIsCompatible(slot.frontend_id, type)]
+				types = [type for type in ["DVB-T2", "DVB-T", "DVB-C", "DVB-S2", "DVB-S", "ATSC"] if eDVBResourceManager.getInstance().frontendIsCompatible(slot.frontend_id, type)]
 				if "DVB-T2" in types:
 					# DVB-T2 implies DVB-T support
 					types.remove("DVB-T")
@@ -703,7 +703,7 @@ class NimManager:
 			#db.readATSC(self.atscList, self.transpondersatsc)
 
 	def enumerateNIMs(self):
-		# enum available NIMs. This is currently very receiver-centric and uses the /proc/bus/nim_sockets interface.
+		# enum available NIMs. This is currently very dreambox-centric and uses the /proc/bus/nim_sockets interface.
 		# the result will be stored into nim_slots.
 		# the content of /proc/bus/nim_sockets looks like:
 		# NIM Socket 0:
@@ -758,7 +758,7 @@ class NimManager:
 				entries[current_slot]["frontend_device"] = input
 			elif  line.startswith("Mode"):
 				# "Mode 0: DVB-T" -> ["Mode 0", "DVB-T"]
-				split = line.split(":")
+				split = line.split(": ")
 				if len(split) > 1 and split[1]:
 					# "Mode 0" -> ["Mode", "0"]
 					split2 = split[0].split(" ")
@@ -1034,7 +1034,7 @@ def InitSecParams():
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_BETWEEN_DISEQC_REPEATS, configElement.value))
 	config.sec.delay_between_diseqc_repeats = x
 
-	x = ConfigInteger(default=100, limits = (0, 9999))
+	x = ConfigInteger(default=50, limits = (0, 9999))
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_AFTER_LAST_DISEQC_CMD, configElement.value))
 	config.sec.delay_after_last_diseqc_command = x
 
@@ -1042,7 +1042,7 @@ def InitSecParams():
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_AFTER_TONEBURST, configElement.value))
 	config.sec.delay_after_toneburst = x
 
-	x = ConfigInteger(default=75, limits = (0, 9999))
+	x = ConfigInteger(default=20, limits = (0, 9999))
 	x.addNotifier(lambda configElement: secClass.setParam(secClass.DELAY_AFTER_VOLTAGE_CHANGE_BEFORE_SWITCH_CMDS, configElement.value))
 	config.sec.delay_after_change_voltage_before_switch_command = x
 
@@ -1365,7 +1365,7 @@ def InitNimManager(nimmgr):
 
 	def configModeChanged(configMode):
 		slot_id = configMode.slot_id
-		nim = config.Nims[slot_id]
+ 		nim = config.Nims[slot_id]
 		if configMode.value == "advanced" and isinstance(nim.advanced, ConfigNothing):
 			# advanced config:
 			nim.advanced = ConfigSubsection()
@@ -1448,7 +1448,7 @@ def InitNimManager(nimmgr):
 				list.append((str(n), x[0]))
 				n += 1
 			nim.cable = ConfigSubsection()
-			nim.cable.scan_networkid = ConfigInteger(default = 0, limits = (0, 99999))
+			nim.cable.scan_networkid = ConfigInteger(default = 0, limits = (0, 9999))
 			possible_scan_types = [("bands", _("Frequency bands")), ("steps", _("Frequency steps"))]
 			if n:
 				possible_scan_types.append(("provider", _("Provider")))

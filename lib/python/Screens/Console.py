@@ -3,7 +3,13 @@ from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.ScrollLabel import ScrollLabel
 
-class Console(Screen):	
+class Console(Screen):
+	#TODO move this to skin.xml
+	skin = """
+		<screen position="100,100" size="550,400" title="Command execution..." >
+			<widget name="text" position="0,0" size="550,400" font="Console;14" />
+		</screen>"""
+		
 	def __init__(self, session, title = "Console", cmdlist = None, finishedCallback = None, closeOnSuccess = False):
 		Screen.__init__(self, session)
 
@@ -11,16 +17,14 @@ class Console(Screen):
 		self.closeOnSuccess = closeOnSuccess
 		self.errorOcurred = False
 
-		self.Shown = True
 		self["text"] = ScrollLabel("")
-		self["actions"] = ActionMap(["ColorActions", "WizardActions", "DirectionActions"], 
+		self["actions"] = ActionMap(["WizardActions", "DirectionActions"], 
 		{
 			"ok": self.cancel,
 			"back": self.cancel,
 			"up": self["text"].pageUp,
-			"down": self["text"].pageDown,
-			"yellow": self.yellow,
-		}, -2)
+			"down": self["text"].pageDown
+		}, -1)
 		
 		self.cmdlist = cmdlist
 		self.newtitle = title
@@ -33,15 +37,6 @@ class Console(Screen):
 		self.container.dataAvail.append(self.dataAvail)
 		self.onLayoutFinish.append(self.startRun) # dont start before gui is finished
 
-	def yellow(self):
-		print 'Yellow pressed'
-		if self.Shown == True:
-				self.hide()
-				self.Shown = False
-		else:
-				self.show()
-				self.Shown = True
-				
 	def updateTitle(self):
 		self.setTitle(self.newtitle)
 

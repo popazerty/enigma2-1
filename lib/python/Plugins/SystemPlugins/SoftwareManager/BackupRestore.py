@@ -1,42 +1,28 @@
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.Console import Console
-from Screens.Standby import TryQuitMainloop
 from Components.ActionMap import ActionMap, NumberActionMap
 from Components.Pixmap import Pixmap
-from Tools.LoadPixmap import LoadPixmap
 from Components.Label import Label
 from Components.Sources.StaticText import StaticText
 from Components.MenuList import MenuList
-from Components.Sources.List import List
-from Components.Button import Button
 from Components.config import getConfigListEntry, configfile, ConfigSelection, ConfigSubsection, ConfigText, ConfigLocations
 from Components.config import config
 from Components.ConfigList import ConfigList,ConfigListScreen
 from Components.FileList import MultiFileSelectList
-from Components.Network import iNetwork
 from Plugins.Plugin import PluginDescriptor
-from enigma import eTimer, eEnv, eConsoleAppContainer
+from enigma import eTimer, eEnv
 from Tools.Directories import *
-from os import system, popen, path, makedirs, listdir, access, stat, rename, remove, W_OK, R_OK
-from time import gmtime, strftime, localtime, sleep
+from os import popen, path, makedirs, listdir, access, stat, rename, remove, W_OK, R_OK
+from time import gmtime, strftime, localtime
 from datetime import date
-from boxbranding import getBoxType
 
 config.plugins.configurationbackup = ConfigSubsection()
 config.plugins.configurationbackup.backuplocation = ConfigText(default = '/media/hdd/', visible_width = 50, fixed_size = False)
 config.plugins.configurationbackup.backupdirs = ConfigLocations(default=[eEnv.resolve('${sysconfdir}/enigma2/'), '/etc/network/interfaces', '/etc/wpa_supplicant.conf', '/etc/wpa_supplicant.ath0.conf', '/etc/wpa_supplicant.wlan0.conf', '/etc/resolv.conf', '/etc/default_gw', '/etc/hostname'])
 
 def getBackupPath():
-	backuppath = config.plugins.configurationbackup.backuplocation.getValue()
-	box = getBoxType()
-	if backuppath.endswith('/'):
-		return backuppath + 'backup_' + box
-	else:
-		return backuppath + '/backup_' + box
-		
-def getOldBackupPath():
-	backuppath = config.plugins.configurationbackup.backuplocation.getValue()
+	backuppath = config.plugins.configurationbackup.backuplocation.value
 	if backuppath.endswith('/'):
 		return backuppath + 'backup'
 	else:
@@ -44,14 +30,7 @@ def getOldBackupPath():
 
 def getBackupFilename():
 	return "enigma2settingsbackup.tar.gz"
-	
-def SettingsEntry(name, checked):
-	if checked:
-		picture = LoadPixmap(cached = True, path = resolveFilename(SCOPE_ACTIVE_SKIN, "icons/lock_on.png"));
-	else:
-		picture = LoadPixmap(cached = True, path = resolveFilename(SCOPE_ACTIVE_SKIN, "icons/lock_off.png"));
-
-	return (name, picture, checked)
+		
 
 class BackupScreen(Screen, ConfigListScreen):
 	skin = """
@@ -90,7 +69,7 @@ class BackupScreen(Screen, ConfigListScreen):
 		try:
 			if (path.exists(self.backuppath) == False):
 				makedirs(self.backuppath)
-			self.backupdirs = ' '.join( config.plugins.configurationbackup.backupdirs.getValue() )
+			self.backupdirs = ' '.join( config.plugins.configurationbackup.backupdirs.value )
 			if path.exists(self.fullbackupfilename):
 				dt = str(date.fromtimestamp(stat(self.fullbackupfilename).st_ctime))
 				self.newfilename = self.backuppath + "/" + dt + '-' + self.backupfile
@@ -266,6 +245,7 @@ class RestoreMenu(Screen):
 			if (file.endswith(".tar.gz")):
 				self.flist.append((file))
 				self.entry = True
+		self.flist.sort(reverse=True)
 		self["filelist"].l.setList(self.flist)
 
 	def KeyOk(self):

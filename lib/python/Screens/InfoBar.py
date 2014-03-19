@@ -47,8 +47,8 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 			{
 				"showMovies": (self.showMovies, _("Play recorded movies...")),
 				"toogleTvRadio": (self.toogleTvRadio, _("toggels betwenn tv and radio...")),
-				"openTimerList": (self.openTimerList, _("Show the tv player...")),
-				"showMediaPlayer": (self.showMediaPlayer, _("Show the media player...")),
+				"showRadio": (self.showRadio, _("Show the radio player...")),
+				"showTv": (self.showTv, _("Show the tv player...")),
 			}, prio=2)
 		
 		self.allowPiP = True
@@ -93,7 +93,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 	def __checkServiceStarted(self):
 		self.__serviceStarted(True)
 		self.onExecBegin.remove(self.__checkServiceStarted)
-		
+
 	def serviceStarted(self):  #override from InfoBarShowHide
 		new = self.servicelist.newServicePlayed()
 		if self.execing:
@@ -118,12 +118,12 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 			self.session.openWithCallback(self.ChannelSelectionRadioClosed, ChannelSelectionRadio, self)
 
 	def toogleTvRadio(self): 
-		if self.radioTV == 1:
-			self.radioTV = 0
-			self.showTv() 
-		else: 
-			self.radioTV = 1
-			self.showRadio()  
+               if self.radioTV == 1:
+                       self.radioTV = 0
+                       self.showTv() 
+               else: 
+                       self.radioTV = 1
+                       self.showRadio()  
 
 	def ChannelSelectionRadioClosed(self, *arg):
 		self.rds_display.show()  # in InfoBarRdsDecoder
@@ -140,19 +140,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 				self.session.nav.playService(ref)
 		else:
 			self.session.open(MoviePlayer, service, slist = self.servicelist, lastservice = ref)
-			
-	def openTimerList(self):
-		from Screens.TimerEdit import TimerEditList
-		self.session.open(TimerEditList)
-		
-	def showMediaPlayer(self):
-		try:
-			from Plugins.Extensions.MediaPlayer.plugin import MediaPlayer
-			self.session.open(MediaPlayer)
-			no_plugin = False
-		except Exception, e:
-			self.session.open(MessageBox, _("The MediaPlayer plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
-			
+
 class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 		InfoBarMenu, \
 		InfoBarSeek, InfoBarShowMovies, InfoBarInstantRecord, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications,
@@ -163,15 +151,11 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 	ENABLE_RESUME_SUPPORT = True
 	ALLOW_SUSPEND = True
 		
-	def __init__(self, session, service, slist=None, lastservice=None, infobar=None):
+	def __init__(self, session, service, slist = None, lastservice = None):
 		Screen.__init__(self, session)
 		
 		self["actions"] = HelpableActionMap(self, "MoviePlayerActions",
 			{
-				"InfoButtonPressed": (self.openEventView, _("open Info...")),
-				"EPGButtonPressed": (self.showDefaultEPG,  _("open EPG...")),
-				"InfoButtonPressedLong": (self.showEventInfoPlugins, _("select Info...")),
-				"EPGButtonPressedLong": (self.showEventGuidePlugins,  _("select EPG...")),
 				"leavePlayer": (self.leavePlayer, _("leave movie player...")),
 				"leavePlayerOnExit": (self.leavePlayerOnExit, _("leave movie player..."))
 			})
@@ -186,7 +170,7 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 		
 		for x in HelpableScreen, InfoBarShowHide, InfoBarMenu, \
 				InfoBarBase, InfoBarSeek, InfoBarShowMovies, InfoBarInstantRecord, \
-				InfoBarAudioSelection, InfoBarNotifications, \
+				InfoBarAudioSelection, InfoBarNotifications, InfoBarSimpleEventView, \
 				InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, \
 				InfoBarMoviePlayerSummarySupport, InfoBarSubtitleSupport, \
 				InfoBarTeletextPlugin, InfoBarServiceErrorPopupSupport, InfoBarExtensions, \
@@ -194,7 +178,6 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 			x.__init__(self)
 
 		self.servicelist = slist
-		self.infobar = infobar
 		self.lastservice = lastservice or session.nav.getCurrentlyPlayingServiceOrGroup()
 		session.nav.playService(service)
 		self.cur_service = service
@@ -408,22 +391,6 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 
 	def swapPiP(self):
 		pass
-
-	def showDefaultEPG(self):
-		if self.infobar:
-			self.infobar.showMultiEPG()
-
-	def openEventView(self):
-		if self.infobar:
-			self.infobar.showDefaultEPG()
-
-	def showEventInfoPlugins(self):
-		if self.infobar:
-			self.infobar.showEventInfoPlugins()
-
-	def showEventGuidePlugins(self):
-		if self.infobar:
-			self.infobar.showEventGuidePlugins()
 
 	def showMovies(self):
 		ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()

@@ -5,9 +5,4 @@ dist_install_DATA = \
 	andale.ttf \
 	lcd.ttf \
 	md_khmurabi_10.ttf \
-	nmsbd.ttf \
-	Daconi-digital-Bold.ttf \
-	Daconi-digital-watch.ttf \
-	nmsbd2.ttf Verdana_R.ttf \
-	DacoMark_Reg.ttf
-
+	nmsbd.ttf

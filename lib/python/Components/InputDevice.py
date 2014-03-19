@@ -3,7 +3,6 @@ from os import listdir, open as os_open, close as os_close, write as os_write, O
 from Tools.Directories import pathExists
 from fcntl import ioctl
 import struct
-from boxbranding import getBoxType
 
 # asm-generic/ioctl.h
 IOC_NRBITS = 8L
@@ -48,11 +47,11 @@ class inputDevices:
 
 
 	def getInputDeviceType(self,name):
-		if "remote control" in name:
+		if name.find("remote control") != -1:
 			return "remote"
-		elif "keyboard" in name:
+		elif name.find("keyboard") != -1:
 			return "keyboard"
-		elif "mouse" in name:
+		elif name.find("mouse") != -1:
 			return "mouse"
 		else:
 			print "Unknown device type:",name
@@ -207,8 +206,6 @@ class RcTypeControl():
 			if config.plugins.remotecontroltype.rctype.value != 0:
 				self.writeRcType(config.plugins.remotecontroltype.rctype.value)
 		else:
-			self.isSupported = False
-		if getBoxType().startswith('gb'):
 			self.isSupported = False
 
 	def multipleRcSupported(self):

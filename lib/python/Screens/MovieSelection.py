@@ -442,7 +442,6 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		else:
 			self.selected_tags = None
 		self.selected_tags_ele = None
-		self.nextInBackground = None
 
 		self.movemode = False
 		self.bouquet_mark_edit = False
@@ -906,18 +905,17 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		self.session.nav.stopService()
 		self.list.playInBackground = None
 		if config.movielist.play_audio_internal.value:
-			index = self.list.findService(playInBackground)
-			if index is None:
-				return # Not found?
-			next = self.list.getItem(index + 1)
-			if not next:
-				return
-			path = next.getPath()
-			ext = os.path.splitext(path)[1].lower()
-			print "Next up:", path
-			if ext in AUDIO_EXTENSIONS:
-				self.nextInBackground = next
-				self.callLater(self.preview)
+			if playInBackground == current:
+				self["list"].moveDown()
+				next = self.getCurrent()
+				if not next or (next == current):
+					print "End of list"
+					return # don't loop the last item
+				path = next.getPath()
+				ext = os.path.splitext(path)[1].lower()
+				print "Next up:", path
+				if ext in AUDIO_EXTENSIONS:
+					self.callLater(self.preview)
 
 	def preview(self):
 		current = self.getCurrent()
@@ -928,26 +926,19 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 			else:
 				Screens.InfoBar.InfoBar.instance.checkTimeshiftRunning(self.previewCheckTimeshiftCallback)
 
-	def startPreview(self):
-		if self.nextInBackground is not None:
-			current = self.nextInBackground
-			self.nextInBackground = None
-		else:
-			current = self.getCurrent()
-		playInBackground = self.list.playInBackground
-		if playInBackground:
-			self.list.playInBackground = None
-			self.session.nav.stopService()
-			if playInBackground != current:
-				# come back to play the new one
-				self.callLater(self.preview)
-		else:
-			self.list.playInBackground = current
-			self.session.nav.playService(current)
-
 	def previewCheckTimeshiftCallback(self, answer):
 		if answer:
-			self.startPreview()
+			current = self.getCurrent()
+			playInBackground = self.list.playInBackground
+			if playInBackground:
+				self.list.playInBackground = None
+				self.session.nav.stopService()
+				if playInBackground != current:
+					# come back to play the new one
+					self.callLater(self.preview)
+			else:
+				self.list.playInBackground = current
+				self.session.nav.playService(current)
 
 	def seekRelative(self, direction, amount):
 		if self.list.playInBackground:
@@ -1149,7 +1140,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 	def setCurrentRef(self, path):
 		self.current_ref = eServiceReference("2:0:1:0:0:0:0:0:0:0:" + path)
 		# Magic: this sets extra things to show
-		self.current_ref.setName('16384:jpg 16384:png 16384:gif 16384:bmp')
+		self.current_ref.setName('8192:jpg 8192:png 8192:gif 8192:bmp')
 
 	def reloadList(self, sel = None, home = False):
 		self.reload_sel = sel
@@ -1282,10 +1273,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 			d = os.path.normpath(p.mountpoint)
 			if d in inlist:
 				# improve shortcuts to mountpoints
-				try:
-					bookmarks[bookmarks.index((d,d))] = (p.tabbedDescription(), d)
-				except:
-					pass # When already listed as some "friendly" name
+				bookmarks[bookmarks.index((d,d))] = (p.tabbedDescription(), d)
 			else:
 				bookmarks.append((p.tabbedDescription(), d))
 			inlist.append(d)
@@ -1669,7 +1657,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 				rec_filename = os.path.split(current.getPath())[1]
 				if rec_filename.endswith(".ts"): rec_filename = rec_filename[:-3]
 				for timer in NavigationInstance.instance.RecordTimer.timer_list:
-					if timer.isRunning() and not timer.justplay and rec_filename in timer.Filename:
+					if timer.isRunning() and not timer.justplay and timer.Filename.find(rec_filename)>=0:
 						choices = [
 							(_("Cancel"), None),
 							(_("Stop recording"), ("s", timer)),

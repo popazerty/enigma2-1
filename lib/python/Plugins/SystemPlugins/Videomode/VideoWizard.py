@@ -1,4 +1,3 @@
-from boxbranding import getBoxType
 from Screens.Wizard import WizardSummary
 from Screens.WizardLanguage import WizardLanguage
 from Screens.Rc import Rc
@@ -12,24 +11,13 @@ from Tools.HardwareInfo import HardwareInfo
 
 config.misc.showtestcard = ConfigBoolean(default = False)
 
-try:
-	file = open("/proc/stb/info/chipset", "r")
-	chipset = file.readline().strip()
-	file.close()
-except:
-	chipset = "unknown"
-
-has_rca = False
-if getBoxType() == 'gbquad' or getBoxType() == 'gbquadplus' or getBoxType() == 'gb800seplus' or getBoxType() == 'gb800ueplus':	
-	has_rca = True
-
 class VideoWizardSummary(WizardSummary):
 	def __init__(self, session, parent):
 		WizardSummary.__init__(self, session, parent)
 
 	def setLCDPicCallback(self):
 		self.parent.setLCDTextCallback(self.setText)
-
+		
 	def setLCDPic(self, file):
 		self["pic"].instance.setPixmapFromFile(file)
 
@@ -61,20 +49,22 @@ class VideoWizard(WizardLanguage, Rc):
 		# FIXME anyone knows how to use relative paths from the plugin's directory?
 		self.xmlfile = resolveFilename(SCOPE_PLUGINS, "SystemPlugins/Videomode/videowizard.xml")
 		self.hw = video_hw
-
+		
 		WizardLanguage.__init__(self, session, showSteps = False, showStepSlider = False)
 		Rc.__init__(self)
 		self["wizard"] = Pixmap()
 		self["portpic"] = Pixmap()
-
+		
 		self.port = None
 		self.mode = None
 		self.rate = None
+		
+		
 	def createSummary(self):
 		print "++++++++++++***++**** VideoWizard-createSummary"
 		from Screens.Wizard import WizardSummary
 		return VideoWizardSummary
-
+		
 	def markDone(self):
 		self.hw.saveMode(self.port, self.mode, self.rate)
 		config.misc.videowizardenabled.value = 0
@@ -91,8 +81,6 @@ class VideoWizard(WizardLanguage, Rc):
 				descr = port
 				if descr == 'DVI' and has_hdmi:
 					descr = 'HDMI'
-				if descr == 'Scart' and has_rca:
-					descr = 'RCA'
 				if port != "DVI-PC":
 					list.append((descr,port))
 		list.sort(key = lambda x: x[0])
@@ -103,7 +91,7 @@ class VideoWizard(WizardLanguage, Rc):
 		print "inputSelectionMade:", index
 		self.port = index
 		self.inputSelect(index)
-
+		
 	def inputSelectionMoved(self):
 		hw_type = HardwareInfo().get_device_name()
 		has_hdmi = HardwareInfo().has_hdmi()
@@ -113,10 +101,8 @@ class VideoWizard(WizardLanguage, Rc):
 			picname = self.selection
 			if picname == 'DVI' and has_hdmi:
 				picname = "HDMI"
-			if picname == 'Scart' and has_rca:
-				picname = "RCA"					
 			self["portpic"].instance.setPixmapFromFile(resolveFilename(SCOPE_PLUGINS, "SystemPlugins/Videomode/" + picname + ".png"))
-
+		
 	def inputSelect(self, port):
 		print "inputSelect:", port
 		modeList = self.hw.getModeList(self.selection)
@@ -125,7 +111,7 @@ class VideoWizard(WizardLanguage, Rc):
 		if (len(modeList) > 0):
 			ratesList = self.listRates(modeList[0][0])
 			self.hw.setMode(port = port, mode = modeList[0][0], rate = ratesList[0][0])
-
+		
 	def listModes(self):
 		list = []
 		print "modes for port", self.port
@@ -139,18 +125,15 @@ class VideoWizard(WizardLanguage, Rc):
 		print "modeSelectionMade:", index
 		self.mode = index
 		self.modeSelect(index)
-	
+		
 	def modeSelectionMoved(self):
 		print "mode selection moved:", self.selection
 		self.modeSelect(self.selection)
-	
+		
 	def modeSelect(self, mode):
 		ratesList = self.listRates(mode)
 		print "ratesList:", ratesList
-		if self.port == "DVI" and mode in ("720p", "1080i", "1080p") and chipset != 'bcm7405':
-			self.rate = "multi"
-			self.hw.setMode(port = self.port, mode = mode, rate = "multi")
-		elif self.port == "DVI" and mode in ("720p", "1080i"):
+		if self.port == "DVI" and mode in ("720p", "1080i", "1080p"):
 			self.rate = "multi"
 			self.hw.setMode(port = self.port, mode = mode, rate = "multi")
 		else:

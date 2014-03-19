@@ -1,12 +1,5 @@
 #!/bin/sh
 
-if [ `cat /etc/hostname | cut -c 1-2`=="gb" ]; then
-	echo 'Gigablue' > /proc/stb/info/model
-	cat /etc/model > /proc/stb/info/gbmodel
-fi
-
-rm -rf /dev/dbox/oled0
-
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
@@ -30,24 +23,10 @@ if [ -d /home/root ]; then
 	cd /home/root
 fi
 
-#check for sundtek tuner helper lib
-if [ -e /opt/lib/libmediaclient.so ]; then
-	LIBS="/opt/lib/libmediaclient.so /usr/lib/libopen.so.0.0.0"
-else
-	LIBS="/usr/lib/libopen.so.0.0.0"
-fi
+LIBS=@libdir@/libopen.so.0.0.0
 
 sync
-
-if [ "$(grep config.crash.enabledebug /etc/enigma2/settings)" == "config.crash.enabledebug=true" ]; then
-	if [ "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" != "" -a -d "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" ]; then
-		LD_PRELOAD=$LIBS @bindir@/enigma2 &> $(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')Enigma2-debug-$(date +%Y%m%d_%H-%M-%S).log
-	else
-		LD_PRELOAD=$LIBS @bindir@/enigma2 &> /home/root/logs/Enigma2-debug-$(date +%Y%m%d_%H-%M-%S).log
-	fi
-else
-	LD_PRELOAD=$LIBS @bindir@/enigma2
-fi
+LD_PRELOAD=$LIBS @bindir@/enigma2
 
 # enigma2 exit codes:
 #
@@ -81,10 +60,6 @@ case $ret in
 		[ -f /sys/class/vtconsole/vtcon1/bind ] && echo 1 > /sys/class/vtconsole/vtcon1/bind
 		opkg upgrade 2>&1 | tee /home/root/ipkgupgrade.log
 		/sbin/reboot
-		;;
-	43)
-		echo "    " > /dev/lcd0
-		/usr/bin/gigablue_wol
 		;;
 	*)
 		;;

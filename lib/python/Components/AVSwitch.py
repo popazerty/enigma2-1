@@ -3,7 +3,6 @@ from config import config, ConfigSlider, ConfigSelection, ConfigYesNo, \
 from enigma import eAVSwitch, getDesktop
 from SystemInfo import SystemInfo
 import os
-from boxbranding import getBoxType
 
 class AVSwitch:
 	def setInput(self, input):
@@ -124,10 +123,7 @@ def InitAVSwitch():
 	iAVSwitch = AVSwitch()
 
 	def setColorFormat(configElement):
-		if getBoxType() == 'gbquad' or getBoxType() == 'gbquadplus':
-			map = {"cvbs": 0, "rgb": 3, "svideo": 2, "yuv": 3}
-		else:
-			map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3} 
+		map = {"cvbs": 0, "rgb": 1, "svideo": 2, "yuv": 3}
 		iAVSwitch.setColorFormat(map[configElement.value])
 
 	def setAspectRatio(configElement):
@@ -148,76 +144,19 @@ def InitAVSwitch():
 	config.av.wss.addNotifier(setWSS)
 
 	iAVSwitch.setInput("ENCODER") # init on startup
-	if (getBoxType() in ('gbquad', 'gbquadplus', 'gb800seplus', 'gb800ueplus')):
-		detected = False
-	else:
-		detected = eAVSwitch.getInstance().haveScartSwitch()
+	SystemInfo["ScartSwitch"] = eAVSwitch.getInstance().haveScartSwitch()
 
-	SystemInfo["ScartSwitch"] = detected
-	
-	if os.path.exists("/proc/stb/audio/3d_surround_choices"):
-		f = open("/proc/stb/audio/3d_surround_choices", "r")
-		can_3dsurround = f.read().strip().split(" ")
-		f.close()
-	else:
-		can_3dsurround = False
-
-	SystemInfo["Can3DSurround"] = can_3dsurround
-
-	if can_3dsurround:
-		def set3DSurround(configElement):
-			f = open("/proc/stb/audio/3d_surround", "w")
-			f.write(configElement.value)
-			f.close()
-		choice_list = [("none", _("off")), ("hdmi", _("HDMI")), ("spdif", _("SPDIF")), ("dac", _("DAC"))]
-		config.av.surround_3d = ConfigSelection(choices = choice_list, default = "none")
-		config.av.surround_3d.addNotifier(set3DSurround)
-	else:
-		config.av.surround_3d = ConfigNothing()
-		
-	if os.path.exists("/proc/stb/audio/avl_choices"):
-		f = open("/proc/stb/audio/avl_choices", "r")
-		can_autovolume = f.read().strip().split(" ")
-		f.close()
-	else:
-		can_autovolume = False
-
-	SystemInfo["CanAutoVolume"] = can_autovolume
-
-	if can_autovolume:
-		def setAutoVulume(configElement):
-			f = open("/proc/stb/audio/avl", "w")
-			f.write(configElement.value)
-			f.close()
-		choice_list = [("none", _("off")), ("hdmi", _("HDMI")), ("spdif", _("SPDIF")), ("dac", _("DAC"))]
-		config.av.autovolume = ConfigSelection(choices = choice_list, default = "none")
-		config.av.autovolume.addNotifier(setAutoVulume)
-	else:
-		config.av.autovolume = ConfigNothing()		
-	
 	try:
-		can_downmix_ac3 = "downmix" in open("/proc/stb/audio/ac3_choices", "r").read()
+		can_downmix = open("/proc/stb/audio/ac3_choices", "r").read()[:-1].find("downmix") != -1
 	except:
-		can_downmix_ac3 = False
+		can_downmix = False
 
-	SystemInfo["CanDownmixAC3"] = can_downmix_ac3
-	if can_downmix_ac3:
+	SystemInfo["CanDownmixAC3"] = can_downmix
+	if can_downmix:
 		def setAC3Downmix(configElement):
 			open("/proc/stb/audio/ac3", "w").write(configElement.value and "downmix" or "passthrough")
 		config.av.downmix_ac3 = ConfigYesNo(default = True)
 		config.av.downmix_ac3.addNotifier(setAC3Downmix)
-	
-	try:
-		can_downmix_aac = "downmix" in open("/proc/stb/audio/aac_choices", "r").read()
-	except:
-		can_downmix_aac = False
-
-	SystemInfo["CanDownmixAAC"] = can_downmix_aac
-	if can_downmix_aac:
-		def setAACDownmix(configElement):
-			open("/proc/stb/audio/aac", "w").write(configElement.value and "downmix" or "passthrough")
-		config.av.downmix_aac = ConfigYesNo(default = True)
-		config.av.downmix_aac.addNotifier(setAACDownmix)
 
 	try:
 		can_osd_alpha = open("/proc/stb/video/alpha", "r") and True or False
@@ -243,10 +182,7 @@ def InitAVSwitch():
 			except IOError:
 				print "couldn't write pep_scaler_sharpness"
 
-		if getBoxType() == 'gbquad' or getBoxType() == 'gbquadplus':		
-			config.av.scaler_sharpness = ConfigSlider(default=13, limits=(0,26))
-		else:
-			config.av.scaler_sharpness = ConfigSlider(default=13, limits=(0,26))
+		config.av.scaler_sharpness = ConfigSlider(default=13, limits=(0,26))
 		config.av.scaler_sharpness.addNotifier(setScaler_sharpness)
 	else:
 		config.av.scaler_sharpness = NoSave(ConfigNothing())

@@ -7,25 +7,10 @@ from Tools import Notifications
 from GlobalActions import globalActionMap
 import RecordTimer
 from enigma import eDVBVolumecontrol, eTimer
-from os import path
-import Screens.InfoBar
-from boxbranding import getMachineBrand, getMachineName, getBoxType
 
 inStandby = None
 
-MACHINEBRAND = getMachineBrand()
-MACHINENAME = getMachineName()
-BOXTYPE = getBoxType()
-
-def setLCDModeMinitTV(value):
-	try:
-		f = open("/proc/stb/lcd/mode", "w")
-		f.write(value)
-		f.close()
-	except:
-		pass
-
-class Standby2(Screen):
+class Standby(Screen):
 	def Power(self):
 		print "leave standby"
 		#set input to encoder
@@ -33,9 +18,6 @@ class Standby2(Screen):
 		#restart last played service
 		#unmute adc
 		self.leaveMute()
-		# set LCDminiTV 
-		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
-			setLCDModeMinitTV(config.lcd.modeminitv.getValue())
 		#kill me
 		self.close(True)
 
@@ -53,7 +35,6 @@ class Standby2(Screen):
 
 	def __init__(self, session, StandbyCounterIncrease=True):
 		Screen.__init__(self, session)
-		self.skinName = "Standby"
 		self.avswitch = AVSwitch()
 
 		print "enter standby"
@@ -70,10 +51,6 @@ class Standby2(Screen):
 
 		#mute adc
 		self.setMute()
-
-		# set LCDminiTV off
-		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
-			setLCDModeMinitTV("0")
 
 		self.paused_service = None
 		self.prev_running_service = None
@@ -128,13 +105,9 @@ class Standby2(Screen):
 		from RecordTimer import RecordTimerEntry
 		RecordTimerEntry.TryQuitMainloop()
 
-class Standby(Standby2):
-	def __init__(self, session):
-		Standby2.__init__(self, session)
-		self.skinName = "Standby"
-
 class StandbySummary(Screen):
-	skin = """<screen position="0,0" size="132,64">
+	skin = """
+	<screen position="0,0" size="132,64">
 		<widget source="global.CurrentTime" render="Label" position="0,0" size="132,64" font="Regular;40" halign="center">
 			<convert type="ClockToText" />
 		</widget>
@@ -150,20 +123,20 @@ from time import time
 from Components.Task import job_manager
 
 class QuitMainloopScreen(Screen):
+
 	def __init__(self, session, retvalue=1):
 		self.skin = """<screen name="QuitMainloopScreen" position="fill" flags="wfNoBorder">
-			<ePixmap pixmap="skin_default/icons/input_info.png" position="c-27,c-60" size="53,53" alphatest="on" />
-			<widget name="text" position="center,c+5" size="720,100" font="Regular;22" halign="center" />
-		</screen>"""
+				<ePixmap pixmap="skin_default/icons/input_info.png" position="c-27,c-60" size="53,53" alphatest="on" />
+				<widget name="text" position="center,c+5" size="720,100" font="Regular;22" halign="center" />
+			</screen>"""
 		Screen.__init__(self, session)
 		from Components.Label import Label
-		text = { 1: _("Your %s %s is shutting down") % (MACHINEBRAND, MACHINENAME),
-			2: _("Your %s %s is rebooting") % (MACHINEBRAND, MACHINENAME),
-			3: _("The user interface of your %s %s is restarting") % (MACHINEBRAND, MACHINENAME),
-			4: _("Your frontprocessor will be upgraded\nPlease wait until your %s %s reboots\nThis may take a few minutes") % (MACHINEBRAND, MACHINENAME),
-			5: _("The user interface of your %s %s is restarting\ndue to an error in mytest.py") % (MACHINEBRAND, MACHINENAME),
-			42: _("Unattended upgrade in progress\nPlease wait until your %s %s reboots\nThis may take a few minutes") % (MACHINEBRAND, MACHINENAME),
-			43: _("Your %s %s goes to WOL") % (MACHINEBRAND, MACHINENAME)}.get(retvalue)
+		text = { 1: _("Your receiver is shutting down"),
+			2: _("Your receiver is rebooting"),
+			3: _("The user interface of your receiver is restarting"),
+			4: _("Your frontprocessor will be upgraded\nPlease wait until your receiver reboots\nThis may take a few minutes"),
+			5: _("The user interface of your receiver is restarting\ndue to an error in mytest.py"),
+			42: _("Unattended upgrade in progress\nPlease wait until your receiver reboots\nThis may take a few minutes") }.get(retvalue)
 		self["text"] = Label(text)
 
 inTryQuitMainloop = False
@@ -171,37 +144,27 @@ inTryQuitMainloop = False
 class TryQuitMainloop(MessageBox):
 	def __init__(self, session, retvalue=1, timeout=-1, default_yes = False):
 		self.retval = retvalue
-		self.ptsmainloopvalue = retvalue
 		recordings = session.nav.getRecordings()
 		jobs = len(job_manager.getPendingJobs())
 		self.connected = False
 		reason = ""
 		next_rec_time = -1
-
 		if not recordings:
 			next_rec_time = session.nav.RecordTimer.getNextRecordingTime()
+		if recordings or (next_rec_time > 0 and (next_rec_time - time()) < 360):
+			reason = _("Recording(s) are in progress or coming up in few seconds!") + '\n'
 		if jobs:
-			reason = _("Job task(s) are in progress!") + '\n'
 			if jobs == 1:
 				job = job_manager.getPendingJobs()[0]
 				reason += "%s: %s (%d%%)\n" % (job.getStatustext(), job.name, int(100*job.progress/float(job.end)))
 			else:
-				reason += (_("%d jobs are running in the background!") % jobs) + '\n'
-			if job.name == "VFD Checker":		
-				reason = ""	
-		if recordings or (next_rec_time > 0 and (next_rec_time - time()) < 360):
-			reason = _("Recording(s) are in progress or coming up in few seconds!") + '\n'
-
-		if reason and inStandby:
-			session.nav.record_event.append(self.getRecordEvent)
-			self.skinName = ""
-		elif reason and not inStandby:
-			text = { 1: _("Really shutdown your %s %s now?") % (MACHINEBRAND, MACHINENAME),
-				2: _("Really reboot your %s %s now?") % (MACHINEBRAND, MACHINENAME),
-				3: _("Really restart your %s %s now?") % (MACHINEBRAND, MACHINENAME),
+				reason += (ngettext("%d job is running in the background!", "%d jobs are running in the background!", jobs) % jobs) + '\n'
+		if reason:
+			text = { 1: _("Really shutdown now?"),
+				2: _("Really reboot now?"),
+				3: _("Really restart now?"),
 				4: _("Really upgrade the frontprocessor and reboot now?"),
-				42: _("Really upgrade your %s %s and reboot now?") % (MACHINEBRAND, MACHINENAME),
-				43: _("Really WOL now?")}.get(retvalue)
+				42: _("Really upgrade your settop box and reboot now?") }.get(retvalue)
 			if text:
 				MessageBox.__init__(self, session, reason+text, type = MessageBox.TYPE_YESNO, timeout = timeout, default = default_yes)
 				self.skinName = "MessageBoxSimple"
@@ -210,25 +173,22 @@ class TryQuitMainloop(MessageBox):
 				self.onShow.append(self.__onShow)
 				self.onHide.append(self.__onHide)
 				return
-		self.skin = """<screen position="1310,0" size="0,0"/>"""
+		self.skin = """<screen position="0,0" size="0,0"/>"""
 		Screen.__init__(self, session)
 		self.close(True)
 
 	def getRecordEvent(self, recservice, event):
-		if event == iRecordableService.evEnd and config.timeshift.isRecording.value:
-			return
-		else:
-			if event == iRecordableService.evEnd:
-				recordings = self.session.nav.getRecordings()
-				if not recordings: # no more recordings exist
-					rec_time = self.session.nav.RecordTimer.getNextRecordingTime()
-					if rec_time > 0 and (rec_time - time()) < 360:
-						self.initTimeout(360) # wait for next starting timer
-						self.startTimer()
-					else:
-						self.close(True) # immediate shutdown
-			elif event == iRecordableService.evStart:
-				self.stopTimer()
+		if event == iRecordableService.evEnd:
+			recordings = self.session.nav.getRecordings()
+			if not recordings: # no more recordings exist
+				rec_time = self.session.nav.RecordTimer.getNextRecordingTime()
+				if rec_time > 0 and (rec_time - time()) < 360:
+					self.initTimeout(360) # wait for next starting timer
+					self.startTimer()
+				else:
+					self.close(True) # immediate shutdown
+		elif event == iRecordableService.evStart:
+			self.stopTimer()
 
 	def close(self, value):
 		if self.connected:

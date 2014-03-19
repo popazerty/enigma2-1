@@ -6,13 +6,13 @@ from enigma import eTimer
 from sys import maxint
 
 config.hdmicec = ConfigSubsection()
-config.hdmicec.enabled = ConfigYesNo(default = False)
-config.hdmicec.control_tv_standby = ConfigYesNo(default = False)
-config.hdmicec.control_tv_wakeup = ConfigYesNo(default = False)
+config.hdmicec.enabled = ConfigYesNo(default = True)
+config.hdmicec.control_tv_standby = ConfigYesNo(default = True)
+config.hdmicec.control_tv_wakeup = ConfigYesNo(default = True)
 config.hdmicec.report_active_source = ConfigYesNo(default = True)
-config.hdmicec.report_active_menu = ConfigYesNo(default = False)
-config.hdmicec.handle_tv_standby = ConfigYesNo(default = False)
-config.hdmicec.handle_tv_wakeup = ConfigYesNo(default = False)
+config.hdmicec.report_active_menu = ConfigYesNo(default = True)
+config.hdmicec.handle_tv_standby = ConfigYesNo(default = True)
+config.hdmicec.handle_tv_wakeup = ConfigYesNo(default = True)
 config.hdmicec.tv_wakeup_detection = ConfigSelection(
 	choices = {
 	"wakeup": _("Wakeup"),

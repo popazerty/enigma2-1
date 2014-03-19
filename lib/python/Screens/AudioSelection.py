@@ -23,7 +23,7 @@ class AudioSelection(Screen, ConfigListScreen):
 	def __init__(self, session, infobar=None, page=PAGE_AUDIO):
 		Screen.__init__(self, session)
 
-		self["streams"] = List([], enableWrapAround=True)
+		self["streams"] = List([])
 		self["key_red"] = Boolean(False)
 		self["key_green"] = Boolean(False)
 		self["key_yellow"] = Boolean(True)
@@ -90,9 +90,9 @@ class AudioSelection(Screen, ConfigListScreen):
 			self.audioTracks = audio = service and service.audioTracks()
 			n = audio and audio.getNumberOfTracks() or 0
 			if SystemInfo["CanDownmixAC3"]:
-				self.settings.downmix_ac3 = ConfigOnOff(default=config.av.downmix_ac3.value)
-				self.settings.downmix_ac3.addNotifier(self.changeAC3Downmix, initial_call = False)
-				conflist.append(getConfigListEntry(_("AC3/DTS downmix"), self.settings.downmix_ac3))
+				self.settings.downmix = ConfigOnOff(default=config.av.downmix_ac3.value)
+				self.settings.downmix.addNotifier(self.changeAC3Downmix, initial_call = False)
+				conflist.append(getConfigListEntry(_("AC3/DTS downmix"), self.settings.downmix))
 				self["key_red"].setBoolean(True)
 
 			if n > 0:
@@ -165,11 +165,6 @@ class AudioSelection(Screen, ConfigListScreen):
 				if len(Plugins) > 1:
 					print "plugin(s) installed but not displayed in the dialog box:", Plugins[1:]
 
-			if SystemInfo["CanDownmixAAC"]:
-				self.settings.downmix_aac = ConfigOnOff(default=config.av.downmix_aac.value)
-				self.settings.downmix_aac.addNotifier(self.changeAACDownmix, initial_call = False)
-				conflist.append(getConfigListEntry(_("AAC downmix"), self.settings.downmix_aac))
-
 		elif self.settings.menupage.getValue() == PAGE_SUBTITLES:
 	
 			self.setTitle(_("Subtitle selection"))
@@ -241,7 +236,7 @@ class AudioSelection(Screen, ConfigListScreen):
 		self.selectedSubtitle = None
 		if self.subtitlesEnabled():
 			self.selectedSubtitle = self.infobar.selected_subtitle
-			if self.selectedSubtitle and self.selectedSubtitle[:4] == (0,0,0,0):
+			if self.selectedSubtitle == (0,0,0,0):
 				self.selectedSubtitle = None
 			elif self.selectedSubtitle and not self.selectedSubtitle[:4] in (x[:4] for x in subtitlelist):
 				subtitlelist.append(self.selectedSubtitle)
@@ -257,19 +252,12 @@ class AudioSelection(Screen, ConfigListScreen):
 		if self.infobar.selected_subtitle != subtitle:
 			self.infobar.enableSubtitle(subtitle)
 
-	def changeAC3Downmix(self, downmix_ac3):
-		if downmix_ac3.getValue() == True:
+	def changeAC3Downmix(self, downmix):
+		if downmix.getValue() == True:
 			config.av.downmix_ac3.value = True
 		else:
 			config.av.downmix_ac3.value = False
 		config.av.downmix_ac3.save()
-
-	def changeAACDownmix(self, downmix_aac):
-		if downmix_aac.getValue() == True:
-			config.av.downmix_aac.value = True
-		else:
-			config.av.downmix_aac.value = False
-		config.av.downmix_aac.save()
 
 	def changeMode(self, mode):
 		if mode is not None and self.audioChannel:
@@ -362,13 +350,13 @@ class AudioSelection(Screen, ConfigListScreen):
 				self.changeAudio(cur[0])
 				self.__updatedInfo()
 			if self.settings.menupage.getValue() == PAGE_SUBTITLES and cur[0] is not None:
-				if self.infobar.selected_subtitle and self.infobar.selected_subtitle[:4] == cur[0][:4]:
+				if self.infobar.selected_subtitle == cur[0][:4]:
 					self.enableSubtitle(None)
 					selectedidx = self["streams"].getIndex()
 					self.__updatedInfo()
 					self["streams"].setIndex(selectedidx)
 				else:
-					self.enableSubtitle(cur[0][:5])
+					self.enableSubtitle(cur[0][:4])
 					self.__updatedInfo()
 			self.close(0)
 		elif self.focus == FOCUS_CONFIG:

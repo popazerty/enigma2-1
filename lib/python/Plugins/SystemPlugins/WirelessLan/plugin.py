@@ -14,6 +14,7 @@ from Plugins.Plugin import PluginDescriptor
 from os import system, path as os_path, listdir
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_SKIN_IMAGE
 from Tools.LoadPixmap import LoadPixmap
+from Tools.HardwareInfo import HardwareInfo
 from Wlan import iWlan, wpaSupplicant, iStatus, getWlanConfigName
 from time import time
 from os import system
@@ -155,7 +156,7 @@ class WlanStatus(Screen):
 						if accesspoint == "Not-Associated":
 							encryption = _("Disabled")
 						else:
-							encryption = _("off or wpa2 on")
+							encryption = _("Unsupported")
 					else:
 						encryption = _("Enabled")
 					if self.has_key("enc"):

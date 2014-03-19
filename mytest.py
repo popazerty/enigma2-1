@@ -12,7 +12,6 @@ import eBaseImpl
 enigma.eTimer = eBaseImpl.eTimer
 enigma.eSocketNotifier = eBaseImpl.eSocketNotifier
 enigma.eConsoleAppContainer = eConsoleImpl.eConsoleAppContainer
-from boxbranding import getBoxType
 
 from traceback import print_exc
 profile("SimpleSummary")
@@ -47,7 +46,6 @@ config.misc.startCounter = ConfigInteger(default=0) # number of e2 starts...
 config.misc.standbyCounter = NoSave(ConfigInteger(default=0)) # number of standby
 config.misc.DeepStandby = NoSave(ConfigYesNo(default=False)) # detect deepstandby
 config.misc.epgcache_filename = ConfigText(default = "/hdd/epg.dat")
-config.misc.isNextRecordTimerAfterEventActionAuto = ConfigYesNo(default=False)
 
 def setEPGCachePath(configElement):
 	enigma.eEPGCache.getInstance().setCacheFile(configElement.value)
@@ -360,25 +358,8 @@ class PowerKey:
 		self.session.infobar = None
 
 	def shutdown(self):
-		wasRecTimerWakeup = False
-		from time import time
-		recordings = self.session.nav.getRecordings()
-		if not recordings:
-			next_rec_time = self.session.nav.RecordTimer.getNextRecordingTime()
-		if recordings or (next_rec_time > 0 and (next_rec_time - time()) < 360):
-			if os.path.exists("/tmp/was_rectimer_wakeup") and not self.session.nav.RecordTimer.isRecTimerWakeup():
-				f = open("/tmp/was_rectimer_wakeup", "r")
-				file = f.read()
-				f.close()
-				wasRecTimerWakeup = int(file) and True or False
-			if self.session.nav.RecordTimer.isRecTimerWakeup() or wasRecTimerWakeup:
-				print "PowerOff (timer wakewup) - Recording in progress or a timer about to activate, entering standby!"
-				self.standby()
-			else:
-				print "PowerOff - Now!"
-				self.session.open(Screens.Standby.TryQuitMainloop, 1)
-		elif not Screens.Standby.inTryQuitMainloop and self.session.current_dialog and self.session.current_dialog.ALLOW_SUSPEND:
-			print "PowerOff - Now!"
+		print "PowerOff - Now!"
+		if not Screens.Standby.inTryQuitMainloop and self.session.current_dialog and self.session.current_dialog.ALLOW_SUSPEND:
 			self.session.open(Screens.Standby.TryQuitMainloop, 1)
 
 	def powerlong(self):
@@ -456,7 +437,7 @@ def runScreenTest():
 	plugins.readPluginList(resolveFilename(SCOPE_PLUGINS))
 
 	profile("Init:Session")
-	nav = Navigation(config.misc.isNextRecordTimerAfterEventActionAuto.getValue())
+	nav = Navigation()
 	session = Session(desktop = enigma.getDesktop(0), summary_desktop = enigma.getDesktop(1), navigation = nav)
 
 	CiHandler.setSession(session)
@@ -509,29 +490,11 @@ def runScreenTest():
 
 	profile("RunReactor")
 	profile_final()
-	
-	if getBoxType() == 'gb800se' or getBoxType() == 'gb800solo' or getBoxType() == 'gb800seplus':
-		from enigma import evfd, eConsoleAppContainer
-		try:
-			cmd = 'vfdctl "    openmips starting e2"'
-			container = eConsoleAppContainer()
-			container.execute(cmd)
-		except:
-			evfd.getInstance().vfd_write_string("-E2-")
-		evfd.getInstance().vfd_led(str(1))
-	
 	runReactor()
 
 	config.misc.startCounter.save()
 
 	profile("wakeup")
-	
-	try:
-		from Plugins.SystemPlugins.VFDControl.plugin import SetTime
-		SetTime()
-	except:
-		print"Failed SetTime from VFDControl !!"
-
 	from time import time, strftime, localtime
 	from Tools.StbHardware import setFPWakeuptime, getFPWakeuptime, setRTCtime
 	#get currentTime
@@ -543,24 +506,18 @@ def runScreenTest():
 		if x[0] != -1
 	]
 	wakeupList.sort()
-	recordTimerWakeupAuto = False
 	if wakeupList:
-		from time import strftime, altzone, timezone
+		from time import strftime
 		startTime = wakeupList[0]
 		if (startTime[0] - nowTime) < 270: # no time to switch box back on
 			wptime = nowTime + 30  # so switch back on in 30 seconds
 		else:
-			wptime = startTime[0] - 120
+			wptime = startTime[0] - 240
 		if not config.misc.useTransponderTime.value:
 			print "dvb time sync disabled... so set RTC now to current linux time!", strftime("%Y/%m/%d %H:%M", localtime(nowTime))
 			setRTCtime(nowTime)
 		print "set wakeup time to", strftime("%Y/%m/%d %H:%M", localtime(wptime))
 		setFPWakeuptime(wptime)
-		recordTimerWakeupAuto = startTime[1] == 0 and startTime[2]
-		print 'recordTimerWakeupAuto',recordTimerWakeupAuto
-
-	config.misc.isNextRecordTimerAfterEventActionAuto.value = recordTimerWakeupAuto
-	config.misc.isNextRecordTimerAfterEventActionAuto.save()
 
 	profile("stopService")
 	session.nav.stopService()

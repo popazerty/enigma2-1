@@ -2,7 +2,6 @@ from Screens.Wizard import WizardSummary
 from Screens.WizardLanguage import WizardLanguage
 from Screens.Wizard import wizardManager
 from Screens.Rc import Rc
-from Screens.Screen import Screen
 from Components.Label import Label
 from Components.MenuList import MenuList
 from Components.PluginComponent import plugins
@@ -11,7 +10,6 @@ from Tools.Directories import fileExists, resolveFilename, SCOPE_PLUGINS, SCOPE_
 from Components.Pixmap import Pixmap, MovingPixmap, MultiPixmap
 from os import popen, path, makedirs, listdir, access, stat, rename, remove, W_OK, R_OK
 from enigma import eEnv
-from boxbranding import getBoxType
 
 from Components.config import config, getConfigListEntry, ConfigSubsection, ConfigText, ConfigLocations, ConfigBoolean
 from Components.Harddisk import harddiskmanager
@@ -26,42 +24,29 @@ backupfile = "enigma2settingsbackup.tar.gz"
 
 def checkConfigBackup():
 	parts = [ (r.description, r.mountpoint) for r in harddiskmanager.getMountedPartitions(onlyhotplug = False)]
-	box = getBoxType()
 	for x in parts:
 		if x[1] == '/':
 			parts.remove(x)
 	if len(parts):
 		for x in parts:
 			if x[1].endswith('/'):
-				fullbackupfile =  x[1] + 'backup_' + box + '/' + backupfile
+				fullbackupfile =  x[1] + 'backup/' + backupfile
 				if fileExists(fullbackupfile):
-					config.plugins.configurationbackup.backuplocation.setValue(str(x[1]))
-					config.plugins.configurationbackup.backuplocation.save()
-					config.plugins.configurationbackup.save()
-					return x
-				fullbackupfile = x[1] + '/backup/' + backupfile
-				if fileExists(fullbackupfile):
-					config.plugins.configurationbackup.backuplocation.setValue(str(x[1]))
+					config.plugins.configurationbackup.backuplocation.value = str(x[1])
 					config.plugins.configurationbackup.backuplocation.save()
 					config.plugins.configurationbackup.save()
 					return x
 			else:
-				fullbackupfile =  x[1] + '/backup_' + box + '/' + backupfile
+				fullbackupfile =  x[1] + '/backup/' + backupfile
 				if fileExists(fullbackupfile):
-					config.plugins.configurationbackup.backuplocation.setValue(str(x[1]))
+					config.plugins.configurationbackup.backuplocation.value = str(x[1])
 					config.plugins.configurationbackup.backuplocation.save()
 					config.plugins.configurationbackup.save()
 					return x
-				fullbackupfile = x[1] + '/backup/' + backupfile
-				if fileExists(fullbackupfile):
-					config.plugins.configurationbackup.backuplocation.setValue(str(x[1]))
-					config.plugins.configurationbackup.backuplocation.save()
-					config.plugins.configurationbackup.save()
-					return x					
 		return None		
 
 def checkBackupFile():
-	backuplocation = config.plugins.configurationbackup.backuplocation.getValue()
+	backuplocation = config.plugins.configurationbackup.backuplocation.value
 	if backuplocation.endswith('/'):
 		fullbackupfile =  backuplocation + 'backup/' + backupfile
 		if fileExists(fullbackupfile):
@@ -103,7 +88,6 @@ class ImageWizard(WizardLanguage, Rc):
 		Rc.__init__(self)
 		self.session = session
 		self["wizard"] = Pixmap()
-		Screen.setTitle(self, _("Welcome…"))
 		self.selectedDevice = None
 		
 	def markDone(self):
