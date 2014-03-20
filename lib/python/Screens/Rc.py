@@ -29,7 +29,7 @@ class Rc:
 
 	def initRc(self):
 		if self.isDefaultRc:
-			self["rc"].setPixmapNum(config.misc.rcused.getValue())
+			self["rc"].setPixmapNum(config.misc.rcused.value)
 		else:
 			self["rc"].setPixmapNum(0)
 
@@ -64,13 +64,9 @@ class Rc:
 
 	def selectKey(self, key):
 		if self.isDefaultRc:
-			rc = self.rcs[config.misc.rcused.getValue()]
+			rc = self.rcs[config.misc.rcused.value]
 		else:
-			try:
-				rc = self.rcs[2]
-			except:
-				rc = self.rcs[config.misc.rcused.getValue()]
-
+			rc = self.rcs[2]
 		if rc.has_key(key):
 			rcpos = self["rc"].getPosition()
 			pos = rc[key]

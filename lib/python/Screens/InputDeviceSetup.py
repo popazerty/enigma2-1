@@ -187,6 +187,9 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 
 	def layoutFinished(self):
 		self.setTitle(self.setup_title)
+		listWidth = self["config"].l.getItemSize().width()
+		# use 20% of list width for sliders
+		self["config"].l.setSeperation(int(listWidth*.8))
 
 	def cleanup(self):
 		iInputDevices.currentDevice = ""
@@ -223,7 +226,6 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 				self["config"].invalidate(self.nameEntry)
 
 		self["config"].list = self.list
-		self["config"].l.setSeperation(600)
 		self["config"].l.setList(self.list)
 		if not self.selectionChanged in self["config"].onSelectionChanged:
 			self["config"].onSelectionChanged.append(self.selectionChanged)
@@ -294,21 +296,21 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 class RemoteControlType(Screen, ConfigListScreen):
 	rcList = [
 			("0", _("Default")),
-			("4", _("DMM normal")), ("6", _("DMM advanced")),
-			("11", "et9x00/6500"), ("7", "et5000/6000"), ("13", "et4000"),
-			("14", "xp1000"),
-			("8", "VU+"),
+			("13", "ET4000"), ("7", "ET5000 / ET6000"), ("5", "ET9000"), ("11", "ET9100 / ET9200"), ("9", "ET6500 / ET9500 / ET8000 / ET10000"),
+			("4", _("DMM normal")), ("6", _("DMM advanced"))
 		]
 
 	defaultRcList = [
 			("et4000", 13),
 			("et5000", 7),
 			("et6000", 7),
-			("et6500", 11),
-			("et9000", 11),
+			("et6500", 9),
+			("et8000", 9),
+			("et9000", 5),
+			("et9100", 11),
 			("et9200", 11),
-			("et9500", 11),
-			("xp1000", 14),
+			("et9500", 9),
+			("et10000", 9),
 		]
 
 	def __init__(self, session):
@@ -350,8 +352,7 @@ class RemoteControlType(Screen, ConfigListScreen):
 			self.close()
 		else:
 			self.setNewSetting()
-			self.session.openWithCallback(self.keySaveCallback, MessageBox, _("Is this setting ok?"), MessageBox.TYPE_YESNO, timeout = 20, default = False)
-
+			self.session.openWithCallback(self.keySaveCallback, MessageBox, _("Is this Remote Control OK ?"), MessageBox.TYPE_YESNO, timeout = 10, default = False)
 	def keySaveCallback(self, answer):
 		if answer is False:
 			self.restoreOldSetting()

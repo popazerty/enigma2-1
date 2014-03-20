@@ -47,6 +47,7 @@ config.movielist.play_audio_internal = ConfigYesNo(default=True)
 config.movielist.settings_per_directory = ConfigYesNo(default=True)
 config.movielist.root = ConfigSelection(default="/media", choices=["/","/media","/media/hdd","/media/hdd/movie"])
 config.movielist.hide_extensions = ConfigYesNo(default=False)
+config.movielist.hide_images = ConfigYesNo(default=True)
 
 userDefinedButtons = None
 last_selected_dest = []
@@ -241,6 +242,7 @@ class MovieBrowserConfiguration(ConfigListScreen,Screen):
 		configList = [
 			getConfigListEntry(_("Sort"), cfg.moviesort),
 			getConfigListEntry(_("Show extended description"), cfg.description),
+			getConfigListEntry(_("Show image items (.jpg, .gif, .bmp, .png)"), config.movielist.hide_images),
 			getConfigListEntry(_("Type"), cfg.listtype),
 			getConfigListEntry(_("Use individual settings for each directory"), config.movielist.settings_per_directory),
 			getConfigListEntry(_("Behavior when a movie reaches the end"), config.usage.on_movie_eof),
@@ -296,6 +298,7 @@ class MovieBrowserConfiguration(ConfigListScreen,Screen):
 			config.movielist.listtype.save()
 			config.movielist.description.save()
 			config.usage.on_movie_eof.save()
+			config.movielist.hide_images.save()
 		self.close(True)
 
 	def cancel(self):
@@ -472,6 +475,8 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 		self.movieOff = self.settings["movieoff"]
 
 		self["list"] = MovieList(None, list_type=self.settings["listtype"], sort_type=self.settings["moviesort"], descr_state=self.settings["description"])
+
+		self.loadLocalSettings()
 
 		self.list = self["list"]
 		self.selectedmovie = selectedmovie
@@ -1140,7 +1145,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 	def setCurrentRef(self, path):
 		self.current_ref = eServiceReference("2:0:1:0:0:0:0:0:0:0:" + path)
 		# Magic: this sets extra things to show
-		self.current_ref.setName('8192:jpg 8192:png 8192:gif 8192:bmp')
+		self.current_ref.setName('16384:jpg 16384:png 16384:gif 16384:bmp')
 
 	def reloadList(self, sel = None, home = False):
 		self.reload_sel = sel
@@ -1273,7 +1278,10 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 			d = os.path.normpath(p.mountpoint)
 			if d in inlist:
 				# improve shortcuts to mountpoints
-				bookmarks[bookmarks.index((d,d))] = (p.tabbedDescription(), d)
+				try:
+					bookmarks[bookmarks.index((d,d))] = (p.tabbedDescription(), d)
+				except:
+					pass # When already listed as some "friendly" name
 			else:
 				bookmarks.append((p.tabbedDescription(), d))
 			inlist.append(d)
@@ -1657,7 +1665,7 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase):
 				rec_filename = os.path.split(current.getPath())[1]
 				if rec_filename.endswith(".ts"): rec_filename = rec_filename[:-3]
 				for timer in NavigationInstance.instance.RecordTimer.timer_list:
-					if timer.isRunning() and not timer.justplay and timer.Filename.find(rec_filename)>=0:
+					if timer.isRunning() and not timer.justplay and rec_filename in timer.Filename:
 						choices = [
 							(_("Cancel"), None),
 							(_("Stop recording"), ("s", timer)),
