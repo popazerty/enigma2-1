@@ -61,6 +61,7 @@ void keyEvent(const eRCKey &key)
 
 	ePtr<eActionMap> ptr;
 	eActionMap::getInstance(ptr);
+	/*eDebug("key.code : %02x \n", key.code);*/
 
 	if ((key.code == last.code) && (key.producer == last.producer) && key.flags & eRCKey::flagRepeat)
 		num_repeat++;
@@ -137,11 +138,10 @@ int main(int argc, char **argv)
 
 	gst_init(&argc, &argv);
 
+	printf("Distro:  %s\n", DISTRO);
 	printf("Version: %s\n", IMAGEVERSION);
 	printf("Build:   %s\n", IMAGEBUILD);
-	printf("Brand:   %s\n", MACHINE_BRAND);
-	printf("Boxtype: %s\n", BOXTYPE);
-	printf("Machine: %s\n", MACHINE_NAME);
+	printf("Machine: %s\n", BOXTYPE);
 	printf("Drivers: %s\n", DRIVERDATE);
 
 	// set pythonpath if unset
@@ -320,7 +320,23 @@ void runMainloop()
 
 const char *getEnigmaVersionString()
 {
-	return enigma2_version;
+	std::string date = enigma2_date;
+	return std::string(date).c_str();
+}
+
+const char *getDistro()
+{
+	return DISTRO;
+}
+
+const char *getMachineBrand()
+{
+	return MACHINE_BRAND;
+}
+
+const char *getMachineName()
+{
+	return MACHINE_NAME;
 }
 
 const char *getImageVersionString()
@@ -331,6 +347,11 @@ const char *getImageVersionString()
 const char *getBuildVersionString()
 {
 	return IMAGEBUILD;
+}
+
+const char *getDriverDateString()
+{
+	return DRIVERDATE;
 }
 
 const char *getBoxType()

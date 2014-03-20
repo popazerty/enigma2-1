@@ -5,8 +5,8 @@ from Components.Label import Label
 from Components.ActionMap import ActionMap
 from Components.FIFOList import FIFOList
 from Components.Sources.FrontendInfo import FrontendInfo
-from Components.config import config
-from enigma import eServiceCenter, eServiceReference
+from ServiceReference import ServiceReference
+from enigma import eServiceCenter
 
 class ServiceScanSummary(Screen):
 	skin = """
@@ -34,34 +34,28 @@ class ServiceScan(Screen):
 	def ok(self):
 		print "ok"
 		if self["scan"].isDone():
-			if self.currentInfobar.__class__.__name__ == "InfoBar":
-				selectedService = self["servicelist"].getCurrentSelection()
-				if selectedService and self.currentServiceList is not None:
+			selectedChannel = self["servicelist"].getCurrentSelection()
+			if selectedChannel and self.currentInfobar.__class__.__name__ == "InfoBar":
+				if self.currentServiceList is not None:
 					self.currentServiceList.setTvMode()
 					bouquets = self.currentServiceList.getBouquetList()
-					last_scanned_bouquet = bouquets and next((x[1] for x in bouquets if x[0] == "Last Scanned"), None)
-					if last_scanned_bouquet:
-						self.currentServiceList.enterUserbouquet(last_scanned_bouquet)
-						self.currentServiceList.setCurrentSelection(eServiceReference(selectedService[1]))
-						service = self.currentServiceList.getCurrentSelection()
-						if not self.session.postScanService or service != self.session.postScanService:
-							self.session.postScanService = service
-							self.currentServiceList.addToHistory(service)
-						config.servicelist.lastmode.save()
-						self.currentServiceList.saveChannel(service)
-						self.doCloseRecursive()
-			self.cancel()
+					for x in bouquets:
+						if x[0] == 'Last Scanned':
+							self.currentServiceList.setRoot(x[1])
+							services = eServiceCenter.getInstance().list(self.currentServiceList.servicelist.getRoot())
+							channels = services and services.getContent("R", True)
+							for channel in channels:
+								if selectedChannel == ServiceReference(channel.toString()).getServiceName():
+									self.session.postScanService = channel
+									self.currentServiceList.addToHistory(channel)
+									self.close(True)
+			self.close(False)
 
 	def cancel(self):
-		self.exit(False)
+		self.close(False)
 
 	def doCloseRecursive(self):
-		self.exit(True)
-
-	def exit(self, returnValue):
-		if self.currentInfobar.__class__.__name__ == "InfoBar":
-			self.close(returnValue)
-		self.close()
+		self.close(True)
 
 	def __init__(self, session, scanList):
 		Screen.__init__(self, session)

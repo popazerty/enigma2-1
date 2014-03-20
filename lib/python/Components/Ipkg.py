@@ -19,7 +19,7 @@ def onPartitionChange(why, part):
 	global opkgDestinations
 	global opkgStatusPath
 	mountpoint = os.path.normpath(part.mountpoint)
-	if mountpoint and not mountpoint.startswith('/media/net'):
+	if mountpoint and mountpoint != '/':
 		if why == 'add':
 			if opkgStatusPath == '':
 				# recent opkg versions

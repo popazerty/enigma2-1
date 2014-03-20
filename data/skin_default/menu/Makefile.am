@@ -9,5 +9,4 @@ dist_install_DATA = \
 	setup.png \
 	shutdown.png \
 	subtitles.png \
-	timer.png \
-    main.png
+	timer.png

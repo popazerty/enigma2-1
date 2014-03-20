@@ -449,7 +449,6 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 		self["actions"] = ActionMap(["SetupActions", "SatlistShortcutAction"],
 		{
 			"ok": self.keySave,
-			"save": self.keySave,
 			"cancel": self.keyCancel,
 			"nothingconnected": self.nothingConnectedShortcut
 		}, -2)
@@ -466,10 +465,6 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 
 	def keyRight(self):
 		ConfigListScreen.keyRight(self)
-		self.newConfig()
-
-	def handleKeyFileCallback(self, answer):
-		ConfigListScreen.handleKeyFileCallback(self, answer)
 		self.newConfig()
 
 	def keyCancel(self):

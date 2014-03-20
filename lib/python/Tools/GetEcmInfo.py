@@ -101,7 +101,7 @@ class GetEcmInfo:
 						info['provid'] = info['prov'][2:]
 						time = ""
 						for line in ecm:
-							if 'msec' in line:
+							if line.find('msec') != -1:
 								line = line.split(' ')
 								if line[0]:
 									time = " (%ss)" % (float(line[0])/1000)
