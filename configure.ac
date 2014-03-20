@@ -317,7 +317,12 @@ lib/python/Plugins/Extensions/SocketMMI/meta/Makefile
 lib/python/Plugins/Extensions/SocketMMI/src/Makefile
 lib/python/Plugins/Extensions/TuxboxPlugins/Makefile
 lib/python/Plugins/Extensions/TuxboxPlugins/meta/Makefile
-lib/python/Plugins/PLi/Makefile
+lib/python/Plugins/Extensions/Infopanel/Makefile
+lib/python/Plugins/Extensions/Infopanel/meta/Makefile
+lib/python/Plugins/Extensions/Infopanel/pics/Makefile
+lib/python/Plugins/Extensions/Infopanel/locale/Makefile
+lib/python/Plugins/Extensions/Infopanel/icons/Makefile
+lib/python/Plugins/Extensions/Infopanel/Extra/Makefile
 lib/python/Plugins/SystemPlugins/CommonInterfaceAssignment/Makefile
 lib/python/Plugins/SystemPlugins/CommonInterfaceAssignment/meta/Makefile
 lib/python/Plugins/SystemPlugins/DefaultServicesScanner/Makefile
