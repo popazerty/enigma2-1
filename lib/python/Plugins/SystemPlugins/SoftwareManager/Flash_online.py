@@ -21,16 +21,16 @@ from boxbranding import getImageDistro, getMachineBrand, getMachineName
 distro = getImageDistro()
 
 #############################################################################################################
-image = 0 # 0=openATV / 1=openMips / 2=OpenXTA
+image = 0 # 0=openATV / 1=openMips / 2=Opendroid
 if distro.lower() == "openmips":
 	image = 1
 elif distro.lower() == "openatv":
 	image = 0
-elif distro.lower() == "openxta":
+elif distro.lower() == "opendroid":
 	image = 2
 feedurl_atv = 'http://images.mynonpublic.com/openatv/nightly'
 feedurl_om = 'http://image.openmips.com/2.0'
-feedurl_openxta = 'http://image.openxta.com'
+feedurl_opendroid = 'http://opendroid.bugs3.com/images/'
 imagePath = '/hdd/images'
 flashPath = '/hdd/images/flash'
 flashTmp = '/hdd/images/tmp'
@@ -149,7 +149,7 @@ class doFlashImage(Screen):
 		elif image == 1:
 			self.feed = "om"
 		elif image == 2:
-			self.feed = "openxta"
+			self.feed = "opendroid"
 		self["imageList"] = MenuList(self.imagelist)
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"], 
 		{
@@ -174,7 +174,7 @@ class doFlashImage(Screen):
 					self.feed = "atv"
 			if image == 2:
 				if self.feed == "atv":
-					self.feed = "openxta"
+					self.feed = "opendroid"
 				else:
 					self.feed = "atv"
 			self.layoutFinished()
@@ -345,12 +345,12 @@ class doFlashImage(Screen):
 					self.feedurl = feedurl_om
 					self["key_blue"].setText("openATV")
 			elif image == 2:
-				if self.feed == "openxta":
-					self.feedurl = feedurl_openxta
+				if self.feed == "opendroid":
+					self.feedurl = feedurl_opendroid
 					self["key_blue"].setText("openATV")
 				else:
 					self.feedurl = feedurl_atv
-					self["key_blue"].setText("OpenXTA")
+					self["key_blue"].setText("Opendroid")
 			else:
 				self.feedurl = feedurl_atv
 				self["key_blue"].setText("")
@@ -374,7 +374,7 @@ class doFlashImage(Screen):
 			for line in lines:
 				if line.find("<a href='%s/" % box) > -1:
 					t = line.find("<a href='%s/" % box)
-					if self.feed == "atv" or self.feed == "openxta":
+					if self.feed == "atv" or self.feed == "opendroid":
 						self.imagelist.append(line[t+tt+10:t+tt+tt+39])
 					else:
 						self.imagelist.append(line[t+tt+10:t+tt+tt+40])

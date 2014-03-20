@@ -263,12 +263,6 @@ lib/python/Plugins/SystemPlugins/Satfinder/Makefile
 lib/python/Plugins/SystemPlugins/Satfinder/meta/Makefile
 lib/python/Plugins/SystemPlugins/SkinSelector/Makefile
 lib/python/Plugins/SystemPlugins/SkinSelector/meta/Makefile
-lib/python/Plugins/Extensions/ExtrasPanel/Makefile
-lib/python/Plugins/Extensions/ExtrasPanel/meta/Makefile
-lib/python/Plugins/Extensions/ExtrasPanel/pics/Makefile
-lib/python/Plugins/Extensions/ExtrasPanel/locale/Makefile
-lib/python/Plugins/Extensions/ExtrasPanel/icons/Makefile
-lib/python/Plugins/Extensions/ExtrasPanel/Extra/Makefile
 lib/python/Plugins/SystemPlugins/SoftwareManager/Makefile
 lib/python/Plugins/SystemPlugins/SoftwareManager/meta/Makefile
 lib/python/Plugins/SystemPlugins/VideoEnhancement/Makefile
