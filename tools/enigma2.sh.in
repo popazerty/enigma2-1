@@ -4,13 +4,22 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
 
+# workaround for corrupt ssl files
+if [ ! "$(grep config.misc.firstrun /etc/enigma2/settings)" == "config.misc.firstrun=false" ]; then
+	rm -rf /etc/enigma2/cert.pem &
+	rm -rf /etc/enigma2/key.pem &
+fi
+
+# update NTP time if NTP Time Enabled
+if [ "$(grep config.misc.SyncTimeUsing /etc/enigma2/settings)" == "config.misc.SyncTimeUsing=1" ]; then
+	/usr/bin/ntpdate -s -u pool.ntp.org &
+fi
+
 if [ -x @bindir@/showiframe ]; then
 	if [ -f @sysconfdir@/enigma2/backdrop.mvi ]; then
 		@bindir@/showiframe @sysconfdir@/enigma2/backdrop.mvi
-	elif [ -f @sysconfdir@/enigma2/bootlogo.mvi ]; then
-		@bindir@/showiframe @sysconfdir@/enigma2/bootlogo.mvi
-	elif [ -f @datadir@/bootlogo.mvi ]; then
-		@bindir@/showiframe @datadir@/bootlogo.mvi
+	elif [ -f @datadir@/backdrop.mvi ]; then
+		@bindir@/showiframe @datadir@/backdrop.mvi
 	fi
 fi
 
@@ -19,14 +28,52 @@ if [ -x @bindir@/enigma2_pre_start.sh ]; then
 	@bindir@/enigma2_pre_start.sh
 fi
 
+if [ -e /proc/stb/info/hwmodel ]; then
+	stbcheck=`cat /proc/stb/info/hwmodel| cut -c1-8`
+	if [ $stbcheck == "optimuss" ]; then
+		string=`mount | grep 'sda1' | cut -c21-23` 
+		if [ -e /media/$string/sat-soft/settings.sh ]; then
+			chmod 755 /media/$string/sat-soft/settings.sh
+			/media/$string/sat-soft/settings.sh
+		fi
+	fi
+fi	
+
 if [ -d /home/root ]; then
 	cd /home/root
 fi
 
-LIBS=@libdir@/libopen.so.0.0.0
+#check for sundtek tuner helper lib
+if [ -e /opt/lib/libmediaclient.so ]; then
+	LIBS="/opt/lib/libmediaclient.so /usr/lib/libopen.so.0.0.0"
+else
+	LIBS="/usr/lib/libopen.so.0.0.0"
+fi
+
+#check for specific pagecache helper lib
+if [ -e /usr/lib/libpagecache.so ]; then
+	LIBS="$LIBS /usr/lib/libpagecache.so"
+fi
+
+#check for receiver specific passthrough helper lib
+if [ -e @libdir@/libpassthrough.so ]; then
+	LIBS="$LIBS @libdir@/libpassthrough.so"
+fi
+
+if [ ! -e /etc/enigma2/settings ]; then
+	touch /etc/enigma2/settings
+fi
 
 sync
-LD_PRELOAD=$LIBS @bindir@/enigma2
+if [ "$(grep config.crash.enabledebug /etc/enigma2/settings)" == "config.crash.enabledebug=true" ]; then
+	if [ "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" != "" -a -d "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" ]; then
+		LD_PRELOAD=$LIBS @bindir@/enigma2 &> $(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')Enigma2-$(date +%d-%m-%Y_%H-%M-%S).log
+	else
+		LD_PRELOAD=$LIBS @bindir@/enigma2 &> /home/root/logs/Enigma2-$(date +%d-%m-%Y_%H-%M-%S).log
+	fi
+else
+	LD_PRELOAD=$LIBS @bindir@/enigma2
+fi
 
 # enigma2 exit codes:
 #
@@ -46,6 +93,7 @@ case $ret in
 		;;
 	3)
 		rm -fR /home/root/.gstreamer-0.10
+		rm -f /tmp/.listen.camd.socket.ignore
 		;;
 	4)
 		/sbin/rmmod lcd
@@ -56,11 +104,20 @@ case $ret in
 		/sbin/reboot
 		;;
 	42)
-		# bind the console (when available)
-		[ -f /sys/class/vtconsole/vtcon1/bind ] && echo 1 > /sys/class/vtconsole/vtcon1/bind
-		opkg upgrade 2>&1 | tee /home/root/ipkgupgrade.log
-		/sbin/reboot
+		python /usr/lib/enigma2/python/upgrade.pyo
 		;;
+	43)
+		init 1
+		;;		
+	44)
+		# little hack but it will be fixed soon in drivers
+		/usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/bin/fbclear && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/wait.mvi && echo fpupload > /dev/dbox/oled0 && sleep 3 && cat /tmp/micom.bin > /dev/mcu && /usr/bin/showiframe /usr/lib/enigma2/python/Plugins/SystemPlugins/MICOMUpgrade/reboot.mvi && sleep 200000
+		;;
+	45)
+		echo "    " > /dev/lcd0
+		/usr/bin/gigablue_wol
+		;;		
 	*)
+		rm -f /tmp/.listen.camd.socket.ignore
 		;;
 esac

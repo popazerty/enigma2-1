@@ -58,9 +58,9 @@ def SecSetupMain(Session, **kwargs):
 
 def SecSetupStart(menuid):
 	show = False
-	
+
 	# other menu than "scan"?
-	if menuid != "scan": 
+	if menuid != "scan":
 		return [ ]
 
 	# only show if DVB-S frontends are available
@@ -71,7 +71,7 @@ def SecSetupStart(menuid):
 	return [ ]
 
 def Plugins(**kwargs):
-	if (nimmgr.hasNimType("DVB-S")):
+	if nimmgr.hasNimType("DVB-S"):
 		return PluginDescriptor(name=_("Satellite equipment setup"), description=_("Setup your satellite equipment"), where = PluginDescriptor.WHERE_MENU, needsRestart = False, fnc=SecSetupStart)
 	else:
 		return []

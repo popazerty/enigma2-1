@@ -13,14 +13,15 @@ from Screens.Console import Console
 from Screens.HelpMenu import HelpableScreen
 from Screens.TaskView import JobView
 from Tools.Downloader import downloadWithProgress
-from enigma import getBoxType, getDistro, getMachineName
+from boxbranding import getBoxType,  getImageDistro, getMachineName, getMachineBrand
+distro =  getImageDistro()
 import urllib2
 import os
 import shutil
 
-distro = getDistro()
 
 #############################################################################################################
+feedurl_mcron1 = 'http://sat-world-forum.com/ronny/images/e3hd/online'
 feedurl_mcron = 'http://sat-world-forum.com/ronny/images/ventonhdx/online'
 imagePath = '/hdd/images'
 flashPath = '/hdd/images/flash'
@@ -135,6 +136,7 @@ class doFlashImage(Screen):
 		self.Online = online
 		self.imagePath = imagePath
 		self.feedurl = feedurl_mcron
+		self.feedurl1 = feedurl_mcron1
 		self["imageList"] = MenuList(self.imagelist)
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"], 
 		{
@@ -194,7 +196,11 @@ class doFlashImage(Screen):
 		box = self.box()
 		self.hide()
 		if self.Online:
-			url = self.feedurl + "/" + "/" + sel
+			if box == 'ventonhdx':
+				url = self.feedurl + "/" + "/" + sel
+			elif box == 'e3hd':
+				url = self.feedurl1 + "/" + "/" + sel
+			
 			u = urllib2.urlopen(url)
 			f = open(file_name, 'wb')
 			meta = u.info()
@@ -308,16 +314,22 @@ class doFlashImage(Screen):
 			self.imagePath = imagePath
 
 	def layoutFinished(self):
+
 		box = self.box()
 		self.imagelist = []
 		if self.Online:
 			self["key_yellow"].setText("")
+			self.feedurl1 = feedurl_mcron1
 			self.feedurl = feedurl_mcron
 			self["key_blue"].setText("")
 			#url = '%s/index.php?open=%s' % (self.feedurl,box)
 			req = urllib2.Request(self.feedurl)
+			req1 = urllib2.Request(self.feedurl1)
 			try:
-				response = urllib2.urlopen(req)
+				if box == 'ventonhdx':
+					response = urllib2.urlopen(req)
+				elif box == 'e3hd':
+					response = urllib2.urlopen(req1)
 			except urllib2.URLError as e:
 				print "URL ERROR: %s" % e
 				return
@@ -328,11 +340,14 @@ class doFlashImage(Screen):
 			except urllib2.HTTPError as e:
 				print "HTTP download ERROR: %s" % e.code
 				return
-
+ 
 			lines = the_page.split('\n')
 			for line in lines:
 				if line.find('<a href="swf-3.0-') > -1 and line.find('_usb.zip') > -1:
-					self.imagelist.append(line[13:47])
+					if box == 'ventonhdx':
+						self.imagelist.append(line[13:47])
+					elif box == 'e3hd':
+						self.imagelist.append(line[13:42])	
 		else:
 			self["key_blue"].setText(_("Delete"))
 			self["key_yellow"].setText(_("Devices"))

@@ -15,9 +15,13 @@ from Tools.Directories import fileExists
 from Tools.HardwareInfo import HardwareInfo
 from os import system
 from enigma import eConsoleAppContainer, quitMainloop, eEnv
+from boxbranding import getImageVersion
 from Components.About import about
 
 class md5Postcondition(Condition):
+	def __init__(self):
+		pass
+
 	def check(self, task):
 		print "md5Postcondition::check", task.returncode
 		return task.returncode == 0
@@ -36,7 +40,7 @@ class md5verify(Task):
 		self.setTool("md5sum")
 		self.args += ["-c", "-s"]
 		self.initial_input = md5
-	
+
 	def writeInput(self, input):
 		self.container.dataSent.append(self.md5ready)
 		print "[writeInput]", input
@@ -50,7 +54,7 @@ class md5verify(Task):
 
 class writeNAND(Task):
 	def __init__(self, job, param, box):
-		Task.__init__(self,job, ("Writing image file to NAND Flash"))
+		Task.__init__(self,job, "Writing image file to NAND Flash")
 		self.setTool(eEnv.resolve("${libdir}/enigma2/python/Plugins/SystemPlugins/NFIFlash/writenfi-mipsel-2.6.18-r1"))
 		if box == "dm7025":
 			self.end = 256
@@ -72,15 +76,15 @@ class writeNAND(Task):
 class NFIFlash(Screen):
 	skin = """
 	<screen name="NFIFlash" position="center,center" size="610,410" title="Image flash utility" >
-		<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
-		<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
-		<ePixmap pixmap="skin_default/buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
-		<ePixmap pixmap="skin_default/buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
+		<ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" alphatest="on" />
+		<ePixmap pixmap="buttons/green.png" position="140,0" size="140,40" alphatest="on" />
+		<ePixmap pixmap="buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
+		<ePixmap pixmap="buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
 		<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" valign="center" halign="center" backgroundColor="#9f1313" transparent="1" />
 		<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;20" valign="center" halign="center" backgroundColor="#1f771f" transparent="1" />
 		<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;20" valign="center" halign="center" backgroundColor="#a08500" transparent="1" />
 		<widget source="key_blue" render="Label" position="420,0" zPosition="1" size="140,40" font="Regular;20" valign="center" halign="center" backgroundColor="#18188b" transparent="1" />
-		<ePixmap pixmap="skin_default/border_menu_350.png" position="5,50" zPosition="1" size="350,300" transparent="1" alphatest="on" />
+		<ePixmap pixmap="border_menu_350.png" position="5,50" zPosition="1" size="350,300" transparent="1" alphatest="on" />
 		<widget name="filelist" position="15,60" size="330,284" scrollbarMode="showOnDemand" />
 		<widget source="infolabel" render="Label" position="360,50" size="240,300" font="Regular;13" />
 		<widget source="status" render="Label" position="5,360" zPosition="10" size="600,50" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
@@ -88,7 +92,7 @@ class NFIFlash(Screen):
 
 	def __init__(self, session, destdir=None):
 		Screen.__init__(self, session)
-		
+
 		self.box = HardwareInfo().get_device_name()
 		self.usbmountpoint = "/mnt/usb/"
 
@@ -100,7 +104,7 @@ class NFIFlash(Screen):
 		self["filelist"] = self.filelist
 		self["infolabel"] = StaticText()
 
-		self["status"] = StaticText(_("Please select an NFI file and press green key to flash!") + '\n' + _("currently installed image: %s") % (about.getImageVersionString()))
+		self["status"] = StaticText(_("Please select an NFI file and press green key to flash!") + '\n' + _("currently installed image: %s") % (getImageVersion()))
 		self.job = None
 
 		self["shortcuts"] = ActionMap(["OkCancelActions", "ColorActions", "ShortcutActions", "DirectionActions"],
@@ -133,7 +137,7 @@ class NFIFlash(Screen):
 	def keyDown(self):
 		self["filelist"].down()
 		self.check_for_NFO()
-	
+
 	def keyRight(self):
 		self["filelist"].pageDown()
 		self.check_for_NFO()
@@ -181,7 +185,7 @@ class NFIFlash(Screen):
 				self.md5sum = ""
 
 	def queryCB(self, answer):
-		if answer == True:
+		if answer:
 			self.createJob()
 
 	def createJob(self):
@@ -224,6 +228,6 @@ class NFIFlash(Screen):
 
 	def reboot(self, ret=None):
 		if self.job.status == self.job.FINISHED:
-			self["status"].text = ("rebooting...")
+			self["status"].text = "rebooting..."
 			from os import system
 			system(eEnv.resolve("${libdir}/enigma2/python/Plugins/SystemPlugins/NFIFlash/kill_e2_reboot.sh"))

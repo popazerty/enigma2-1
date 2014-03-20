@@ -23,7 +23,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 		self.offset = 0
 		self.overwrite = maxSize
 		self.setText(text)
-		
+
 	def __len__(self):
 		return len(self.text)
 
@@ -62,11 +62,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 			self.currPos = 0
 			self.Text = u""
 		else:
-			try:
-				self.Text = text.decode("utf-8")
-			except UnicodeDecodeError:
-				print "utf8 kaputt!"
-				self.Text = text
+			self.Text = text.decode("utf-8", "ignore").decode("utf-8")
 		self.update()
 
 	def getText(self):
@@ -80,12 +76,12 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 
 	def getSize(self):
 		s = self.instance.calculateSize()
-		return (s.width(), s.height())
+		return s.width(), s.height()
 
 	def markAll(self):
 		self.allmarked = True
 		self.update()
-	
+
 	def innerright(self):
 		if self.allmarked:
 			self.currPos = 0
@@ -137,14 +133,14 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 			newNumber = str(int(self.Text[self.currPos]) - 1)
 		self.Text = self.Text[0:self.currPos] + newNumber + self.Text[self.currPos + 1:]
 		self.update()
-		
+
 	def home(self):
 		self.allmarked = False
 		if self.type == self.TEXT:
 			self.timeout()
 		self.currPos = 0
 		self.update()
-	
+
 	def end(self):
 		self.allmarked = False
 		if self.type == self.TEXT:
@@ -156,6 +152,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 		self.update()
 
 	def insertChar(self, ch, pos=False, owr=False, ins=False):
+		self.Text = self.Text.decode("utf-8", "ignore").decode("utf-8")
 		if not pos:
 			pos = self.currPos
 		if ins and not self.maxSize:
@@ -217,6 +214,16 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 				if not self.maxSize and self.offset > 0:
 					self.offset -= 1
 				self.currPos -= 1
+		self.update()
+
+	def deleteForward(self):
+		if self.type == self.TEXT:
+			self.timeout()
+		if self.allmarked:
+			self.deleteAllChars()
+			self.allmarked = False
+		else:
+			self.deleteChar(self.currPos);
 		self.update()
 
 	def toggleOverwrite(self):

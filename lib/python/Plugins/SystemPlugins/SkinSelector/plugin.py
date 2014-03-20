@@ -11,17 +11,14 @@ from Components.MenuList import MenuList
 from Plugins.Plugin import PluginDescriptor
 from Components.config import config
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS
+from os import path, walk
 from enigma import eEnv
-import os
-
-SKINXML = "skin.xml"
-DEFAULTSKIN = "<Default Skin>"
 
 class SkinSelector(Screen):
 	# for i18n:
 	# _("Choose your Skin")
 	skinlist = []
-	root = os.path.join(eEnv.resolve("${datadir}"),"enigma2")
+	root = eEnv.resolve("${datadir}/enigma2/")
 
 	def __init__(self, session, args = None):
 
@@ -29,14 +26,7 @@ class SkinSelector(Screen):
 
 		self.skinlist = []
 		self.previewPath = ""
-		if os.path.exists(os.path.join(self.root, SKINXML)):
-			self.skinlist.append(DEFAULTSKIN)
-		for root, dirs, files in os.walk(self.root, followlinks=True):
-			for subdir in dirs:
-				dir = os.path.join(root,subdir)
-				if os.path.exists(os.path.join(dir,SKINXML)):
-					self.skinlist.append(subdir)
-			dirs = []
+		path.walk(self.root, self.find, "")
 
 		self["key_red"] = StaticText(_("Close"))
 		self["introduction"] = StaticText(_("Press OK to activate the selected skin."))
@@ -59,9 +49,9 @@ class SkinSelector(Screen):
 		self.onLayoutFinish.append(self.layoutFinished)
 
 	def layoutFinished(self):
-		tmp = config.skin.primary_skin.value.find("/"+SKINXML)
+		tmp = config.skin.primary_skin.getValue().find('/skin.xml')
 		if tmp != -1:
-			tmp = config.skin.primary_skin.value[:tmp]
+			tmp = config.skin.primary_skin.getValue()[:tmp]
 			idx = 0
 			for skin in self.skinlist:
 				if skin == tmp:
@@ -88,30 +78,38 @@ class SkinSelector(Screen):
 		self.loadPreview()
 
 	def info(self):
-		aboutbox = self.session.open(MessageBox,_("Enigma2 skin selector"), MessageBox.TYPE_INFO)
+		aboutbox = self.session.open(MessageBox,_("Enigma2 Skinselector\n\nIf you experience any problems please contact\nstephan@reichholf.net\n\n\xA9 2006 - Stephan Reichholf"), MessageBox.TYPE_INFO)
 		aboutbox.setTitle(_("About..."))
 
+	def find(self, arg, dirname, names):
+		for x in names:
+			if x == "skin.xml":
+				if dirname <> self.root:
+					subdir = dirname[19:]
+					self.skinlist.append(subdir)
+				else:
+					subdir = "Default Skin"
+					self.skinlist.append(subdir)
+
 	def ok(self):
-		if self["SkinList"].getCurrent() == DEFAULTSKIN:
-			skinfile = "."
+		if self["SkinList"].getCurrent() == "Default Skin":
+			skinfile = "skin.xml"
 		else:
-			skinfile = self["SkinList"].getCurrent()
-		skinfile = os.path.join(skinfile, SKINXML)
+			skinfile = self["SkinList"].getCurrent()+"/skin.xml"
 
 		print "Skinselector: Selected Skin: "+self.root+skinfile
-		config.skin.primary_skin.value = skinfile
+		config.skin.primary_skin.setValue(skinfile)
 		config.skin.primary_skin.save()
-		restartbox = self.session.openWithCallback(self.restartGUI,MessageBox,_("GUI needs a restart to apply a new skin\nDo you want to restart the GUI now?"), MessageBox.TYPE_YESNO)
+		restartbox = self.session.openWithCallback(self.restartGUI,MessageBox,_("GUI needs a restart to apply a new skin\nDo you want to Restart the GUI now?"), MessageBox.TYPE_YESNO)
 		restartbox.setTitle(_("Restart GUI now?"))
 
 	def loadPreview(self):
-		if self["SkinList"].getCurrent() == DEFAULTSKIN:
-			pngpath = "."
+		if self["SkinList"].getCurrent() == "Default Skin":
+			pngpath = self.root+"/prev.png"
 		else:
-			pngpath = self["SkinList"].getCurrent()
-		pngpath = os.path.join(os.path.join(self.root, pngpath), "prev.png")
+			pngpath = self.root+self["SkinList"].getCurrent()+"/prev.png"
 
-		if not os.path.exists(pngpath):
+		if not path.exists(pngpath):
 			pngpath = resolveFilename(SCOPE_PLUGINS, "SystemPlugins/SkinSelector/noprev.png")
 
 		if self.previewPath != pngpath:

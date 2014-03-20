@@ -38,13 +38,13 @@ class TunerInfo(GUIComponent):
 	def setValue(self, value):
 		self.value = value
 		if self.instance:
-			self.instance.setValue(self.value)		
+			self.instance.setValue(self.value)
 
 	def calc(self,val):
 		if not val:
 			return 0
 		if val < 2500:
-			return (long)(log(val)/log(2))
+			return long(log(val)/log(2))
 		return val*100/65535
 
 	def update(self):
@@ -65,9 +65,9 @@ class TunerInfo(GUIComponent):
 			else:
 				self.setText("")
 		elif self.type == self.SNR_PERCENTAGE or self.type == self.AGC_PERCENTAGE:
-			self.setText("%d%%" % (value))
+			self.setText("%d%%" % value)
 		elif self.type == self.BER_VALUE:
-			self.setText("%d" % (value))
+			self.setText("%d" % value)
 		elif self.type == self.SNR_BAR or self.type == self.AGC_BAR:
 			self.setValue(value)
 		elif self.type == self.BER_BAR:

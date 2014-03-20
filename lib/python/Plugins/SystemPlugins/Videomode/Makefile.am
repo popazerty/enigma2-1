@@ -5,8 +5,8 @@ SUBDIRS = meta
 install_PYTHON =	\
 	__init__.py \
 	plugin.py \
-	VideoHardware.py \
-	VideoWizard.py
+	VideoHardware.py
+
 
 dist_install_DATA = \
 	DVI.png \
@@ -17,4 +17,5 @@ dist_install_DATA = \
 	videowizard.xml \
 	YPbPr.png \
 	HDMI.png \
-	lcd_HDMI.png
+	lcd_HDMI.png \
+	RCA.png 
