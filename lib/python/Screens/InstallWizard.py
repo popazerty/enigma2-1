@@ -1,5 +1,6 @@
 from Screens.Screen import Screen
-from Components.ConfigList import ConfigListScreen
+from Components.ConfigList import ConfigListScreen, ConfigList
+from Components.ActionMap import ActionMap
 from Components.Sources.StaticText import StaticText
 from Components.config import config, ConfigSubsection, ConfigBoolean, getConfigListEntry, ConfigSelection, ConfigYesNo, ConfigIP
 from Components.Network import iNetwork
@@ -41,20 +42,12 @@ class InstallWizard(Screen, ConfigListScreen):
 					else:
 						iNetwork.restartNetwork(self.checkNetworkLinkCB)
 					break
-				elif x[1] == 'wlan0':
-					if iNetwork.getAdapterAttribute(x[1], 'up'):
-						self.ipConfigEntry = ConfigIP(default = iNetwork.getAdapterAttribute(x[1], "ip"))
-						iNetwork.checkNetworkState(self.checkNetworkCB)
-						if_found = True
-					else:
-						iNetwork.restartNetwork(self.checkNetworkLinkCB)
-					break
 			if is_found is False:
 				self.createMenu()
 		elif self.index == self.STATE_CHOISE_CHANNELLIST:
 			self.enabled = ConfigYesNo(default = True)
-			modes = {"default-ventonsupport": "Default Germany", "henksat-19e": "Astra 1", "henksat-23e": "Astra 3", "henksat-19e-23e": "Astra 1 Astra 3", "henksat-19e-23e-28e": "Astra 1 Astra 2 Astra 3", "henksat-13e-19e-23e-28e": "Astra 1 Astra 2 Astra 3 Hotbird"}
-			self.channellist_type = ConfigSelection(choices = modes, default = "default-ventonsupport")
+			modes = {"19e": "Astra 1", "23e": "Astra 3", "19e-23e": "Astra 1 Astra 3", "19e-23e-28e": "Astra 1 Astra 2 Astra 3", "13e-19e-23e-28e": "Astra 1 Astra 2 Astra 3 Hotbird"}
+			self.channellist_type = ConfigSelection(choices = modes, default = "19e")
 			self.createMenu()
 		elif self.index == self.STATE_CHOISE_SOFTCAM:
 			self.enabled = ConfigYesNo(default = True)
@@ -112,14 +105,20 @@ class InstallWizard(Screen, ConfigListScreen):
 			if config.misc.installwizard.hasnetwork.value:
 				self.session.open(InstallWizardIpkgUpdater, self.index, _('Please wait (updating packages)'), IpkgComponent.CMD_UPDATE)
 		elif self.index == self.STATE_CHOISE_CHANNELLIST and self.enabled.value:
-			self.session.open(InstallWizardIpkgUpdater, self.index, _('Please wait (downloading channel list)'), IpkgComponent.CMD_REMOVE, {'package': 'enigma2-plugin-settings-' + self.channellist_type.value})
+			self.session.open(InstallWizardIpkgUpdater, self.index, _('Please wait (downloading channel list)'), IpkgComponent.CMD_REMOVE, {'package': 'enigma2-plugin-settings-henksat-' + self.channellist_type.value})
 		elif self.index == self.STATE_CHOISE_SOFTCAM and self.enabled.value:
 			self.session.open(InstallWizardIpkgUpdater, self.index, _('Please wait (downloading softcam)'), IpkgComponent.CMD_INSTALL, {'package': 'enigma2-plugin-softcams-' + self.softcam_type.value})
 		return
 
 
 class InstallWizardIpkgUpdater(Screen):
+	skin = """
+	<screen position="c-300,c-25" size="600,50" title=" ">
+		<widget source="statusbar" render="Label" position="10,5" zPosition="10" size="e-10,30" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
+	</screen>"""
+
 	def __init__(self, session, index, info, cmd, pkg = None):
+		self.skin = InstallWizardIpkgUpdater.skin
 		Screen.__init__(self, session)
 
 		self["statusbar"] = StaticText(info)

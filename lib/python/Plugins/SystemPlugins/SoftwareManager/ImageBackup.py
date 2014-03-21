@@ -4,7 +4,8 @@
 #					MAKES A FULLBACK-UP READY FOR FLASHING.						#
 #																				#
 #################################################################################
-from enigma import getBoxType, getMachineBrand, getMachineName, getImageVersionString, getBuildVersionString, getDriverDateString, getEnigmaVersionString
+from enigma import getBoxType, getImageVersionString, getBuildVersionString, getEnigmaVersionString
+from boxbranding import getMachineBrand, getMachineName, getDriverDate
 from Screens.Screen import Screen
 from Components.Button import Button
 from Components.Label import Label
@@ -17,7 +18,7 @@ from os import path, system, makedirs, listdir, walk, statvfs
 import commands
 import datetime
 
-VERSION = "Version 2.0 "
+VERSION = "Version 2.0 openATV"
 
 def Freespace(dev):
 	statdev = statvfs(dev)
@@ -39,7 +40,7 @@ class ImageBackup(Screen):
 		<widget name="info-hdd" position="10,30" zPosition="1" size="450,100" font="Regular;20" halign="left" valign="top" transparent="1" />
 		<widget name="info-usb" position="10,150" zPosition="1" size="450,200" font="Regular;20" halign="left" valign="top" transparent="1" />
 	</screen>"""
-		
+
 	def __init__(self, session, args = 0):
 		Screen.__init__(self, session)
 		self.session = session
@@ -49,7 +50,7 @@ class ImageBackup(Screen):
 		print "[FULL BACKUP] BOX MACHINENAME = >%s<" %self.MACHINENAME
 		print "[FULL BACKUP] BOX MACHINEBRAND = >%s<" %self.MACHINEBRAND
 		print "[FULL BACKUP] BOX MODEL = >%s<" %self.MODEL
-		
+
 		self["key_green"] = Button("USB")
 		self["key_red"] = Button("HDD")
 		self["key_blue"] = Button(_("Exit"))
@@ -79,10 +80,10 @@ class ImageBackup(Screen):
 			self.session.open(MessageBox, _("Not enough free space on %s !!\nYou need at least 300Mb free space.\n" % dev), type = MessageBox.TYPE_ERROR)
 			return False
 		return True
-		
+
 	def quit(self):
 		self.close()	
-		
+
 	def red(self):
 		if self.check_hdd():
 			self.doFullBackup("/hdd")
@@ -152,16 +153,23 @@ class ImageBackup(Screen):
 		## TESTING WHICH KIND OF SATELLITE RECEIVER IS USED
 
 		## TESTING THE XTREND AND CLARK TECH MODELS
-		if self.MODEL == "et9x00" or self.MODEL == "et5x00" or self.MODEL == "et6x00" or self.MODEL == "et6500" or self.MODEL == "et4x00":
+		if self.MODEL.startswith("et") and not self.MODEL == "et10000":
 			self.TYPE = "ET"
-			if self.MODEL == "et6500":
-				self.MODEL = "et6x00"
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
-			self.SHOWNAME = "Xtrend %s" %self.MODEL
+			self.SHOWNAME = "%s %s" %(self.MACHINEBRAND, self.MODEL)
 			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
 			self.MAINDEST = "%s/%sx00" %(self.DIRECTORY, self.MODEL[:-3])
 			self.EXTRA = "%s/fullbackup_%sx00/%s" % (self.DIRECTORY, self.MODEL[:-3], self.DATE)
+			self.EXTRAOLD = "%s/fullbackup_%s/%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE, self.MODEL)
+		elif self.MODEL == "et10000":
+			self.TYPE = "ET"
+			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 8192"
+			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
+			self.SHOWNAME = "%s %s" %(self.MACHINEBRAND, self.MODEL)
+			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
+			self.MAINDEST = "%s/%s" %(self.DIRECTORY, self.MODEL)
+			self.EXTRA = "%s/fullbackup_%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE)
 			self.EXTRAOLD = "%s/fullbackup_%s/%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE, self.MODEL)
 		## TESTING THE Odin M9 Model
 		elif self.MODEL == "odinm9":
@@ -208,7 +216,7 @@ class ImageBackup(Screen):
 			self.EXTRAOLD = "%s/fullbackup_%s/%s/%s" % (self.DIRECTORY, self.MODEL, self.DATE, self.MODEL)
 			self.EXTRA = "%s/fullbackup_e3hd/%s" % (self.DIRECTORY, self.DATE)
 		## TESTING THE MK Digital Model
-		elif self.MODEL == "xp1000":
+		elif self.MODEL == "xp1000" and not self.MACHINENAME.lower() == "sf8 hd":
 			self.TYPE = "MAXDIGITAL"
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
@@ -427,11 +435,11 @@ class ImageBackup(Screen):
 		## TESTING THE Gigablue 800 SE Plus Model
 		elif self.MODEL == "gb800seplus":
 			self.TYPE = "GIGABLUE"
-			self.MODEL = "seplus"
+			self.MODEL = "ueplus"
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
 			self.SHOWNAME = "GigaBlue %s" %self.MODEL
-			self.MTDKERNEL = "mtd1"	
+			self.MTDKERNEL = "mtd2"	
 			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
 			self.MAINDEST = "%s/gigablue/%s" %(self.DIRECTORY, self.MODEL)
 			self.EXTRA =  "%s/fullbackup_%s/%s/gigablue" % (self.DIRECTORY, self.TYPE, self.DATE)
@@ -442,7 +450,7 @@ class ImageBackup(Screen):
 			self.MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
 			self.UBINIZE_ARGS = "-m 2048 -p 128KiB"
 			self.SHOWNAME = "GigaBlue %s" %self.MODEL
-			self.MTDKERNEL = "mtd1"	
+			self.MTDKERNEL = "mtd2"	
 			self.MAINDESTOLD = "%s/%s" %(self.DIRECTORY, self.MODEL)
 			self.MAINDEST = "%s/gigablue/%s" %(self.DIRECTORY, self.MODEL)
 			self.EXTRA =  "%s/fullbackup_%s/%s/gigablue" % (self.DIRECTORY, self.TYPE, self.DATE)
@@ -500,6 +508,7 @@ class ImageBackup(Screen):
 
 		if self.ROOTFSTYPE == "jffs2":
 			cmd1 = "%s --root=/tmp/bi/root --faketime --output=%s/root.jffs2 %s" % (self.MKFS, self.WORKDIR, self.JFFS2OPTIONS)
+			cmd2 = None
 		else:
 			f = open("%s/ubinize.cfg" %self.WORKDIR, "w")
 			f.write("[ubifs]\n")
@@ -530,7 +539,7 @@ class ImageBackup(Screen):
 		cmdlist.append('echo " "')
 		cmdlist.append('echo "Check: kerneldump"')
 		cmdlist.append("sync")
-				
+
 		self.session.open(Console, title = self.TITLE, cmdlist = cmdlist, finishedCallback = self.doFullBackupCB, closeOnSuccess = True)
 
 	def doFullBackupCB(self):
@@ -658,10 +667,10 @@ class ImageBackup(Screen):
 
 				if self.TYPE == 'ET':
 					cmdlist.append('mkdir -p %s/%sx00' % (self.TARGET, self.MODEL[:-3]))
-					cmdlist.append('cp -r %s %s' % (MAINDEST, TARGET))
+					cmdlist.append('cp -r %s %s' % (self.MAINDEST, self.TARGET))
 				elif self.TYPE == 'VU':
 					cmdlist.append('mkdir -p %s/vuplus_back/%s' % (self.TARGET, self.MODEL[2:]))
-					cmdlist.append('cp -r %s %s/vuplus_back/' % (MAINDEST, TARGET))
+					cmdlist.append('cp -r %s %s/vuplus_back/' % (self.MAINDEST, self.TARGET))
 				elif self.TYPE == 'VENTON':
 					cmdlist.append('mkdir -p %s/venton/%s' % (self.TARGET, self.MODEL))
 					cmdlist.append('cp -r %s %s/venton/' % (self.MAINDEST, self.TARGET))
@@ -715,7 +724,7 @@ class ImageBackup(Screen):
 
 				cmdlist.append("sync")
 				cmdlist.append('echo "Backup finished and copied to your USB-flash drive"')
-			
+
 		cmdlist.append("umount /tmp/bi/root")
 		cmdlist.append("rmdir /tmp/bi/root")
 		cmdlist.append("rmdir /tmp/bi")
@@ -730,8 +739,8 @@ class ImageBackup(Screen):
 
 	def imageInfo(self):
 		AboutText = _("Full Image Backup ")
-		AboutText += _("By openSWF") + "\n"
-		AboutText += _("Support at") + " www.sat-world-forum.com\n\n"
+		AboutText += _("By openATV Image Team") + "\n"
+		AboutText += _("Support at") + " www.xtrend-alliance.com\n\n"
 		AboutText += _("[Image Info]\n")
 		AboutText += _("Model: %s %s\n") % (getMachineBrand(), getMachineName())
 		AboutText += _("Backup Date: %s\n") % strftime("%Y-%m-%d", localtime(self.START))
@@ -746,7 +755,7 @@ class ImageBackup(Screen):
 		AboutText += _("Build: %s") % getBuildVersionString() + "\n"
 		AboutText += _("Kernel: %s") % about.getKernelVersionString() + "\n"
 
-		string = getDriverDateString()
+		string = getDriverDate()
 		year = string[0:4]
 		month = string[4:6]
 		day = string[6:8]
@@ -773,7 +782,7 @@ class ImageBackup(Screen):
 						f.close()
 		except:
 			AboutText += "Error reading bouquets.tv"
-			
+
 		AboutText += _("\n[User - bouquets (RADIO)]\n")
 		try:
 			f = open("/etc/enigma2/bouquets.radio","r")
