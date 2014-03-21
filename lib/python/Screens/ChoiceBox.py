@@ -6,9 +6,7 @@ from Components.Sources.StaticText import StaticText
 import enigma
 
 class ChoiceBox(Screen):
-	def __init__(self, session, title="", list=None, keys=None, selection=0, skin_name=None, text=""):
-		if not list: list = []
-		if not skin_name: skin_name = []
+	def __init__(self, session, title = "", list = [], keys = None, selection = 0, skin_name = [], text = ""):
 		Screen.__init__(self, session)
 
 		if isinstance(skin_name, str):
@@ -27,7 +25,7 @@ class ChoiceBox(Screen):
 					labeltext = ""
 					while len(temptext) >= count:
 						if labeltext:
-							labeltext += '\n'
+							labeltext = labeltext + '\n'
 						labeltext = labeltext + temptext[count-1]
 						count += 1
 						print 'count',count
@@ -169,11 +167,10 @@ class ChoiceBox(Screen):
 
 	# runs a specific entry
 	def goEntry(self, entry):
-		if entry and len(entry) > 3 and isinstance(entry[1], str) and entry[1] == "CALLFUNC":
-			arg = entry[3]
+		if len(entry) > 2 and isinstance(entry[1], str) and entry[1] == "CALLFUNC":
+			# CALLFUNC wants to have the current selection as argument
+			arg = self["list"].l.getCurrentSelection()[0]
 			entry[2](arg)
-		elif entry and len(entry) > 2 and isinstance(entry[1], str) and entry[1] == "CALLFUNC":
-			entry[2](None)
 		else:
 			self.close(entry)
 
@@ -200,7 +197,7 @@ class ChoiceBox(Screen):
 		pos = 0
 		summarytext = ""
 		for entry in self.summarylist:
-			if curpos-2 < pos < curpos+5:
+			if pos > curpos-2 and pos < curpos+5:
 				if pos == curpos:
 					summarytext += ">"
 					self["summary_selection"].setText(entry[1])

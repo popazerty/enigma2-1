@@ -23,9 +23,16 @@ from re import escape as re_escape
 plugin_path = eEnv.resolve("${libdir}/enigma2/python/Plugins/SystemPlugins/WirelessLan")
 
 
-list = ["Unencrypted", "WEP", "WPA", "WPA/WPA2", "WPA2"]
+list = []
+list.append("Unencrypted")
+list.append("WEP")
+list.append("WPA")
+list.append("WPA/WPA2")
+list.append("WPA2")
 
-weplist = ["ASCII", "HEX"]
+weplist = []
+weplist.append("ASCII")
+weplist.append("HEX")
 
 config.plugins.wlan = ConfigSubsection()
 config.plugins.wlan.essid = NoSave(ConfigText(default = "", fixed_size = False))
@@ -149,7 +156,7 @@ class WlanStatus(Screen):
 						if accesspoint == "Not-Associated":
 							encryption = _("Disabled")
 						else:
-							encryption = _("off or wpa2 on")
+							encryption = _("Unsupported")
 					else:
 						encryption = _("Enabled")
 					if self.has_key("enc"):
@@ -221,8 +228,6 @@ class WlanScan(Screen):
 		self.cleanList = None
 		self.oldlist = {}
 		self.listLength = None
-		self.divpng = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
-
 		self.rescanTimer = eTimer()
 		self.rescanTimer.callback.append(self.rescanTimerFired)
 
@@ -281,8 +286,9 @@ class WlanScan(Screen):
 		self.updateAPList()
 
 	def buildEntryComponent(self, essid, bssid, encrypted, iface, maxrate, signal):
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
 		encryption = encrypted and _("Yes") or _("No")
-		return essid, bssid, _("Signal: ") + str(signal), _("Max. bitrate: ") + str(maxrate), _("Encrypted: ") + encryption, _("Interface: ") + str(iface), self.divpng
+		return((essid, bssid, _("Signal: ") + str(signal), _("Max. bitrate: ") + str(maxrate), _("Encrypted: ") + encryption, _("Interface: ") + str(iface), divpng))
 
 	def updateAPList(self):
 		newList = []

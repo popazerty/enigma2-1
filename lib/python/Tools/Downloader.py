@@ -1,7 +1,7 @@
 from twisted.web import client
-from twisted.internet import reactor, defer, ssl
+from twisted.internet import reactor, defer
 from twisted.python import failure
-from boxbranding import getMachineBrand, getMachineName
+from enigma import getMachineBrand, getMachineName
 
 class HTTPProgressDownloader(client.HTTPDownloader):
 	def __init__(self, url, outfile, headers=None):
@@ -38,13 +38,9 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
 class downloadWithProgress:
 	def __init__(self, url, outputfile, contextFactory=None, *args, **kwargs):
-		# noinspection PyProtectedMember
 		scheme, host, port, path = client._parse(url)
 		self.factory = HTTPProgressDownloader(url, outputfile, *args, **kwargs)
-		if scheme == "https":
-			self.connection = reactor.connectSSL(host, port, self.factory, ssl.ClientContextFactory())
-		else:
-			self.connection = reactor.connectTCP(host, port, self.factory)
+		self.connection = reactor.connectTCP(host, port, self.factory)
 
 	def start(self):
 		return self.factory.deferred

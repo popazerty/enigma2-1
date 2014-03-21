@@ -20,8 +20,7 @@ public:
 		idStructure,	// service_id == 0 is root
 		idDVB,
 		idFile,
-		idUser=0x1000,
-		idServiceMP3=0x1001
+		idUser=0x1000
 	};
 	int type;
 
@@ -92,7 +91,6 @@ public:
 	std::string getName() const { return name; }
 	void setName( const std::string &n ) { name=n; }
 	int getChannelNum() const { return number; }
-	void setChannelNum(const int n) { number = n; }
 
 	eServiceReference()
 		: type(idInvalid), flags(0)
@@ -421,7 +419,6 @@ public:
 	virtual std::string getInfoString(int w);
 	virtual ePtr<iServiceInfoContainer> getInfoObject(int w);
 	virtual ePtr<iDVBTransponderData> getTransponderData();
-	virtual void getAITApplications(std::map<int, std::string> &aitlist) {};
 	virtual void getCaIds(std::vector<int> &caids, std::vector<int> &ecmpids);
 	virtual long long getFileSize();
 

@@ -1,26 +1,25 @@
 from config import config, ConfigSubsection, ConfigSelection, ConfigNothing
 from Components.SystemInfo import SystemInfo
 from Tools.Directories import fileExists
-from boxbranding import getBoxType
 
 class WOL:
 	def __init__(self):
 		pass
 
 	def setWolState(self, value):
-		print '[WOL] set:',value
+		print 'setWOL',value
 		f = open("/proc/stb/fp/wol", "w")
 		f.write(value)
 		f.close()
+		enable = value == 'enable' and True or False
 
 def Init():
 	if SystemInfo["WOL"]:
-		if not getBoxType() == 'gbquad' :
-			def setWOLmode(value):
-				iwol.setWolState(config.network.wol.value);
-			iwol = WOL()
-			config.network.wol = ConfigSelection([("disable", _("No")), ("enable", _("Yes"))], default = "disable")
-			config.network.wol.addNotifier(setWOLmode, initial_call=True)
+		def setWOLmode(value):
+			iwol.setWolState(config.network.wol.value);
+		iwol = WOL()
+		config.network.wol = ConfigSelection([("disable", _("No")), ("enable", _("Yes"))], default = "disable")
+		config.misc.DeepStandby.addNotifier(setWOLmode, initial_call=False)
 	else:
 		def doNothing():
 			pass

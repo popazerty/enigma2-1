@@ -6,20 +6,13 @@ import os
 from Tools.Directories import SCOPE_LANGUAGE, resolveFilename
 from time import time, localtime, strftime
 
-LPATH = resolveFilename(SCOPE_LANGUAGE, "")
-
 class Language:
 	def __init__(self):
 		gettext.install('enigma2', resolveFilename(SCOPE_LANGUAGE, ""), unicode=0, codeset="utf-8")
 		self.activeLanguage = 0
 		self.catalog = None
 		self.lang = {}
-		self.InitLang()
-		self.callbacks = []
-
-	def InitLang(self):
 		self.langlist = []
-		self.ll = os.listdir(LPATH)
 		# FIXME make list dynamically
 		# name, iso-639 language, iso-3166 country. Please don't mix language&country!
 		self.addLanguage("Deutsch", "de", "DE")
@@ -47,7 +40,6 @@ class Language:
 		self.addLanguage("Lietuvių", "lt", "LT")
 		self.addLanguage("Latviešu", "lv", "LV")
 		self.addLanguage("Nederlands", "nl", "NL")
-		self.addLanguage("Norsk Bokmål","nb", "NO")
 		self.addLanguage("Norsk", "no", "NO")
 		self.addLanguage("Polski", "pl", "PL")
 		self.addLanguage("Português", "pt", "PT")
@@ -62,18 +54,12 @@ class Language:
 		self.addLanguage("Türkçe", "tr", "TR")
 		self.addLanguage("Ukrainian", "uk", "UA")
 
-		
+		self.callbacks = []
 
 	def addLanguage(self, name, lang, country):
 		try:
-			if lang in self.ll:
-				if country == "GB" or country == "BR":
-					if (lang + "_" + country) in self.ll:
-						self.lang[str(lang + "_" + country)] = ((name, lang, country))
-						self.langlist.append(str(lang + "_" + country))
-				else:
-					self.lang[str(lang + "_" + country)] = ((name, lang, country))
-					self.langlist.append(str(lang + "_" + country))
+			self.lang[str(lang + "_" + country)] = ((name, lang, country))
+			self.langlist.append(str(lang + "_" + country))
 		except:
 			print "Language " + str(name) + " not found"
 
@@ -85,8 +71,7 @@ class Language:
 			self.catalog.install(names=("ngettext", "pgettext"))
 			self.activeLanguage = index
 			for x in self.callbacks:
-				if x:
-					x()
+				x()
 		except:
 			print "Selected language does not exist!"
 		# NOTE: we do not use LC_ALL, because LC_ALL will not set any of the categories, when one of the categories fails.
@@ -129,38 +114,6 @@ class Language:
 
 	def addCallback(self, callback):
 		self.callbacks.append(callback)
-
-	def delLanguage(self, delLang = None):
-		from Components.config import config, configfile
-		from shutil import rmtree
-		lang = config.osd.language.getValue()
-		if delLang:
-			print"DELETE", delLang
-			if delLang == "en_US":
-				print"Default Language can not be deleted !!"
-				return
-			elif delLang == "en_GB":
-				rmtree(LPATH + delLang)
-			elif delLang == "pt_BR":
-				rmtree(LPATH + delLang)
-			else:
-				rmtree(LPATH + delLang[:2])
-		else:
-			ll = os.listdir(LPATH)
-			for x in ll:
-				print x
-				if len(x) > 2:
-					if x != lang:
-						rmtree(LPATH + x)
-				else:
-					if x != lang[:2] and x != "en":
-						rmtree(LPATH + x)
-					elif x == "pt":
-						if x != lang:
-							rmtree(LPATH + x)
-			os.system("touch /etc/enigma2/.removelang")
-
-		self.InitLang()
 
 	def updateLanguageCache(self):
 		t = localtime(time())

@@ -78,14 +78,14 @@
 <!--
 		<widget source="SetupEntry" render="Label" position="0,0" size="120,32" font="Regular;12" />
  -->
-		<widget source="SetupValue" render="Label" position="0,0" size="120,32" font="Regular;12" />
+   <!--<widget source="SetupValue" render="Label" position="0,0" size="120,32" font="Regular;12" />-->
 	</screen>
 
 <!-- misc-->
 	<screen name="SimpleSummary" position="0,0" size="132,64">
 		<widget source="parent.Title" render="Label" position="0,0" size="124,40" font="Regular;16" valign="center" />
 	</screen>
-	<screen name="PLIMenuSummary" position="0,0" size="132,64">
+	<screen name="VIXMenuSummary" position="0,0" size="132,64">
 		<widget source="entry" render="Label" position="0,0" size="120,20" font="Regular;18" noWrap="1" />
 	</screen>
 	<screen name="ChoiceBox_summary" position="0,0" size="132,64">
@@ -120,7 +120,7 @@
 <!-- standby -->
 	<screen name="StandbySummary" position="0,0" size="132,64">
 		<widget source="global.CurrentTime" render="Label" position="0,0" size="120,64" font="Regular;48" halign="center" valign="center">
-			<convert type="ClockToText">Format:%H:%M</convert>
+			<convert type="ClockToText">Format:%d/%m %H:%M</convert>
 		</widget>
 		<widget source="session.RecordState" render="FixedLabel" position="0,4" zPosition="1" size="120,64" text=" ">
 			<convert type="ConfigEntryTest">config.usage.blinking_display_clock_during_recording,True,CheckSourceBoolean</convert>

@@ -1,10 +1,11 @@
 import os
 from Renderer import Renderer
-from enigma import ePixmap, ePicLoad
+from enigma import ePixmap
 from Tools.Alternatives import GetWithAlternative
 from Tools.Directories import pathExists, SCOPE_ACTIVE_SKIN, resolveFilename
 from Components.Harddisk import harddiskmanager
-from boxbranding import getBoxType
+from PIL import Image
+from enigma import getBoxType
 
 searchPaths = []
 lastLcdPiconPath = None
@@ -21,7 +22,7 @@ def onMountpointAdded(mountpoint):
 	global searchPaths
 	try:
 		if getBoxType() == 'vuultimo':
-			path = os.path.join(mountpoint, 'piconlcd') + '/'
+			path = os.path.join(mountpoint, 'lcd_picon') + '/'
 		else:
 			path = os.path.join(mountpoint, 'picon') + '/'
 		if os.path.isdir(path) and path not in searchPaths:
@@ -36,7 +37,7 @@ def onMountpointAdded(mountpoint):
 def onMountpointRemoved(mountpoint):
 	global searchPaths
 	if getBoxType() == 'vuultimo':
-		path = os.path.join(mountpoint, 'piconlcd') + '/'
+		path = os.path.join(mountpoint, 'lcd_picon') + '/'
 	else:
 		path = os.path.join(mountpoint, 'picon') + '/'
 	try:
@@ -84,18 +85,25 @@ def getLcdPiconName(serviceName):
 	pngname = findLcdPicon(sname)
 	if not pngname:
 		fields = sname.split('_', 3)
-		if len(fields) > 2 and fields[2] != '2': #fallback to 1 for tv services with nonstandard servicetypes
+		if len(fields) > 2 and fields[2] != '2':
+			#fallback to 1 for tv services with nonstandard servicetypes
 			fields[2] = '1'
-		if len(fields) > 0 and fields[0] == '4097': #fallback to 1 for IPTV streams
-			fields[0] = '1'
-		pngname = findLcdPicon('_'.join(fields))
+			pngname = findLcdPicon('_'.join(fields))
+	return pngname
+
+def resizePicon(pngname, size):
+	try:
+		im = Image.open(pngname)
+		im.resize((size[0],size[1])).save("/tmp/picon.png")
+		pngname = "/tmp/picon.png"
+	except:
+		print"[PiconRes] error resizePicon"
+		pass
 	return pngname
 
 class LcdPicon(Renderer):
 	def __init__(self):
 		Renderer.__init__(self)
-		self.PicLoad = ePicLoad()
-		self.PicLoad.PictureData.get().append(self.updatePicon)
 		self.piconsize = (0,0)
 		self.pngname = ""
 		self.lastPath = None
@@ -143,26 +151,21 @@ class LcdPicon(Renderer):
 	def postWidgetCreate(self, instance):
 		self.changed((self.CHANGED_DEFAULT,))
 
-	def updatePicon(self, picInfo=None):
-		ptr = self.PicLoad.getData()
-		if ptr is not None:
-			self.instance.setPixmap(ptr.__deref__())
-			self.instance.show()
-
 	def changed(self, what):
 		if self.instance:
 			pngname = ""
-			if what[0] == 1 or what[0] == 3:
+			if what[0] != self.CHANGED_CLEAR:
 				pngname = getLcdPiconName(self.source.text)
-				if not pathExists(pngname): # no picon for service found
-					pngname = self.defaultpngname
-				if self.pngname != pngname:
-					if pngname:
-						self.PicLoad.setPara((self.piconsize[0], self.piconsize[1], 0, 0, 1, 1, "#FF000000"))
-						self.PicLoad.startDecode(pngname)
-					else:
-						self.instance.hide()
-					self.pngname = pngname
+			if not pngname: # no picon for service found
+				pngname = self.defaultpngname
+			if self.pngname != pngname:
+				if pngname:
+					self.instance.setScale(1)
+					self.instance.setPixmapFromFile(resizePicon(pngname, self.piconsize))
+					self.instance.show()
+				else:
+					self.instance.hide()
+				self.pngname = pngname
 
 harddiskmanager.on_partition_list_change.append(onPartitionChange)
 initLcdPiconPaths()

@@ -4,21 +4,12 @@ from Components.config import config
 from Components.AVSwitch import AVSwitch
 from Components.SystemInfo import SystemInfo
 from GlobalActions import globalActionMap
-from enigma import eDVBVolumecontrol
+from enigma import eDVBVolumecontrol, getMachineBrand, getMachineName
 from Tools import Notifications
 import Screens.InfoBar
-from gettext import dgettext
-from boxbranding import getMachineBrand, getMachineName, getBoxType
+from os import path
 
 inStandby = None
-
-def setLCDModeMinitTV(value):
-	try:
-		f = open("/proc/stb/lcd/mode", "w")
-		f.write(value)
-		f.close()
-	except:
-		pass
 
 class Standby2(Screen):
 	def Power(self):
@@ -28,14 +19,11 @@ class Standby2(Screen):
 		#restart last played service
 		#unmute adc
 		self.leaveMute()
-		# set LCDminiTV 
-		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
-			setLCDModeMinitTV(config.lcd.modeminitv.getValue())
 		#kill me
 		self.close(True)
 
 	def setMute(self):
-		if eDVBVolumecontrol.getInstance().isMuted():
+		if (eDVBVolumecontrol.getInstance().isMuted()):
 			self.wasMuted = 1
 			print "mute already active"
 		else:
@@ -52,7 +40,35 @@ class Standby2(Screen):
 		self.avswitch = AVSwitch()
 
 		print "enter standby"
+		# Venton series	new vfd
+		if open("/proc/stb/info/boxtype").read().strip() == "ini-7012":
+			if path.exists("/proc/stb/lcd/symbol_scrambled"):
+				open("/proc/stb/lcd/symbol_scrambled", "w").write("0")
+		
+			if path.exists("/proc/stb/lcd/symbol_1080p"):
+				open("/proc/stb/lcd/symbol_1080p", "w").write("0")
+				
+			if path.exists("/proc/stb/lcd/symbol_1080i"):
+				open("/proc/stb/lcd/symbol_1080i", "w").write("0")
+			  
+			if path.exists("/proc/stb/lcd/symbol_720p"):
+				open("/proc/stb/lcd/symbol_720p", "w").write("0")
+			  
+			if path.exists("/proc/stb/lcd/symbol_576i"):
+				open("/proc/stb/lcd/symbol_576i", "w").write("0")
+			  
+			if path.exists("/proc/stb/lcd/symbol_576p"): 
+				open("/proc/stb/lcd/symbol_576p", "w").write("0")
+			
+			if path.exists("/proc/stb/lcd/symbol_hd"): 
+				open("/proc/stb/lcd/symbol_hd", "w").write("0")  
 
+			if path.exists("/proc/stb/lcd/symbol_dolby_audio"): 
+				open("/proc/stb/lcd/symbol_dolby_audio", "w").write("0") 
+
+			if path.exists("/proc/stb/lcd/symbol_mp3"): 
+				open("/proc/stb/lcd/symbol_mp3", "w").write("0") 
+				
 		self["actions"] = ActionMap( [ "StandbyActions" ],
 		{
 			"power": self.Power,
@@ -63,10 +79,6 @@ class Standby2(Screen):
 
 		#mute adc
 		self.setMute()
-		
-		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
-			# set LCDminiTV off
-			setLCDModeMinitTV("0")
 
 		self.paused_service = None
 		self.prev_running_service = None
@@ -116,7 +128,6 @@ class Standby(Standby2):
 			self.onHide.append(self.close)
 		else:
 			Standby2.__init__(self, session)
-			self.skinName = "Standby"
 
 	def showMessageBox(self):
 		Screens.InfoBar.InfoBar.checkTimeshiftRunning(Screens.InfoBar.InfoBar.instance, self.showMessageBoxcallback)
@@ -148,11 +159,12 @@ from Components.Task import job_manager
 class QuitMainloopScreen(Screen):
 	def __init__(self, session, retvalue=1):
 		self.skin = """<screen name="QuitMainloopScreen" position="fill" flags="wfNoBorder">
-			<ePixmap pixmap="icons/input_info.png" position="c-27,c-60" size="53,53" alphatest="on" />
-			<widget name="text" position="center,c+5" size="720,100" font="Regular;22" halign="center" />
-		</screen>"""
+				<ePixmap pixmap="icons/input_info.png" position="c-27,c-60" size="53,53" alphatest="on" />
+				<widget name="text" position="center,c+5" size="720,100" font="Regular;22" halign="center" />
+			</screen>"""
 		Screen.__init__(self, session)
 		from Components.Label import Label
+
 		text = { 1: _("Your %s %s is shutting down") % (getMachineBrand(), getMachineName()),
 			2: _("Your %s %s is rebooting") % (getMachineBrand(), getMachineName()),
 			3: _("The user interface of your %s %s is restarting") % (getMachineBrand(), getMachineName()),
@@ -160,8 +172,7 @@ class QuitMainloopScreen(Screen):
 			5: _("The user interface of your %s %s is restarting\ndue to an error in mytest.py") % (getMachineBrand(), getMachineName()),
 			42: _("Upgrade in progress\nPlease wait until your %s %s reboots\nThis may take a few minutes") % (getMachineBrand(), getMachineName()),
 			43: _("Reflash in progress\nPlease wait until your %s %s reboots\nThis may take a few minutes") % (getMachineBrand(), getMachineName()),
-			44: _("Your front panel will be upgraded\nThis may take a few minutes"),
-			45: _("Your %s %s goes to WOL") % (getMachineBrand(), getMachineName())}.get(retvalue)
+			44: _("Your front panel will be upgraded\nThis may take a few minutes")}.get(retvalue)
 		self["text"] = Label(text)
 
 inTryQuitMainloop = False
@@ -178,16 +189,13 @@ class TryQuitMainloop(MessageBox):
 		next_rec_time = -1
 		if not recordings:
 			next_rec_time = session.nav.RecordTimer.getNextRecordingTime()
-#		if jobs:
-#			reason = (ngettext("%d job is running in the background!", "%d jobs are running in the background!", jobs) % jobs) + '\n'
-#			if jobs == 1:
-#				job = job_manager.getPendingJobs()[0]
-#				if job.name == "VFD Checker":		
-#					reason = ""
-#				else:
-#					reason += "%s: %s (%d%%)\n" % (job.getStatustext(), job.name, int(100*job.progress/float(job.end)))
-#			else:
-#				reason += (_("%d jobs are running in the background!") % jobs) + '\n'
+		if jobs:
+			reason = (ngettext("%d job is running in the background!", "%d jobs are running in the background!", jobs) % jobs) + '\n'
+			if jobs == 1:
+				job = job_manager.getPendingJobs()[0]
+				reason += "%s: %s (%d%%)\n" % (job.getStatustext(), job.name, int(100*job.progress/float(job.end)))
+			else:
+				reason += (_("%d jobs are running in the background!") % jobs) + '\n'
 		if inTimeshift:
 			reason = _("You seem to be in timeshift!") + '\n'
 		if recordings or (next_rec_time > 0 and (next_rec_time - time()) < 360):
@@ -203,9 +211,8 @@ class TryQuitMainloop(MessageBox):
 				3: _("Really restart now?"),
 				4: _("Really upgrade the frontprocessor and reboot now?"),
 				42: _("Really upgrade your %s %s and reboot now?") % (getMachineBrand(), getMachineName()),
-				43: _("Really reflash your %s %s and reboot now?") % (getMachineBrand(), getMachineName()),				
-				44: _("Really upgrade the front panel and reboot now?"),
-				45: _("Really WOL now?")}.get(retvalue)
+				43: _("Really reflash your %s %s and reboot now?") % (getMachineBrand(), getMachineName()),
+				44: _("Really upgrade the front panel and reboot now?") }.get(retvalue)
 			if text:
 				MessageBox.__init__(self, session, reason+text, type = MessageBox.TYPE_YESNO, timeout = timeout, default = default_yes)
 				self.skinName = "MessageBoxSimple"

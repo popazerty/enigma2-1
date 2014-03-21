@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tuxbox-enigma 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-26 16:32+0200\n"
-"PO-Revision-Date: 2013-10-26 15:41+0100\n"
+"POT-Creation-Date: 2013-07-25 09:57+0200\n"
+"PO-Revision-Date: 2012-12-09 02:01+0100\n"
 "Last-Translator: Andy Blackburn <andyblac@o2.co.uk>\n"
 "Language-Team: \n"
 "Language: \n"
@@ -21,27 +21,27 @@ msgid ""
 "Advanced options and settings."
 msgstr ""
 "\n"
-"Opzioni e le impostazioni avanzate."
+"Išplėstiniai pasirinkimai ir nustatymai."
 
 msgid ""
 "\n"
 "After pressing OK, please wait!"
 msgstr ""
 "\n"
-"Attendere dopo aver premuto OK!"
+"Paspaudus OK, prašome laukti!"
 
 #, fuzzy, python-format
 msgid ""
 "\n"
 "Backup your %s %s settings."
-msgstr "Backup impostazioni del tuo %s %s"
+msgstr "Atsarginė sisteminių nustatymų kopija"
 
 msgid ""
 "\n"
 "Edit the upgrade source address."
 msgstr ""
 "\n"
-"Modificare l'indirizzo di origine di aggiornamento."
+"Redaguoti atnaujinimo šaltinio adresus."
 
 #, fuzzy, python-format
 msgid ""
@@ -49,7 +49,7 @@ msgid ""
 "Manage extensions or plugins for your %s %s"
 msgstr ""
 "\n"
-"Gestire le estensioni o plugin per il vostro %s %s'"
+"Išplėtimų arba papildomų programų valdymas jūsų %s %s'e"
 
 #, fuzzy, python-format
 msgid ""
@@ -57,20 +57,20 @@ msgid ""
 "Online update of your %s %s software."
 msgstr ""
 "\n"
-"Aggiornamento online software del tuo %s %s ."
+"Internetinis jūsų %s %s programinės įrangos atnaujinimas."
 
 msgid ""
 "\n"
 "Press OK on your remote control to continue."
 msgstr ""
 "\n"
-"Premi OK per continuare."
+"Spauskite OK ant jūsų distancinio valdymo pulto, kad tęsti."
 
 #, fuzzy, python-format
 msgid ""
 "\n"
-"Ripristino configurazioni del tuo %s %s ."
-msgstr "Ripristino configurazioni del tuo %s %s ."
+"Restore your %s %s settings."
+msgstr "Atkurkite sisteminius nustatymus"
 
 #, fuzzy, python-format
 msgid ""
@@ -78,78 +78,74 @@ msgid ""
 "Restore your %s %s with a new firmware."
 msgstr ""
 "\n"
-"Ripristina il tuo %s %s con un nuovo firmware."
+"Atkurti jūsų %s %s su nauja programine įranga."
 
 msgid ""
 "\n"
 "Restore your backups by date."
 msgstr ""
 "\n"
-"Ripristina i tuoi backups per data."
+"Atkurti jūsų atsarginę kopiją pagal datą."
 
 msgid ""
 "\n"
 "Scan for local extensions and install them."
 msgstr ""
 "\n"
-"Ricerca tra le estensioni locali ed installa."
+"Skanuoti vietinius paketus ir įdiegti juos."
 
 msgid ""
 "\n"
-"Seleziona la periferica di backup.\n"
-"Periferica corrente: "
+"Select your backup device.\n"
+"Current device: "
 msgstr ""
 "\n"
-"Seleziona la periferica di backup.\n"
-"Periferica corrente: "
+"Pasirinkite jūsų atsarginės kopijos įrenginį.\n"
+"Dabartinis įrenginys: "
 
 msgid ""
 "\n"
 "View, install and remove available or installed packages."
 msgstr ""
 "\n"
-"Vedi, nstalla e rimuovi pacchetti disponibili o installati."
+"Peržiūrėkite, įdiekite ir pašalinkite esamus arba įdiegtus paketus."
 
 msgid " (PiP)"
-msgstr " (PiP) "
+msgstr ""
 
 msgid " (Radio)"
-msgstr " (Radio) "
+msgstr ""
 
 msgid " (TV)"
-msgstr " (TV) "
+msgstr ""
 
 msgid " and"
-msgstr " e "
+msgstr ""
 
 #, fuzzy
 msgid "%-H:%M"
 msgstr "%H:%M"
 
-#, python-format
-msgid "%02d.%02d - %02d.%02d (%s%d min)"
-msgstr "%02d.%02d - %02d.%02d (%s%d min)"
-
 #. TRANSLATORS: short time representation hour:minute
 #, python-format
 msgid "%2d:%02d"
-msgstr "%2d:%02d"
+msgstr ""
 
 #. TRANSLATORS: full time representation hour:minute:seconds
 #, python-format
 msgid "%2d:%02d:%02d"
-msgstr "%2d:%02d:%02d"
+msgstr ""
 
 msgid "%A %d %B"
-msgstr "%A %d %B"
+msgstr ""
 
 #. TRANSLATORS: long date representations dayname daynum monthname in strftime() format! See 'man strftime'
 msgid "%A %e %B"
-msgstr "%A %e %B"
+msgstr ""
 
 #. TRANSLATORS: full date representation dayname daynum monthname year in strftime() format! See 'man strftime'
 msgid "%A %e %B %Y"
-msgstr "%A %e %B %Y"
+msgstr ""
 
 msgid "%A %e %b"
 msgstr ""
@@ -159,19 +155,19 @@ msgstr "%H:%M"
 
 #. TRANSLATORS: full date representations sort dayname daynum monthname long year in strftime() format! See 'man strftime'
 msgid "%a %e %B %Y"
-msgstr "%a %e %B %Y"
+msgstr ""
 
 #. TRANSLATORS: short date representation short dayname daynum short monthname in strftime() format! See 'man strftime'
 msgid "%a %e/%m"
-msgstr "%a %e/%m"
+msgstr ""
 
 #. TRANSLATORS: long date representation short dayname daynum short monthname hour:minute in strftime() format! See 'man strftime'
 msgid "%a %e/%m  %-H:%M"
-msgstr "%a %e/%m  %-H:%M"
+msgstr ""
 
 #, python-format
 msgid "%d GB"
-msgstr "%d GB"
+msgstr ""
 
 #, python-format
 msgid "%d Gb"
@@ -179,44 +175,44 @@ msgstr ""
 
 #, python-format
 msgid "%d KB"
-msgstr "%d KB"
+msgstr ""
 
 #, python-format
 msgid "%d MB"
-msgstr "%d MB"
+msgstr ""
 
 #, python-format
 msgid "%d Min"
 msgid_plural "%d Mins"
-msgstr[0] "%d Min"
-msgstr[1] "%d Minuti"
+msgstr[0] ""
+msgstr[1] ""
 
 #. TRANSLATORS: Intermediate scanning result, '%d' channel(s) have been found so far
 #, fuzzy, python-format
 msgid "%d channel found"
 msgid_plural "%d channels found"
-msgstr[0] "%d canale trovatoi!"
-msgstr[1] "%d canali trovati!"
+msgstr[0] "%d kanalai surasti!"
+msgstr[1] "%d kanalai surasti!"
 
 #, python-format
 msgid "%d hour"
 msgid_plural "%d hours"
-msgstr[0] "%d ora"
-msgstr[1] "%d ore"
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, python-format
 msgid "%d job is running in the background!"
 msgid_plural "%d jobs are running in the background!"
-msgstr[0] "%d eseguito in background!"
-msgstr[1] "%d eseguiti in background!"
+msgstr[0] "%d darbas yra veikiantis fone!"
+msgstr[1] "%d darbas yra veikiantis fone!"
 
 #, python-format
 msgid "%d jobs are running in the background!"
-msgstr "%d i lavori sono in esecuzione in background!"
+msgstr "%d darbas yra veikiantis fone!"
 
 #, python-format
 msgid "%d kB"
-msgstr "%d kB"
+msgstr ""
 
 #, python-format
 msgid "%d min"
@@ -225,62 +221,62 @@ msgstr "%d min"
 #, python-format
 msgid "%d minute"
 msgid_plural "%d minutes"
-msgstr[0] "%d minute"
-msgstr[1] "%d minuti"
+msgstr[0] ""
+msgstr[1] ""
 
 #, python-format
 msgid "%d minutes"
-msgstr "%d minuti"
+msgstr ""
 
 #, python-format
 msgid "%d second"
 msgid_plural "%d seconds"
-msgstr[0] "%d secondo"
-msgstr[1] "%d secondi"
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, python-format
 msgid "%d wireless network found!"
 msgid_plural "%d wireless networks found!"
-msgstr[0] "%d rete wireless trovata!"
-msgstr[1] "%d reti wireless trovate!"
+msgstr[0] "rastas 1 belaidis tinklas!"
+msgstr[1] "rastas 1 belaidis tinklas!"
 
 msgid "%d-%m"
-msgstr "%d-%m"
+msgstr ""
 
 msgid "%d.%B %Y"
 msgstr "%d.%B %Y"
 
 #. TRANSLATORS: VFD hour:minute daynum short monthname in strftime() format! See 'man strftime'
 msgid "%k:%M %e/%m"
-msgstr "%k:%M %e/%m"
+msgstr ""
 
 #, python-format
 msgid "%s %s advanced remote control (native)"
-msgstr "%s %s telecomando avanzato (nativo)"
+msgstr ""
 
 #, fuzzy, python-format
 msgid "%s %s format data DVD (HDTV compatible)"
-msgstr "%s %s formato dati DVD (compatibile HDTV)"
+msgstr "%s %s formatuoja DVD duomenis (suderinama su HDTV)"
 
 #, python-format
 msgid "%s %s front panel"
-msgstr "%s %s pannello frontale"
+msgstr ""
 
 #, fuzzy, python-format
 msgid "%s %s ir keyboard"
-msgstr "%s %s tastiera infrarosso"
+msgstr "Virtuali Klaviatūra"
 
 #, python-format
 msgid "%s %s ir mouse"
-msgstr "%s %s mouse infrarosso"
+msgstr ""
 
 #, fuzzy, python-format
 msgid "%s %s remote control (native)"
-msgstr "%s %s Telecomando (nativo)"
+msgstr "Spauskite OK savo valdymo pulte ir tęskite."
 
 #, fuzzy, python-format
 msgid "%s %s software because updates are available."
-msgstr "%s %s ci sono aggiornamenti software disponibili."
+msgstr "%s %s programinės įrangos atnaujinimas, nes yra pasiekiamas."
 
 #, python-format
 msgid "%s (%s)\n"
@@ -289,13 +285,13 @@ msgstr "%s (%s)\n"
 #. TRANSLATORS: The satellite with name '%s' is no longer used after a configuration change. The user is asked whether or not the satellite should be deleted.
 #, python-format
 msgid "%s is no longer used. Should it be deleted?"
-msgstr "%s non usato da molto. Dovrebbe esssere eliminato?"
+msgstr ""
 
 #, python-format
 msgid "%s updated package available"
 msgid_plural "%s updated packages available"
-msgstr[0] "%s aggiornamento disponibile"
-msgstr[1] "%s aggiornamenti disponibili"
+msgstr[0] ""
+msgstr[1] ""
 
 #, fuzzy, python-format
 msgid "%s%d min"
@@ -303,35 +299,32 @@ msgstr "%d min"
 
 #, python-format
 msgid "%s/%s: %s"
-msgstr "%s/%s: %s"
+msgstr ""
 
 #, python-format
 msgid "'%s' contains %d file(s) and %d sub-directories.\n"
-msgstr "%s' contiene %d file(s) e %d sotto-cartelle.\n"
+msgstr ""
 
 msgid "( All readers)"
-msgstr "( Tutti i readers)"
+msgstr ""
 
 msgid "(Show only reader:"
-msgstr "(mostra solo reader:"
+msgstr ""
 
 msgid "(ZAP)"
-msgstr "(ZAPI)"
+msgstr "(JUNGTI)"
 
 msgid "(empty)"
-msgstr "(vuoto)"
+msgstr "(laisva)"
 
 msgid "(show optional DVD audio menu)"
-msgstr "(mostra menu opzionale DVD)"
+msgstr "(rodyti pasirenkamą DVD garso meniu)"
 
 msgid "* = Restart Required"
-msgstr "* = Riavvio Richiesto"
+msgstr ""
 
 msgid "* Only available if more than one interface is active."
-msgstr "* Disponibile solo se attiva più di una interfaccia."
-
-msgid "/s"
-msgstr "/s"
+msgstr "*Pasiekiamas tiktai, jei daugiau kaip viena sąsaja yra aktyvi."
 
 msgid "1.0"
 msgstr "1.0"
@@ -343,11 +336,11 @@ msgid "1.2"
 msgstr "1.2"
 
 msgid "12V output"
-msgstr "12V uscita"
+msgstr "12V išėjimas"
 
 #, fuzzy
 msgid "12V output."
-msgstr "12V uscita"
+msgstr "12V išėjimas"
 
 msgid "13 V"
 msgstr "13 V"
@@ -368,53 +361,53 @@ msgid "16:9 Letterbox"
 msgstr "16:9 Letterbox"
 
 msgid "16:9 always"
-msgstr "sempre 16:9 "
+msgstr "16:9 visada"
 
 msgid "18 V"
 msgstr "18 V"
 
 msgid "1X"
-msgstr "1X"
+msgstr ""
 
 msgid "1st Infobar timeout"
-msgstr "Timeout prima infobar"
+msgstr ""
 
 msgid "23.976"
-msgstr "23.976"
+msgstr ""
 
 #, fuzzy
 msgid "24"
-msgstr "24"
+msgstr "2"
 
 #, fuzzy
 msgid "25"
-msgstr "25"
+msgstr "2"
 
 msgid "29.97"
-msgstr "29.97"
+msgstr ""
 
 msgid "2X"
-msgstr "2X"
+msgstr ""
 
 #, fuzzy
 msgid "30"
 msgstr "0"
 
 msgid "3D Mode"
-msgstr "Modalità 3D"
+msgstr ""
 
 #, fuzzy
 msgid "3D Surround"
-msgstr "3D Surround"
+msgstr "Garsas"
 
 msgid "3D setup"
-msgstr "Configurazione 3D"
+msgstr ""
 
 msgid "3X"
-msgstr "3X"
+msgstr ""
 
 msgid "3d mode"
-msgstr "Modalità 3D"
+msgstr ""
 
 msgid "4:3"
 msgstr "4:3"
@@ -426,19 +419,19 @@ msgid "4:3 PanScan"
 msgstr "4:3 PanScan"
 
 msgid "4X"
-msgstr "4X"
+msgstr ""
 
-msgid "<Posizione corrente lista film>"
-msgstr "<Posizione corrente lista film>"
+msgid "<Current movielist location>"
+msgstr "<Dabartinė filmų sąrašo vieta>"
 
 msgid "<Default movie location>"
-msgstr "<Posizione di default film>"
+msgstr "<Numatyta filmų vieta>"
 
 msgid "<Last timer location>"
-msgstr "<Posizione ultimo timer>"
+msgstr "<Paskutinio laikmačio vieta>"
 
 msgid "<unknown>"
-msgstr "<sconosciuto>"
+msgstr "<nežinomas>"
 
 msgid "??"
 msgstr "??"
@@ -446,15 +439,15 @@ msgstr "??"
 msgid "A"
 msgstr "A"
 
-msgid "A background update check is in progress, please wait a few minutes and try again."
-msgstr "Controllo aggiornamento in background in corso, attendere qualche minuto e ritentare"
+msgid "A background update check is is progress, please wait a few minutes and try again."
+msgstr ""
 
 #, python-format
 msgid ""
 "A configuration file (%s) has been modified since it was installed.\n"
 "Do you want to keep your modifications?"
-msgstr "Un file di configurazione (% s) è stato modificato da quando è stato installato.\n"
-"Vuoi mantenere le modifiche?"
+msgstr ""
+
 #, python-format
 msgid ""
 "A configuration file (%s) was modified since Installation.\n"
@@ -807,10 +800,6 @@ msgstr "Visi"
 msgid "All ages"
 msgstr ""
 
-#, fuzzy
-msgid "All resolutions"
-msgstr "Rezoliucija"
-
 msgid "All satellites"
 msgstr ""
 
@@ -818,12 +807,6 @@ msgid "Allocate"
 msgstr ""
 
 msgid "Allocate unused memory index"
-msgstr ""
-
-msgid "Allow 25Hz/30Hz"
-msgstr ""
-
-msgid "Allow quit movieplayer with exit"
 msgstr ""
 
 msgid "Allow subtitle language to equal audio language"
@@ -848,9 +831,6 @@ msgid "Allows you hide the extensions of known file types."
 msgstr ""
 
 msgid "Allows you setup the button to do what you choose."
-msgstr ""
-
-msgid "Allows you to adjust the amount of time the resolution infomation display on screen."
 msgstr ""
 
 msgid "Allows you to enable the debug log. They contain very detailed information of everything the system does."
@@ -914,10 +894,6 @@ msgstr ""
 
 msgid "Arabic"
 msgstr "Arabų"
-
-#, fuzzy
-msgid "Are you sure to remove this entry?"
-msgstr "Jūs esate įsitikinęs, kad norite išjungti šį vedlį?"
 
 msgid ""
 "Are you sure you want to activate this network configuration?\n"
@@ -1080,14 +1056,6 @@ msgstr ""
 msgid "Automatic refresh"
 msgstr ""
 
-#, fuzzy
-msgid "Automatic resolution"
-msgstr "Automatinė paieška"
-
-#, fuzzy
-msgid "Automatic resolution label"
-msgstr "Automatinė paieška"
-
 msgid "Automatic save"
 msgstr ""
 
@@ -1202,9 +1170,6 @@ msgid "Black screen"
 msgstr ""
 
 msgid "Black screen till locked"
-msgstr ""
-
-msgid "Blind scan"
 msgstr ""
 
 msgid "Block noise reduction"
@@ -1380,9 +1345,6 @@ msgstr ""
 msgid "Cancel"
 msgstr "Atšaukti"
 
-msgid "Cancel next timer"
-msgstr ""
-
 msgid "Cancel save timeshift as movie"
 msgstr ""
 
@@ -1468,9 +1430,6 @@ msgid "Channel List"
 msgstr ""
 
 msgid "Channel list context menu"
-msgstr ""
-
-msgid "Channel list cursor behavior"
 msgstr ""
 
 msgid "Channel list on mode change"
@@ -1643,10 +1602,6 @@ msgid "Close"
 msgstr "Uždaryti"
 
 #, fuzzy
-msgid "Close PiP on exit"
-msgstr "išsaugoti grojaraštį išeinant"
-
-#, fuzzy
 msgid "Close bouquet list."
 msgstr "Redaguoti paketų sąrašą"
 
@@ -1746,9 +1701,6 @@ msgstr ""
 msgid "Configure if and how service type icons will be shown."
 msgstr ""
 
-msgid "Configure if service picons will be shown in the servicelist."
-msgstr ""
-
 msgid "Configure interface"
 msgstr "Konfigūruokite sąsają"
 
@@ -1768,6 +1720,9 @@ msgid "Configure the IP address."
 msgstr ""
 
 msgid "Configure the amount of time that will be presented."
+msgstr ""
+
+msgid "Configure the aspect ratio of the screen."
 msgstr ""
 
 msgid "Configure the behavior of the 'pause' key when movie playback is already paused."
@@ -1791,16 +1746,10 @@ msgstr ""
 msgid "Configure the brightness level of the front panel displa for standby."
 msgstr ""
 
-msgid "Configure the color of the external subtitles, alternative (normal in white, italic in yellow, bold in cyan, underscore in green), white or yellow."
-msgstr ""
-
 msgid "Configure the color of the teletext subtitles."
 msgstr ""
 
 msgid "Configure the contrast level of the front panel display."
-msgstr ""
-
-msgid "Configure the cursor behaviour in the channel selection list. When opening the channel selection list you can keep on the current service or already select up/down and you are able to revert the B+/B- buttons."
 msgstr ""
 
 msgid "Configure the duration in minutes for the screensaver."
@@ -2877,9 +2826,6 @@ msgstr ""
 msgid "Event font size (relative to skin size)"
 msgstr ""
 
-msgid "Event view"
-msgstr ""
-
 msgid "Everywhere"
 msgstr ""
 
@@ -2974,9 +2920,6 @@ msgid "External"
 msgstr ""
 
 msgid "External (CF)"
-msgstr ""
-
-msgid "External subtitle color"
 msgstr ""
 
 msgid "FAILED"
@@ -3150,10 +3093,6 @@ msgstr ""
 
 msgid "Fulscreen"
 msgstr ""
-
-#, fuzzy
-msgid "Fulview resulution"
-msgstr "Filmo vieta"
 
 msgid "Function of OK button"
 msgstr ""
@@ -3352,6 +3291,9 @@ msgstr "Kieto disko nustatymas"
 msgid "Hard disk standby after"
 msgstr "Kietas diskas išsijungs po"
 
+msgid "Harddisk"
+msgstr "Kietas diskas"
+
 msgid "Hebrew"
 msgstr ""
 
@@ -3471,9 +3413,6 @@ msgid "Icons"
 msgstr ""
 
 msgid "Idle Time: "
-msgstr ""
-
-msgid "If enabled the output resolution of the box will try to match the resolution of the video contents resolution"
 msgstr ""
 
 msgid "If logs are using the set maximum space used the eldest will be deleted."
@@ -3800,9 +3739,6 @@ msgid "Just change channels"
 msgstr ""
 
 #. TRANSLATORS: (aspect ratio policy: display as fullscreen, even if this breaks the aspect)
-#. TRANSLATORS: (aspect ratio policy: display as fullscreen, with stretching the left/right)
-#. "nonlinear": _("Nonlinear"),
-#. TRANSLATORS: (aspect ratio policy: display as fullscreen, even if this breaks the aspect)
 #, fuzzy
 msgid "Just scale"
 msgstr "Tik skalė"
@@ -3810,10 +3746,6 @@ msgstr "Tik skalė"
 #, fuzzy
 msgid "Just zap"
 msgstr "Tik skalė"
-
-#, fuzzy
-msgid "Keep service"
-msgstr "pridėti Kanalą"
 
 msgid "Keeps MovieList open whilst playing audio files."
 msgstr ""
@@ -4167,10 +4099,6 @@ msgstr ""
 msgid "Memory index"
 msgstr ""
 
-#, fuzzy
-msgid "Memory positions"
-msgstr "Išsaugoti padėtį"
-
 msgid "Menu"
 msgstr "Meniu"
 
@@ -4219,6 +4147,10 @@ msgid "Model:\t%s %s\n"
 msgstr "Modelis:"
 
 msgid "Model: "
+msgstr "Modelis:"
+
+#, fuzzy, python-format
+msgid "Model: %s"
 msgstr "Modelis:"
 
 msgid "Modulation"
@@ -4674,6 +4606,10 @@ msgstr ""
 msgid "None"
 msgstr "Joks"
 
+#. TRANSLATORS: (aspect ratio policy: display as fullscreen, with stretching the left/right)
+msgid "Nonlinear"
+msgstr "Nelinijinis"
+
 msgid "Normal mode"
 msgstr ""
 
@@ -4684,9 +4620,6 @@ msgid "Norwegian"
 msgstr "Norvegų"
 
 msgid "Not Flashing"
-msgstr ""
-
-msgid "Not Shown"
 msgstr ""
 
 #, fuzzy
@@ -5120,10 +5053,6 @@ msgstr "Prašome įrašyti failo pavadinimą (tuščias = dabartiniai duomenys)"
 
 msgid "Please enter name of the new directory"
 msgstr "Prašome įrašyti naujos direktorijos pavadinimą"
-
-#, fuzzy
-msgid "Please enter new name:"
-msgstr "Prašome įrašyti naują failo pavadinimą"
 
 msgid "Please enter the correct pin code"
 msgstr "Prašome įrašyti teisingą PIN kodą"
@@ -5594,6 +5523,10 @@ msgstr "Įrašas"
 msgid "Record now"
 msgstr "Įrašas"
 
+#, fuzzy
+msgid "Record once"
+msgstr "Įrašas"
+
 msgid "Record started! Stopping timeshift now ..."
 msgstr ""
 
@@ -5844,6 +5777,13 @@ msgstr "Tęsti nuo paskutinės pozicijos"
 msgid "Resume position at %s"
 msgstr "Tęsti poziciją% s"
 
+#. TRANSLATORS: The string "Resuming playback" flashes for a moment
+#. TRANSLATORS: at the start of a movie, when the user has selected
+#. TRANSLATORS: "Resume from last position" as start behavior.
+#. TRANSLATORS: The purpose is to notify the user that the movie starts
+#. TRANSLATORS: in the middle somewhere and not from the beginning.
+#. TRANSLATORS: (Some translators seem to have interpreted it as a
+#. TRANSLATORS: question or a choice, but it is a statement.)
 msgid "Resuming playback"
 msgstr "Tęsti leidimą"
 
@@ -5852,9 +5792,6 @@ msgstr "Grįžti į filmų sąrašą"
 
 msgid "Return to previous service"
 msgstr "Grįžkite į buvusį kanalą"
-
-msgid "Reverse bouquet buttons"
-msgstr ""
 
 msgid "Rewind speeds"
 msgstr "Persukimo greitis"
@@ -5924,9 +5861,6 @@ msgid "Samba Setup"
 msgstr ""
 
 msgid "Samba setup"
-msgstr ""
-
-msgid "Same resolution as skin"
 msgstr ""
 
 msgid "Sat"
@@ -6582,10 +6516,6 @@ msgstr ""
 msgid "Show Transponder Remaining/Elapsed as"
 msgstr ""
 
-#, fuzzy
-msgid "Show VCR scart on main menu"
-msgstr "rodyti DVD pagrindinį meniu"
-
 msgid "Show ViX spinning logo when system is busy."
 msgstr ""
 
@@ -6648,10 +6578,6 @@ msgid "Show in extensions list ?"
 msgstr ""
 
 #, fuzzy
-msgid "Show in extensions menu"
-msgstr "žiūrėti papildymus"
-
-#, fuzzy
 msgid "Show info"
 msgstr "Rodyti informaciją"
 
@@ -6692,10 +6618,6 @@ msgstr ""
 
 msgid "Show picon background colour"
 msgstr ""
-
-#, fuzzy
-msgid "Show picons in servicelist"
-msgstr "Kanalo nėra kanalų sąraše"
 
 msgid "Show positioner movement"
 msgstr "Rodyti pozicionieriaus judėjimą"
@@ -6908,10 +6830,6 @@ msgstr ""
 msgid "Softcam settings"
 msgstr ""
 
-#, fuzzy
-msgid "SoftcamCheck"
-msgstr "Programinė įranga"
-
 msgid "Software"
 msgstr "Programinė įranga"
 
@@ -7097,10 +7015,6 @@ msgstr ""
 msgid "Stop recording and delete"
 msgstr ""
 
-#, fuzzy
-msgid "Stop recording now"
-msgstr "tai įrašyta"
-
 msgid "Stop test"
 msgstr "Stabdyti testavimą"
 
@@ -7125,10 +7039,6 @@ msgstr ""
 
 msgid "Stopped"
 msgstr ""
-
-#, fuzzy
-msgid "Storage devices"
-msgstr "Išsaugotų įrenginių sąrašas"
 
 #, fuzzy
 msgid "Store at index"
@@ -8047,10 +7957,6 @@ msgstr "Suderinimas nepavyko!"
 msgid "Tuner"
 msgstr "Imtuvas"
 
-#, fuzzy
-msgid "Tuner :"
-msgstr "Imtuvas"
-
 msgid "Tuner configuration"
 msgstr "Imtuvo konfigūravimas"
 
@@ -8319,10 +8225,6 @@ msgstr ""
 msgid "User defined"
 msgstr "Vartotojo pasirinktas"
 
-#, fuzzy
-msgid "User defined transponder"
-msgstr "Nustatytas transponderis"
-
 msgid "User interface"
 msgstr ""
 
@@ -8391,10 +8293,6 @@ msgstr ""
 msgid "Video PID"
 msgstr "Vaizdo PID"
 
-#, python-format
-msgid "Video content: %ix%i%s %iHz"
-msgstr ""
-
 msgid "Video enhancement preview"
 msgstr "Vaizdo pakėlimo peržiūra"
 
@@ -8418,10 +8316,6 @@ msgid ""
 msgstr ""
 
 msgid "Video mode selection."
-msgstr "Vaizdo būdo pasirinkimas."
-
-#, fuzzy, python-format
-msgid "Video mode: %s"
 msgstr "Vaizdo būdo pasirinkimas."
 
 msgid "Video output"
@@ -8673,9 +8567,6 @@ msgstr ""
 msgid "What do you want to scan?"
 msgstr "Ką Jūs norite skanuoti?"
 
-msgid "When enabled the PiP can be closed by the exit button."
-msgstr ""
-
 msgid "When enabled the online checker will also check for experimental versions"
 msgstr ""
 
@@ -8709,6 +8600,9 @@ msgstr ""
 msgid "When enabled, deleted recordings are moved to the trash can, instead of being deleted immediately."
 msgstr ""
 
+msgid "When enabled, external subtitles (in media files) will be displayed in yellow, instead of the original color."
+msgstr ""
+
 msgid "When enabled, external subtitles will be always turned on for playback movie."
 msgstr ""
 
@@ -8722,9 +8616,6 @@ msgid "When enabled, graphical DVB subtitles will be displayed at their original
 msgstr ""
 
 msgid "When enabled, graphical DVB subtitles will be displayed in yellow, instead of the original color."
-msgstr ""
-
-msgid "When enabled, it is possible to leave the movieplayer with exit."
 msgstr ""
 
 msgid "When enabled, measure power consumption to detect when the rotor stops turning (when supported by the tuner)."
@@ -8749,9 +8640,6 @@ msgid "When enabled, teletext pages will be cached, allowing faster access."
 msgstr ""
 
 msgid "When enabled, teletext subtitles will be displayed at their original position."
-msgstr ""
-
-msgid "When enabled, the VCR scart option will be shown on the main menu"
 msgstr ""
 
 msgid "When enabled, the lenght of each recording will be shown in the movielist (this might cause some additional loading time)."
@@ -8851,19 +8739,10 @@ msgstr "Belaidžio tinklo prisijungimo nustatymas."
 msgid "Wireless network state"
 msgstr "Belaidžio tinklo būklė"
 
-msgid "With popup"
-msgstr ""
-
-msgid "With this option enabled these refresh rates will be used. (please note not all TV's support these rates)."
-msgstr ""
-
 msgid "With this option set to 'yes' the channel lists will always show you the bouquet screen first. If set to 'no' the current bouquet will be opened."
 msgstr ""
 
 msgid "With this option you can hide Job Tasks from the extension screen (short blue button press)."
-msgstr ""
-
-msgid "Without popup"
 msgstr ""
 
 msgid "Write error while recording. Disk full?\n"
@@ -8888,6 +8767,9 @@ msgid "Year"
 msgstr "Metai"
 
 msgid "Yellow DVB subtitles"
+msgstr ""
+
+msgid "Yellow external subtitles"
 msgstr ""
 
 msgid "Yes"
@@ -9280,10 +9162,6 @@ msgstr ""
 
 msgid "alphabetic reverse"
 msgstr ""
-
-#, fuzzy
-msgid "alternative"
-msgstr "pridėti kitus"
 
 msgid "arts/culture (without music, general)"
 msgstr ""
@@ -9860,9 +9738,6 @@ msgstr "diskas TIK SKAITYMUI."
 msgid "once"
 msgstr "vieną kartą"
 
-msgid "only HD"
-msgstr ""
-
 msgid "open bouquetlist"
 msgstr ""
 
@@ -9970,10 +9845,6 @@ msgstr "šalinti šį žymeklį"
 
 msgid "rename"
 msgstr ""
-
-#, fuzzy
-msgid "rename entry"
-msgstr "pašalinti"
 
 msgid "repeat playlist"
 msgstr "pakartoti grojaraštį"
@@ -10373,3 +10244,10 @@ msgstr "įrašas"
 msgid "zapped"
 msgstr "įjungta"
 
+#, fuzzy
+#~ msgid "Channel selection configuration"
+#~ msgstr "Rankinė konfigūracija"
+
+#, fuzzy
+#~ msgid "Do you want to update your %s ?"
+#~ msgstr "Jūs norite atkurti nustatymus?"

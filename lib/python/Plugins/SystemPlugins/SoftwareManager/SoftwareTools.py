@@ -11,7 +11,7 @@ from Tools.Directories import pathExists, fileExists, resolveFilename, SCOPE_MET
 from Tools.HardwareInfo import HardwareInfo
 from time import time
 
-from boxbranding import getImageVersion
+from enigma import getImageVersionString
 
 class SoftwareTools(PackageInfoHandler):
 	lastDownloadDate = None
@@ -24,7 +24,7 @@ class SoftwareTools(PackageInfoHandler):
 
 
 	def __init__(self):
-		aboutInfo = getImageVersion()
+		aboutInfo = getImageVersionString()
 		if aboutInfo.startswith("dev-"):
 			self.ImageVersion = 'Experimental'
 		else:
@@ -61,7 +61,7 @@ class SoftwareTools(PackageInfoHandler):
 
 	def getUpdates(self, callback = None):
 		if self.lastDownloadDate is None:
-				if self.NetworkConnectionAvailable:
+				if self.NetworkConnectionAvailable == True:
 					self.lastDownloadDate = time()
 					if self.list_updating is False and callback is None:
 						self.list_updating = True
@@ -79,7 +79,7 @@ class SoftwareTools(PackageInfoHandler):
 					elif self.NotifierCallback is not None:
 						self.NotifierCallback(False)
 		else:
-			if self.NetworkConnectionAvailable:
+			if self.NetworkConnectionAvailable == True:
 				self.lastDownloadDate = time()
 				if self.list_updating is False and callback is None:
 					self.list_updating = True
@@ -150,7 +150,7 @@ class SoftwareTools(PackageInfoHandler):
 		if callback is not None:
 			self.list_updating = True
 		if self.list_updating:
-			if self.NetworkConnectionAvailable:
+			if self.NetworkConnectionAvailable == True:
 				if not self.UpdateConsole:
 					self.UpdateConsole = Console()
 				cmd = self.ipkg.ipkg + " install enigma2-meta enigma2-plugins-meta enigma2-skins-meta"

@@ -5,8 +5,8 @@ SUBDIRS = meta
 install_PYTHON =	\
 	__init__.py \
 	plugin.py \
-	VideoHardware.py
-
+	VideoHardware.py \
+	VideoWizard.py
 
 dist_install_DATA = \
 	DVI.png \

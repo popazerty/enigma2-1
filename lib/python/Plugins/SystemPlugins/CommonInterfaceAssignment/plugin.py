@@ -12,8 +12,7 @@ from ServiceReference import ServiceReference
 from Plugins.Plugin import PluginDescriptor
 from xml.etree.cElementTree import parse as ci_parse
 from Tools.XMLTools import elementsWithTag, mergeText, stringToXML
-from enigma import eDVBCI_UI, eDVBCIInterfaces, eEnv
-from boxbranding import getMachineBrand, getMachineName
+from enigma import eDVBCI_UI, eDVBCIInterfaces, eEnv, getMachineBrand, getMachineName
 
 from os import system, path as os_path
 
@@ -147,7 +146,6 @@ class CIconfigMenu(Screen):
 			i+=1
 			self.caidlist.append((str(hex(int(caid))),str(caid),i))
 
-		# noinspection PyStringFormat
 		print "[CI_Wizzard_Config_CI%d] read following CAIds from CI: %s" %(self.ci_slot, self.caidlist)
 
 		self.selectedcaid = []
@@ -204,7 +202,7 @@ class CIconfigMenu(Screen):
 			ref=args[0]
 			service_ref = ServiceReference(ref)
 			service_name = service_ref.getServiceName()
-			if not find_in_list(self.servicelist, service_name, 0):
+			if find_in_list(self.servicelist, service_name, 0)==False:
 				split_ref=service_ref.ref.toString().split(":")
 				if split_ref[0] == "1":#== dvb service und nicht muell von None
 					self.servicelist.append( (service_name , ConfigNothing(), 0, service_ref.ref.toString()) )
@@ -215,7 +213,7 @@ class CIconfigMenu(Screen):
 		if len(args)>1: # bei nix selected kommt nur 1 arg zurueck (==None)
 			name=args[0]
 			dvbnamespace=args[1]
-			if not find_in_list(self.servicelist, name, 0):
+			if find_in_list(self.servicelist, name, 0)==False:
 				self.servicelist.append( (name , ConfigNothing(), 1, dvbnamespace) )
 				self["ServiceList"].l.setList(self.servicelist)
 				self.setServiceListInfo()
@@ -270,15 +268,14 @@ class CIconfigMenu(Screen):
 			Len = len(definitions)
 			return Len > 0 and definitions[Len-1].text or default
 
-		self.read_services=[]
-		self.read_providers=[]
-		self.usingcaid=[]
-		self.ci_config=[]
-
 		try:
-			fp = open(self.filename, 'r')
+			fp = opens(self.filename, 'r')
 			tree = ci_parse(fp).getroot()
 			fp.close()
+			self.read_services=[]
+			self.read_providers=[]
+			self.usingcaid=[]
+			self.ci_config=[]
 			for slot in tree.findall("slot"):
 				read_slot = getValue(slot.findall("id"), False).encode("UTF-8")
 				print "ci " + read_slot
@@ -446,7 +443,7 @@ class myProviderSelection(ChannelSelectionBase):
 
 	def showSatellites(self):
 		if not self.pathChangeDisabled:
-			refstr = '%s FROM SATELLITES ORDER BY satellitePosition'% self.service_types
+			refstr = '%s FROM SATELLITES ORDER BY satellitePosition'%(self.service_types)
 			if not self.preEnterPath(refstr):
 				ref = eServiceReference(refstr)
 				justSet=False
@@ -627,16 +624,6 @@ def find_in_list(list, search, listpos=0):
 
 global_session = None
 
-def isModule():
-	if eDVBCIInterfaces.getInstance().getNumOfSlots():
-		NUM_CI=eDVBCIInterfaces.getInstance().getNumOfSlots()
-		if NUM_CI > 0:
-			for slot in range(NUM_CI):
-				state = eDVBCI_UI.getInstance().getState(slot)
-				if state > 0:
-					return True
-	return False
-
 def sessionstart(reason, session):
 	global global_session
 	global_session = session
@@ -653,7 +640,7 @@ def main(session, **kwargs):
 	session.open(CIselectMainMenu)
 
 def menu(menuid, **kwargs):
-	if menuid == "setup" and isModule():
+	if menuid == "cam" and eDVBCIInterfaces.getInstance().getNumOfSlots():
 		return [(_("Common Interface Assignment"), main, "ci_assign", 11)]
 	return [ ]
 

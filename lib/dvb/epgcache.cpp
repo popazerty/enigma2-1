@@ -2468,9 +2468,9 @@ PyObject *eEPGCache::lookupEvent(ePyObject list, ePyObject convertFunc)
 				stime = ::time(0);
 
 			eServiceReference ref(handleGroup(eServiceReference(PyString_AS_STRING(service))));
-			if (ref.type != eServiceReference::idDVB && ref.type != eServiceReference::idServiceMP3)
+			if (ref.type != eServiceReference::idDVB)
 			{
-				// eDebug("service reference for epg query is not valid");
+				eDebug("service reference for epg query is not valid");
 				continue;
 			}
 
@@ -3032,13 +3032,13 @@ PyObject *eEPGCache::search(ePyObject arg)
 					switch (querytype)
 					{
 						case 1:
-							eDebug("[EPGC] lookup events with '%s' as title (%s)", str, casetype?"ignore case":"case sensitive");
+							eDebug("lookup events with '%s' as title (%s)", str, casetype?"ignore case":"case sensitive");
 							break;
 						case 2:
-							eDebug("[EPGC] lookup events with '%s' in title (%s)", str, casetype?"ignore case":"case sensitive");
+							eDebug("lookup events with '%s' in title (%s)", str, casetype?"ignore case":"case sensitive");
 							break;
 						case 3:
-							eDebug("[EPGC] lookup events, title starting with '%s' (%s)", str, casetype?"ignore case":"case sensitive");
+							eDebug("lookup events, title starting with '%s' (%s)", str, casetype?"ignore case":"case sensitive");
 							break;
 					}
 					singleLock s(cache_lock);
@@ -3202,7 +3202,7 @@ PyObject *eEPGCache::search(ePyObject arg)
 							if (needServiceEvent)
 							{
 								if (lookupEventId(ref, evit->second->getEventID(), ev_data))
-									eDebug("[EPGC] event not found !!!!!!!!!!!");
+									eDebug("event not found !!!!!!!!!!!");
 								else
 								{
 									const eServiceReferenceDVB &dref = (const eServiceReferenceDVB&)ref;

@@ -40,10 +40,10 @@ def do_file(f, mode):
 			classstate = state
 		
 		if t == "{":
-			state += 1
+			state = state + 1
 		
 		if t == "}":
-			state -= 1
+			state = state - 1
 		
 		if t == "enum" and state == classstate + 1:
 			actionname = tokens.next()
@@ -98,7 +98,8 @@ def do_file(f, mode):
 					if mode == "parse":
 						print "{\"" + actionname + "\", \"" + t + "\", " + string.join((classname, t), "::") + "},"
 
-					counter += 1
+
+					counter = counter + 1
 
 mode = sys.argv[1]
 

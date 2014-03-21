@@ -10,13 +10,13 @@ from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 import VideoEnhancement
 from os import path as os_path
-from boxbranding import getBoxType
 
 class VideoEnhancementSetup(Screen, ConfigListScreen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
 		self.session = session
 		self.onChangedEntry = [ ]
+		self.skinName = ["Setup" ]
 		self.setup_title = _("Video enhancement setup")
 		self["HelpWindow"] = Pixmap()
 		self["HelpWindow"].hide()
@@ -227,10 +227,7 @@ class VideoEnhancementSetup(Screen, ConfigListScreen):
 			if self.digital_contour_removalEntry is not None:
 				config.pep.digital_contour_removal.setValue(0)
 			if self.scaler_sharpnessEntry is not None:
-				if getBoxType() == 'gbquad' or getBoxType() == 'gbquadplus':
-					config.av.scaler_sharpness.setValue(13)
-				else:
-					config.av.scaler_sharpness.setValue(13)
+				config.av.scaler_sharpness.setValue(13)
 			if self.splitEntry is not None:
 				config.pep.split.setValue('off')
 			if self.sharpnessEntry is not None:
@@ -389,7 +386,7 @@ def videoEnhancementSetupMain(session, **kwargs):
 	session.open(VideoEnhancementSetup)
 
 def startSetup(menuid):
-	if menuid != "system":
+	if menuid != "av":
 		return [ ]
 	return [(_("Video Enhancement Settings") , videoEnhancementSetupMain, "videoenhancement_setup", None)]
 

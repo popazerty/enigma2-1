@@ -14,23 +14,19 @@ import skin
 
 from enigma import eListboxPythonMultiContent, eListbox, gFont, iServiceInformation, eSize, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_VALIGN_CENTER, eServiceReference, eServiceCenter, eTimer
 
-AUDIO_EXTENSIONS = frozenset((".dts", ".mp3", ".wav", ".wave", ".ogg", ".flac", ".m4a", ".mp2", ".m2a", ".3gp", ".3g2", ".asf", ".wma"))
+AUDIO_EXTENSIONS = frozenset((".dts", ".mp3", ".wav", ".wave", ".ogg", ".flac", ".m4a", ".mp2", ".m2a", ".3gp", ".3g2", ".asf", ".wma",  ))
 DVD_EXTENSIONS = ('.iso', '.img')
 IMAGE_EXTENSIONS = frozenset((".jpg", ".png", ".gif", ".bmp"))
-MOVIE_EXTENSIONS = frozenset((".mpg", ".vob", ".wav", ".m4v", ".mkv", ".avi", ".divx", ".dat", ".flv", ".mp4", ".mov", ".wmv", ".m2ts"))
+MOVIE_EXTENSIONS = frozenset((".mpg", ".vob", ".wav", ".m4v", ".mkv", ".avi", ".divx", ".dat", ".flv", ".mp4", ".mov", ".wmv"))
 KNOWN_EXTENSIONS = MOVIE_EXTENSIONS.union(IMAGE_EXTENSIONS, DVD_EXTENSIONS, AUDIO_EXTENSIONS)
 
 cutsParser = struct.Struct('>QI') # big-endian, 64-bit PTS and 32-bit type
 
 class MovieListData:
-	def __init__(self):
-		pass
+	pass
 
 # iStaticServiceInformation
 class StubInfo:
-	def __init__(self):
-		pass
-
 	def getName(self, serviceref):
 		return os.path.split(serviceref.getPath())[1]
 	def getLength(self, serviceref):
@@ -40,15 +36,12 @@ class StubInfo:
 	def isPlayable(self):
 		return True
 	def getInfo(self, serviceref, w):
-		try:
-			if w == iServiceInformation.sTimeCreate:
-				return os.stat(serviceref.getPath()).st_ctime
-			if w == iServiceInformation.sFileSize:
-				return os.stat(serviceref.getPath()).st_size
-			if w == iServiceInformation.sDescription:
-				return serviceref.getPath()
-		except:
-			pass
+		if w == iServiceInformation.sTimeCreate:
+			return os.stat(serviceref.getPath()).st_ctime
+		if w == iServiceInformation.sFileSize:
+			return os.stat(serviceref.getPath()).st_size
+		if w == iServiceInformation.sDescription:
+			return serviceref.getPath()
 		return 0
 	def getInfoString(self, serviceref, w):
 		return ''
@@ -159,7 +152,6 @@ class MovieList(GUIComponent):
 		self.l = eListboxPythonMultiContent()
 		self.tags = set()
 		self.root = None
-		self.list = None
 		self._playInBackground = None
 		self._playInForeground = None
 		self._char = ''
@@ -372,7 +364,7 @@ class MovieList(GUIComponent):
 
 		begin_string = ""
 		if begin > 0:
-			begin_string = ' '.join(FuzzyTime(begin, inPast = True))
+			begin_string = ', '.join(FuzzyTime(begin, inPast = True))
 
 		ih = self.itemHeight
 		lenSize = ih * 3 # 25 -> 75
@@ -461,7 +453,7 @@ class MovieList(GUIComponent):
 	def load(self, root, filter_tags):
 		# this lists our root service, then building a
 		# nice list
-		self.list = [ ]
+		del self.list[:]
 		serviceHandler = eServiceCenter.getInstance()
 		numberOfDirs = 0
 
@@ -533,32 +525,24 @@ class MovieList(GUIComponent):
 
 		self.firstFileEntry = numberOfDirs
 		self.parentDirectory = 0
-		
-		self.list.sort(key=self.buildBeginTimeSortKey)
 		if self.sort_type == MovieList.SORT_ALPHANUMERIC:
-			self.list = sorted(self.list[:numberOfDirs], key=self.buildAlphaNumericSortKey) + sorted(self.list[numberOfDirs:], key=self.buildAlphaNumericSortKey)
-		elif self.sort_type == MovieList.SORT_ALPHANUMERIC_REVERSE:
-			self.list = sorted(self.list[:numberOfDirs], key=self.buildAlphaNumericSortKey, reverse = True) + sorted(self.list[numberOfDirs:], key=self.buildAlphaNumericSortKey, reverse = True)
+			self.list.sort(key=self.buildAlphaNumericSortKey)
 		elif self.sort_type == MovieList.SORT_ALPHANUMERIC_FLAT:
 			self.list.sort(key=self.buildAlphaNumericFlatSortKey)
 		elif self.sort_type == MovieList.SORT_ALPHANUMERIC_FLAT_REVERSE:
 			self.list.sort(key=self.buildAlphaNumericFlatSortKey, reverse = True)
-		elif self.sort_type == MovieList.SORT_RECORDED:
-			self.list = sorted(self.list[:numberOfDirs], key=self.buildBeginTimeSortKey) + sorted(self.list[numberOfDirs:], key=self.buildBeginTimeSortKey)
-		elif self.sort_type == MovieList.SORT_RECORDED_REVERSE:
-			self.list = sorted(self.list[:numberOfDirs], key=self.buildBeginTimeSortKey, reverse = True) + sorted(self.list[numberOfDirs:], key=self.buildBeginTimeSortKey, reverse = True)
-		elif self.sort_type == MovieList.SHUFFLE:
+		else:
+			#always sort first this way to avoid shuffle and reverse-sort directories
+			self.list.sort(key=self.buildBeginTimeSortKey)
+		if self.sort_type == MovieList.SHUFFLE:
 			dirlist = self.list[:numberOfDirs]
 			shufflelist = self.list[numberOfDirs:]
 			random.shuffle(shufflelist)
 			self.list = dirlist + shufflelist
-		
-		for x in self.list:
-			if x[1]:
-				tmppath = x[1].getName(x[0])[:-1] if x[1].getName(x[0]).endswith('/') else x[1].getName(x[0])
-				if tmppath.endswith('.Trash'):
-					self.list.insert(0, self.list.pop(self.list.index(x)))
-					break
+		elif self.sort_type == MovieList.SORT_ALPHANUMERIC_REVERSE:
+			self.list = self.list[:numberOfDirs] + sorted(self.list[numberOfDirs:], key=self.buildAlphaNumericSortKey, reverse = True)
+		elif self.sort_type == MovieList.SORT_RECORDED_REVERSE:
+			self.list = self.list[:numberOfDirs] + sorted(self.list[numberOfDirs:], key=self.buildBeginTimeSortKey, reverse = True)
 
 		if self.root and numberOfDirs > 0:
 			rootPath = os.path.normpath(self.root.getPath())
@@ -623,8 +607,8 @@ class MovieList(GUIComponent):
 		ref = x[0]
 		name = x[1] and x[1].getName(ref)
 		if ref.flags & eServiceReference.mustDescent:
-			return 0, name and name.lower() or "", -x[2]
-		return 1, name and name.lower() or "", -x[2]
+			return (0, name and name.lower() or "", -x[2])
+		return (1, name and name.lower() or "", -x[2])
 
 	def buildAlphaNumericFlatSortKey(self, x):
 		# x = ref,info,begin,...
@@ -639,13 +623,13 @@ class MovieList(GUIComponent):
 			name = p[1]
 		# print "Sorting for -%s-" % name
 
-		return 1, name and name.lower() or "", -x[2]
+		return (1, name and name.lower() or "", -x[2])
 
 	def buildBeginTimeSortKey(self, x):
 		ref = x[0]
 		if ref.flags & eServiceReference.mustDescent:
-			return 0, x[1] and -os.stat(ref.getPath()).st_mtime
-		return 1, -x[2]
+			return (0, x[1] and x[1].getName(ref).lower() or "")
+		return (1, -x[2])
 
 	def moveTo(self, serviceref):
 		count = 0

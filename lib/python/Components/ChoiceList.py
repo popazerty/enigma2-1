@@ -5,8 +5,7 @@ from Tools.LoadPixmap import LoadPixmap
 from Tools.Directories import fileExists
 import skin
 
-def ChoiceEntryComponent(key="", text=None):
-	if not text: text = ["--"]
+def ChoiceEntryComponent(key = "", text = ["--"]):
 	res = [ text ]
 	if text[0] == "--":
 		res.append((eListboxPythonMultiContent.TYPE_TEXT, 0, 00, 800, 25, 0, RT_HALIGN_LEFT, "-"*200))
@@ -29,4 +28,3 @@ class ChoiceList(MenuList):
 	def postWidgetCreate(self, instance):
 		MenuList.postWidgetCreate(self, instance)
 		self.moveToIndex(self.selection)
-		self.instance.setWrapAround(True)

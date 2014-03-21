@@ -1,7 +1,7 @@
 import os
 from shutil import rmtree
 from bisect import insort
-from Tools.Directories import fileExists, resolveFilename, SCOPE_PLUGINS
+from Tools.Directories import fileExists
 from Tools.Import import my_import
 from Tools.Profile import profile
 from Plugins.Plugin import PluginDescriptor
@@ -25,7 +25,7 @@ class PluginComponent:
 		if self.firstRun or not plugin.needsRestart:
 			self.pluginList.append(plugin)
 			for x in plugin.where:
-				insort(self.plugins.setdefault(x, []), plugin)
+				insort(self.plugins.setdefault(x, []), (plugin))
 				if x == PluginDescriptor.WHERE_AUTOSTART:
 					plugin(reason=0)
 		else:
@@ -136,10 +136,6 @@ class PluginComponent:
 	def clearPluginList(self):
 		self.pluginList = []
 		self.plugins = {}
-
-	def reloadPlugins(self, dummy=False):
-		self.clearPluginList()
-		self.readPluginList(resolveFilename(SCOPE_PLUGINS))
 
 	def shutdown(self):
 		for p in self.pluginList[:]:

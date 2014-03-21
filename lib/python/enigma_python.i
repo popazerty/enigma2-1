@@ -102,6 +102,7 @@ is usually caused by not marking PSignals as immutable.
 #include <lib/driver/rfmod.h>
 #include <lib/driver/misc_options.h>
 #include <lib/driver/etimezone.h>
+#include <lib/driver/vfd.h>
 #include <lib/gdi/lcd.h>
 #include <lib/mmi/mmi_ui.h>
 #include <lib/dvb_ci/dvbci.h>
@@ -244,6 +245,7 @@ typedef long time_t;
 %include <lib/driver/rfmod.h>
 %include <lib/driver/misc_options.h>
 %include <lib/driver/etimezone.h>
+%include <lib/driver/vfd.h>
 %include <lib/gdi/lcd.h>
 %include <lib/mmi/mmi_ui.h>
 %include <lib/dvb_ci/dvbci.h>
@@ -407,6 +409,13 @@ extern eApplication *getApplication();
 extern int getPrevAsciiCode();
 extern void addFont(const char *filename, const char *alias, int scale_factor, int is_replacement, int renderflags = 0);
 extern const char *getEnigmaVersionString();
+extern const char *getBoxType();
+extern const char *getMachineBrand();
+extern const char *getMachineName();
+extern const char *getDistro();
+extern const char *getImageVersionString();
+extern const char *getBuildVersionString();
+extern const char *getDriverDateString();
 extern void dump_malloc_stats(void);
 %}
 
@@ -416,6 +425,13 @@ extern void runMainloop();
 extern void quitMainloop(int exit_code);
 extern eApplication *getApplication();
 extern const char *getEnigmaVersionString();
+extern const char *getBoxType();
+extern const char *getMachineBrand();
+extern const char *getMachineName();
+extern const char *getDistro();
+extern const char *getImageVersionString();
+extern const char *getBuildVersionString();
+extern const char *getDriverDateString();
 extern void dump_malloc_stats(void);
 
 %include <lib/python/python_console.i>

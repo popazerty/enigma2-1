@@ -1,6 +1,6 @@
 import os
-from enigma import eActionMap, eEPGCache, quitMainloop
-from boxbranding import getMachineBrand, getMachineName
+from enigma import eActionMap, eEPGCache, quitMainloop, getMachineBrand, getMachineName
+
 from Components.config import config
 from Components.TimerSanityCheck import TimerSanityCheck
 from Components.Task import Task, Job, job_manager as JobManager
@@ -24,21 +24,15 @@ import os
 def parseEvent(ev):
 	begin = ev.getBeginTime()
 	end = begin + ev.getDuration()
-	return begin, end
+	return (begin, end)
 
 class AFTEREVENT:
-	def __init__(self):
-		pass
-
 	NONE = 0
 	WAKEUPTOSTANDBY = 1
 	STANDBY = 2
 	DEEPSTANDBY = 3
 
 class TIMERTYPE:
-	def __init__(self):
-		pass
-
 	NONE = 0
 	WAKEUP = 1
 	WAKEUPTOSTANDBY = 2
@@ -53,7 +47,7 @@ class TIMERTYPE:
 class PowerTimerEntry(timer.TimerEntry, object):
 	def __init__(self, begin, end, disabled = False, afterEvent = AFTEREVENT.NONE, timerType = TIMERTYPE.WAKEUP, checkOldTimers = False):
 		timer.TimerEntry.__init__(self, int(begin), int(end))
-		if checkOldTimers:
+		if checkOldTimers == True:
 			if self.begin < time() - 1209600:
 				self.begin = int(time())
 
@@ -307,9 +301,9 @@ class PowerTimerEntry(timer.TimerEntry, object):
 		if self.state == self.StateEnded or self.state == self.StateFailed:
 			return self.end
 
-		if self.timerType != TIMERTYPE.WAKEUP and self.timerType != TIMERTYPE.WAKEUPTOSTANDBY and not self.afterEvent:
+		if (self.timerType != TIMERTYPE.WAKEUP and self.timerType != TIMERTYPE.WAKEUPTOSTANDBY and not self.afterEvent):
 			return -1
-		elif self.timerType != TIMERTYPE.WAKEUP and self.timerType != TIMERTYPE.WAKEUPTOSTANDBY and self.afterEvent:
+		elif (self.timerType != TIMERTYPE.WAKEUP and self.timerType != TIMERTYPE.WAKEUPTOSTANDBY and self.afterEvent):
 			return self.end
 		next_state = self.state + 1
 		return {self.StatePrepared: self.start_prepare,
@@ -447,7 +441,9 @@ class PowerTimer(timer.Timer):
 				checkit = False # at moment it is enough when the message is displayed one time
 
 	def saveTimer(self):
-		list = ['<?xml version="1.0" ?>\n', '<timers>\n']
+		list = []
+		list.append('<?xml version="1.0" ?>\n')
+		list.append('<timers>\n')
 		for timer in self.timer_list + self.processed_timers:
 			if timer.dontSave:
 				continue
@@ -494,6 +490,7 @@ class PowerTimer(timer.Timer):
 			file.write(x)
 		file.flush()
 
+		import os
 		os.fsync(file.fileno())
 		file.close()
 		os.rename(self.Filename + ".writing", self.Filename)
@@ -520,7 +517,7 @@ class PowerTimer(timer.Timer):
 		nextrectime = self.getNextPowerManagerTimeOld()
 		faketime = time()+300
 		if config.timeshift.isRecording.getValue():
-			if 0 < nextrectime < faketime:
+			if nextrectime > 0 and nextrectime < faketime:
 				return nextrectime
 			else:
 				return faketime

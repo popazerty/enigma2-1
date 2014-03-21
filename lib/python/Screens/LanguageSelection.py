@@ -1,5 +1,4 @@
 from Screens.Screen import Screen
-from Screens.MessageBox import MessageBox
 from Components.ActionMap import ActionMap
 from Components.Language import language
 from Components.config import config
@@ -9,20 +8,17 @@ from Components.Sources.StaticText import StaticText
 from Components.Pixmap import Pixmap
 from Components.Language_cache import LANG_TEXT
 from enigma import eTimer
-
 from Screens.Rc import Rc
-
+from Screens.Setup import Setup
 from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN, SCOPE_LANGUAGE
 from Tools.LoadPixmap import LoadPixmap
 import gettext
 
-inWizzard = False
-
 def LanguageEntryComponent(file, name, index):
 	png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + index + ".png"))
-	if png is None:
+	if png == None:
 		png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + file + ".png"))
-		if png is None:
+		if png == None:
 			png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/missing.png"))
 	res = (index, name, png)
 	return res
@@ -48,8 +44,6 @@ class LanguageSelection(Screen):
 
 		self["key_red"] = Label(_("Cancel"))
 		self["key_green"] = Label(_("Save"))
-		self["key_yellow"] = Label(_("Update Cache"))
-		self["key_blue"] = Label(_("Delete Language"))
 
 		self["actions"] = ActionMap(["SetupActions", "ColorActions"],
 		{
@@ -58,9 +52,8 @@ class LanguageSelection(Screen):
 			"red": self.cancel,
 			"green": self.save,
 			"yellow": self.updateCache,
-			"blue": self.delLang,
 		}, -1)
-
+	    
 	def updateCache(self):
 		print"updateCache"
 		self["languages"].setList([('update cache','Updating cache, please wait...',None)])
@@ -85,16 +78,6 @@ class LanguageSelection(Screen):
 
 	def save(self):
 		self.run()
-		global inWizzard
-		if inWizzard:
-			inWizzard = False
-			self.session.openWithCallback(self.deletelanguagesCB, MessageBox, _("Do you want to delete all other languages?"), default = False)
-		else:
-			self.close(self.oldActiveLanguage != config.osd.language.value)
-
-	def deletelanguagesCB(self, anwser):
-		if anwser:
-			language.delLanguage()
 		self.close()
 
 	def cancel(self):
@@ -102,18 +85,6 @@ class LanguageSelection(Screen):
 		config.osd.language.setValue(self.oldActiveLanguage)
 		config.osd.language.save()
 		self.close()
-
-	def delLang(self):
-		self.curlang = self["languages"].getCurrent()[0]
-		print self["languages"].getCurrent()
-		self.session.openWithCallback(self.delLangCB, MessageBox, _("Do you want to delete %s language?") %(self["languages"].getCurrent()[1]), default = False)
-
-	def delLangCB(self, anwser):
-		if anwser:		
-			language.delLanguage(self.curlang)
-			language.activateLanguage(self.oldActiveLanguage)
-			self.updateList()
-			self.selectActiveLanguage()
 
 	def run(self, justlocal = False):
 		print "updating language..."
@@ -146,7 +117,7 @@ class LanguageSelection(Screen):
 
 	def updateList(self):
 		languageList = language.getLanguageList()
-		if not languageList: # no language available => display only english
+		if not languageList: # no language available => display only german
 			list = [ LanguageEntryComponent("en", "English (US)", "en_US") ]
 		else:
 			list = [ LanguageEntryComponent(file = x[1][2].lower(), name = x[1][0], index = x[0]) for x in languageList]
@@ -160,8 +131,6 @@ class LanguageWizard(LanguageSelection, Rc):
 	def __init__(self, session):
 		LanguageSelection.__init__(self, session)
 		Rc.__init__(self)
-		global inWizzard
-		inWizzard = True
 		self.onLayoutFinish.append(self.selectKeys)
 
 		self["wizard"] = Pixmap()

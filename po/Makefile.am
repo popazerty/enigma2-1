@@ -6,6 +6,7 @@ LANGPO = $(LANGS:=.po)
 
 EXTRA_DIST = $(LANGPO)
 
+if UPDATE_PO
 # the TRANSLATORS: allows putting translation comments before the to-be-translated line.
 enigma2-py.pot: $(top_srcdir)/*.py $(top_srcdir)/lib/python/*/*.py $(top_srcdir)/lib/python/*/*/*.py $(top_srcdir)/lib/python/Plugins/*/*/*.py
 	$(XGETTEXT) --no-wrap -L Python --from-code=UTF-8 -kpgettext:1c,2 --add-comments="TRANSLATORS:" -d @PACKAGE_NAME@ -s -o $@ $^
@@ -24,6 +25,7 @@ enigma2.pot: enigma2-py.pot enigma2-xml.pot
 	else \
 		$(MSGINIT) -l $@ -o $@ -i $< --no-translator; \
 	fi
+endif
 
 .po.mo:
 	$(MSGFMT) -o $@ $<
@@ -38,7 +40,6 @@ install-data-local: $(LANGMO)
 		$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)/po/$$lang/LC_MESSAGES; \
 		$(INSTALL_DATA) $$lang.po $(DESTDIR)$(pkgdatadir)/po/@PACKAGE_NAME@-$$lang.po; \
 		$(INSTALL_DATA) $$lang.mo $(DESTDIR)$(pkgdatadir)/po/$$lang/LC_MESSAGES/@PACKAGE_NAME@.mo; \
-		$(INSTALL_DATA) $$lang.po $(DESTDIR)$(pkgdatadir)/po/$$lang.po; \
 	done
 
 uninstall-local:

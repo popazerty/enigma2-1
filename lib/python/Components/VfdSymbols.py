@@ -1,35 +1,28 @@
 from twisted.internet import threads
 from config import config
-from enigma import eDBoxLCD, eTimer, iPlayableService
+from enigma import eDBoxLCD, eTimer, iPlayableService, iServiceInformation
 import NavigationInstance
 from Tools.Directories import fileExists
 from Components.ParentalControl import parentalControl
 from Components.ServiceEventTracker import ServiceEventTracker
-from Components.SystemInfo import SystemInfo
-from boxbranding import getBoxType
 
 POLLTIME = 5 # seconds
 
 def SymbolsCheck(session, **kwargs):
-		global symbolspoller, POLLTIME
-		if getBoxType() == 'ixussone' or getBoxType() == 'ixusszero':
-			POLLTIME = 1
+		global symbolspoller
 		symbolspoller = SymbolsCheckPoller(session)
 		symbolspoller.start()
 
 class SymbolsCheckPoller:
 	def __init__(self, session):
 		self.session = session
-		self.blink = False
 		self.timer = eTimer()
 		self.onClose = []
 		self.__event_tracker = ServiceEventTracker(screen=self,eventmap=
 			{
-				iPlayableService.evUpdatedInfo: self.__evUpdatedInfo,
+				#iPlayableService.evUpdatedInfo: self.__evUpdatedInfo,
+				iPlayableService.evVideoSizeChanged: self.__evUpdatedInfo,
 			})
-
-	def __onClose(self):
-		pass
 
 	def start(self):
 		if self.symbolscheck not in self.timer.callback:
@@ -47,37 +40,26 @@ class SymbolsCheckPoller:
 
 	def JobTask(self):
 		self.Recording()
-		self.PlaySymbol()
 		self.timer.startLongTimer(POLLTIME)
 
 	def __evUpdatedInfo(self):
 		self.service = self.session.nav.getCurrentService()
+		if open("/proc/stb/info/boxtype").read().strip() == "ini-7012":
+			self.Resolution()
+			self.Audio()
 		self.Subtitle()
 		self.ParentalControl()
-		self.PlaySymbol()
 		del self.service
 
 	def Recording(self):
-		if fileExists("/proc/stb/lcd/symbol_circle"):
+		if fileExists("/proc/stb/lcd/symbol_circle") or fileExists("/proc/stb/lcd/symbol_record"):
 			recordings = len(NavigationInstance.instance.getRecordings())
 			if recordings > 0:
 				open("/proc/stb/lcd/symbol_circle", "w").write("3")
+				open("/proc/stb/lcd/symbol_record", "w").write("1")
 			else:
 				open("/proc/stb/lcd/symbol_circle", "w").write("0")
-		elif getBoxType() == 'ebox5000' or getBoxType() == 'eboxlumi' or getBoxType() == 'ebox7358':
-			recordings = len(NavigationInstance.instance.getRecordings())
-			if recordings > 0:
-				open("/proc/stb/lcd/symbol_recording", "w").write("1")
-			else:
-				open("/proc/stb/lcd/symbol_recording", "w").write("0")
-		elif getBoxType() == 'ixussone' or getBoxType() == 'ixusszero':
-			recordings = len(NavigationInstance.instance.getRecordings())
-			self.blink = not self.blink
-			if recordings > 0 and self.blink:
-				open("/proc/stb/lcd/powerled", "w").write("1")
-			else:
-				open("/proc/stb/lcd/powerled", "w").write("0")
-
+				open("/proc/stb/lcd/symbol_record", "w").write("0")
 		else:
 			if not fileExists("/proc/stb/lcd/symbol_recording") or not fileExists("/proc/stb/lcd/symbol_record_1") or not fileExists("/proc/stb/lcd/symbol_record_2"):
 				return
@@ -99,7 +81,7 @@ class SymbolsCheckPoller:
 
 
 	def Subtitle(self):
-		if not fileExists("/proc/stb/lcd/symbol_smartcard"):
+		if not fileExists("/proc/stb/lcd/symbol_smartcard") or not fileExists("/proc/stb/lcd/symbol_subtitle"):
 			return
 
 		subtitle = self.service and self.service.subtitle()
@@ -107,10 +89,16 @@ class SymbolsCheckPoller:
 
 		if subtitlelist:
 			subtitles = len(subtitlelist)
-			if subtitles > 0:
-				open("/proc/stb/lcd/symbol_smartcard", "w").write("1")
+			if fileExists("/proc/stb/lcd/symbol_subtitle"):
+				if subtitles > 0:
+					open("/proc/stb/lcd/symbol_subtitle", "w").write("1")
+				else:
+					open("/proc/stb/lcd/symbol_subtitle", "w").write("0")
 			else:
-				open("/proc/stb/lcd/symbol_smartcard", "w").write("0")
+				if subtitles > 0:
+					open("/proc/stb/lcd/symbol_smartcard", "w").write("1")
+				else:
+					open("/proc/stb/lcd/symbol_smartcard", "w").write("0")
 		else:
 			open("/proc/stb/lcd/symbol_smartcard", "w").write("0")
 
@@ -127,12 +115,51 @@ class SymbolsCheckPoller:
 				open("/proc/stb/lcd/symbol_parent_rating", "w").write("1")
 		else:
 			open("/proc/stb/lcd/symbol_parent_rating", "w").write("0")
-
-	def PlaySymbol(self):
-		if not fileExists("/proc/stb/lcd/symbol_play "):
+			
+	def Resolution(self):
+		if not fileExists("/proc/stb/lcd/symbol_1080i") or not fileExists("/proc/stb/lcd/symbol_720p") or not fileExists("/proc/stb/lcd/symbol_576i") or not fileExists("/proc/stb/lcd/symbol_hd"):
 			return
 
-		if SystemInfo["SeekStatePlay"]:
-			open("/proc/stb/lcd/symbol_play ", "w").write("1")
-		else:
-			open("/proc/stb/lcd/symbol_play ", "w").write("0")
+		info = self.service and self.service.info()
+		if not info:
+			return ""
+
+		videosize = int(info.getInfo(iServiceInformation.sVideoWidth))
+
+		if videosize == 65535 or videosize == -1:
+			# lets clear all symbols before turn on which are needed
+			open("/proc/stb/lcd/symbol_1080p", "w").write("0")
+			open("/proc/stb/lcd/symbol_1080i", "w").write("0")
+			open("/proc/stb/lcd/symbol_720p", "w").write("0")
+			open("/proc/stb/lcd/symbol_576p", "w").write("0")
+			open("/proc/stb/lcd/symbol_576i", "w").write("0")
+			open("/proc/stb/lcd/symbol_hd", "w").write("0")
+			return ""
+		
+		if videosize >= 1280:
+			open("/proc/stb/lcd/symbol_1080i", "w").write("1")
+			open("/proc/stb/lcd/symbol_hd", "w").write("1")
+		elif videosize < 1280 and videosize > 720:
+			open("/proc/stb/lcd/symbol_720p", "w").write("1")
+			open("/proc/stb/lcd/symbol_hd", "w").write("1")
+		elif videosize <= 720:
+			open("/proc/stb/lcd/symbol_576i", "w").write("1")
+			open("/proc/stb/lcd/symbol_hd", "w").write("0")
+
+	def Audio(self):
+		if not fileExists("/proc/stb/lcd/symbol_dolby_audio"):
+			return
+		      
+		audio = self.service.audioTracks()
+		if audio:
+			n = audio.getNumberOfTracks()
+			idx = 0
+			while idx < n:
+				i = audio.getTrackInfo(idx)
+				description = i.getDescription();
+				if "AC3" in description or "AC-3" in description or "DTS" in description:
+					open("/proc/stb/lcd/symbol_dolby_audio", "w").write("1")
+					return
+				idx += 1	
+		open("/proc/stb/lcd/symbol_dolby_audio", "w").write("0")
+		

@@ -4,13 +4,11 @@
 #include <lib/gdi/gpixmap.h>
 #include <lib/gui/elistbox.h>
 #include <lib/service/iservice.h>
-#include <lib/python/python.h>
 #include <set>
 
 class eListboxServiceContent: public virtual iListboxContent
 {
 	DECLARE_REF(eListboxServiceContent);
-	static ePyObject m_GetPiconNameFunc;
 public:
 	eListboxServiceContent();
 
@@ -37,7 +35,7 @@ public:
 	int markedQueryNext(eServiceReference &ref);
 
 	int lookupService(const eServiceReference &ref);
-	bool setCurrent(const eServiceReference &ref);
+	void setCurrent(const eServiceReference &ref);
 
 	enum {
 		visModeSimple,
@@ -81,7 +79,6 @@ public:
 	int getItemHeight() { return m_itemheight; }
 	void setItemHeight(int height);
 	void setServiceTypeIconMode(int mode);
-	static void setGetPiconNameFunc(SWIG_PYOBJECT(ePyObject) func);
 
 	enum {
 		markedForeground,
@@ -149,7 +146,6 @@ private:
 
 		/* support for movemode */
 	bool m_current_marked;
-	void swapServices(list::iterator, list::iterator);
 
 	eServiceReference m_is_playable_ignore;
 

@@ -1,4 +1,4 @@
-from Screen import Screen
+from Screens.Screen import Screen
 from Screens.HelpMenu import HelpableScreen
 from Screens.MessageBox import MessageBox
 from Components.InputDevice import iInputDevices, iRcTypeControl
@@ -9,7 +9,7 @@ from Components.ConfigList import ConfigListScreen
 from Components.ActionMap import ActionMap, HelpableActionMap
 from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
 from Tools.LoadPixmap import LoadPixmap
-from boxbranding import getMachineBrand, getMachineName
+from enigma import getMachineBrand, getMachineName
 
 class InputDeviceSelection(Screen, HelpableScreen):
 	def __init__(self, session):
@@ -82,7 +82,7 @@ class InputDeviceSelection(Screen, HelpableScreen):
 				devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_mouse.png"))
 		elif isinputdevice:
 			devicepng = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/input_rcnew.png"))
-		return device, description, devicepng, divpng
+		return ((device, description, devicepng, divpng))
 
 	def updateList(self):
 		self.list = []
@@ -149,9 +149,6 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 
 	def layoutFinished(self):
 		self.setTitle(self.setup_title)
-		listWidth = self["config"].l.getItemSize().width()
-		# use 20% of list width for sliders
-		self["config"].l.setSeperation(int(listWidth*.8))
 
 	def cleanup(self):
 		iInputDevices.currentDevice = ""
@@ -160,16 +157,16 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 		self.list = [ ]
 		label = _("Change repeat and delay settings?")
 		cmd = "self.enableEntry = getConfigListEntry(label, config.inputDevices." + self.inputDevice + ".enabled)"
-		exec cmd
+		exec (cmd)
 		label = _("Interval between keys when repeating:")
 		cmd = "self.repeatEntry = getConfigListEntry(label, config.inputDevices." + self.inputDevice + ".repeat)"
-		exec cmd
+		exec (cmd)
 		label = _("Delay before key repeat starts:")
 		cmd = "self.delayEntry = getConfigListEntry(label, config.inputDevices." + self.inputDevice + ".delay)"
-		exec cmd
+		exec (cmd)
 		label = _("Devicename:")
 		cmd = "self.nameEntry = getConfigListEntry(label, config.inputDevices." + self.inputDevice + ".name)"
-		exec cmd
+		exec (cmd)
 		if self.enableEntry:
 			if isinstance(self.enableEntry[1], ConfigYesNo):
 				self.enableConfigEntry = self.enableEntry[1]
@@ -188,6 +185,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 				self["config"].invalidate(self.nameEntry)
 
 		self["config"].list = self.list
+		self["config"].l.setSeperation(400)
 		self["config"].l.setList(self.list)
 		if not self.selectionChanged in self["config"].onSelectionChanged:
 			self["config"].onSelectionChanged.append(self.selectionChanged)
@@ -220,7 +218,7 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 		else:
 			self.nameEntry[1].setValue(iInputDevices.getDeviceAttribute(self.inputDevice, 'name'))
 			cmd = "config.inputDevices." + self.inputDevice + ".name.save()"
-			exec cmd
+			exec (cmd)
 			self.keySave()
 
 	def apply(self):
@@ -258,14 +256,10 @@ class InputDeviceSetup(Screen, ConfigListScreen):
 class RemoteControlType(Screen, ConfigListScreen):
 	rcList = [
 			("0", _("Default")),
-			("3", _("OdinM9")),
-			("4", _("DMM normal")),
-			("6", _("DMM advanced")),
-			("7", _("et5000/6000")),
-			("8", _("VU+")),
-			("11", _("et9x00/6500")),
-			("13", _("et4000")),
-			("14", _("XP1000")),
+			("4", _("DMM normal")), ("6", _("DMM advanced")),
+			("11", "et9x00/6500"), ("7", "et5000/6000"), ("13", "et4000"),
+			("14", "xp1000"),
+			("8", "VU+"),
 		]
 
 	defaultRcList = [

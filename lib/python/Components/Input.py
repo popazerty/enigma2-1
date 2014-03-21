@@ -11,14 +11,14 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 	PIN = 1
 	NUMBER = 2
 
-	def __init__(self, text="", maxSize=False, visible_width=False, type=TEXT, currPos=0, allMarked=True):
+	def __init__(self, text="", maxSize = False, visible_width = False, type = TEXT):
 		NumericalTextInput.__init__(self, self.right)
 		GUIComponent.__init__(self)
 		VariableText.__init__(self)
 		self.type = type
-		self.allmarked = allMarked and (text != "") and (type != self.PIN)
+		self.allmarked = (text != "") and (type != self.PIN)
 		self.maxSize = maxSize
-		self.currPos = currPos
+		self.currPos = 0
 		self.visible_width = visible_width
 		self.offset = 0
 		self.overwrite = maxSize
@@ -62,7 +62,11 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 			self.currPos = 0
 			self.Text = u""
 		else:
-			self.Text = text.decode("utf-8", "ignore").decode("utf-8")
+			try:
+				self.Text = text.decode("utf-8")
+			except UnicodeDecodeError:
+				print "utf8 kaputt!"
+				self.Text = text
 		self.update()
 
 	def getText(self):
@@ -76,11 +80,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 
 	def getSize(self):
 		s = self.instance.calculateSize()
-		return s.width(), s.height()
-
-	def markAll(self):
-		self.allmarked = True
-		self.update()
+		return (s.width(), s.height())
 
 	def innerright(self):
 		if self.allmarked:
@@ -151,10 +151,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 			self.currPos = len(self.Text)
 		self.update()
 
-	def insertChar(self, ch, pos=False, owr=False, ins=False):
-		self.Text = self.Text.decode("utf-8", "ignore").decode("utf-8")
-		if not pos:
-			pos = self.currPos
+	def insertChar(self, ch, pos, owr, ins):
 		if ins and not self.maxSize:
 			self.Text = self.Text[0:pos] + ch + self.Text[pos:]
 		elif owr or self.overwrite:
@@ -216,16 +213,6 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 				self.currPos -= 1
 		self.update()
 
-	def deleteForward(self):
-		if self.type == self.TEXT:
-			self.timeout()
-		if self.allmarked:
-			self.deleteAllChars()
-			self.allmarked = False
-		else:
-			self.deleteChar(self.currPos);
-		self.update()
-
 	def toggleOverwrite(self):
 		if self.type == self.TEXT:
 			self.timeout()
@@ -255,12 +242,4 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 		self.insertChar(newChar, self.currPos, owr, False);
 		if self.type == self.PIN or self.type == self.NUMBER:
 			self.innerright()
-		self.update()
-
-	def char(self, char):
-		if self.allmarked:
-			self.deleteAllChars()
-			self.allmarked = False
-		self.insertChar(char)
-		self.innerright()
 		self.update()

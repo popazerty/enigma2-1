@@ -1,9 +1,8 @@
-from enigma import ePicLoad, eTimer, getDesktop, gMainDC, eSize
+from enigma import ePicLoad, eTimer, getDesktop
 
 from Screens.Screen import Screen
 from Tools.Directories import resolveFilename, pathExists, SCOPE_MEDIA
 
-from Components.About import about
 from Components.Pixmap import Pixmap, MovingPixmap
 from Components.ActionMap import ActionMap, NumberActionMap
 from Components.Sources.StaticText import StaticText
@@ -12,9 +11,7 @@ from Components.AVSwitch import AVSwitch
 from Components.Sources.List import List
 from Components.ConfigList import ConfigList, ConfigListScreen
 
-from Components.config import config, ConfigSubsection, ConfigInteger, ConfigSelection, ConfigText, ConfigYesNo, KEY_LEFT, KEY_RIGHT, KEY_0, getConfigListEntry
-
-from boxbranding import getMachineBrand
+from Components.config import config, ConfigSubsection, ConfigInteger, ConfigSelection, ConfigText, ConfigEnableDisable, KEY_LEFT, KEY_RIGHT, KEY_0, getConfigListEntry
 
 def getScale():
 	return AVSwitch().getFramebufferScale()
@@ -23,17 +20,12 @@ config.pic = ConfigSubsection()
 config.pic.framesize = ConfigInteger(default=30, limits=(5, 99))
 config.pic.slidetime = ConfigInteger(default=10, limits=(1, 60))
 config.pic.resize = ConfigSelection(default="1", choices = [("0", _("simple")), ("1", _("better"))])
-config.pic.cache = ConfigYesNo(default=True)
+config.pic.cache = ConfigEnableDisable(default=True)
 config.pic.lastDir = ConfigText(default=resolveFilename(SCOPE_MEDIA))
-config.pic.infoline = ConfigYesNo(default=True)
-config.pic.loop = ConfigYesNo(default=True)
+config.pic.infoline = ConfigEnableDisable(default=True)
+config.pic.loop = ConfigEnableDisable(default=True)
 config.pic.bgcolor = ConfigSelection(default="#00000000", choices = [("#00000000", _("black")),("#009eb9ff", _("blue")),("#00ff5a51", _("red")), ("#00ffe875", _("yellow")), ("#0038FF48", _("green"))])
 config.pic.textcolor = ConfigSelection(default="#0038FF48", choices = [("#00000000", _("black")),("#009eb9ff", _("blue")),("#00ff5a51", _("red")), ("#00ffe875", _("yellow")), ("#0038FF48", _("green"))])
-if getMachineBrand == 'Vu+':
-	choices = [(None, _("Same resolution as skin")), ("(720, 576)","720x576"), ("(1280, 720)", "1280x720")]
-else:
-	choices = [(None, _("Same resolution as skin")), ("(720, 576)","720x576"), ("(1280, 720)", "1280x720"), ("(1920, 1080)", "1920x1080")]
-config.pic.fullview_resolution = ConfigSelection(default = None, choices = choices)
 
 class picshow(Screen):
 	skin = """
@@ -41,9 +33,11 @@ class picshow(Screen):
 			<ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" alphatest="on" />
 			<ePixmap pixmap="buttons/green.png" position="140,0" size="140,40" alphatest="on" />
 			<ePixmap pixmap="buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
 			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
 			<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
 			<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" transparent="1" />
+			<widget source="key_blue" render="Label" position="420,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" transparent="1" />
 			<widget source="label" render="Label" position="5,55" size="350,140" font="Regular;19" backgroundColor="#25062748" transparent="1"  />
 			<widget name="thn" position="360,40" size="180,160" alphatest="on" />
 			<widget name="filelist" position="5,205" zPosition="2" size="550,230" scrollbarMode="showOnDemand" />
@@ -52,19 +46,20 @@ class picshow(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
 
-		self["actions"] = ActionMap(["OkCancelActions", "ColorActions", "DirectionActions", "MenuActions"],
+		self["actions"] = ActionMap(["OkCancelActions", "ColorActions", "DirectionActions"],
 		{
 			"cancel": self.KeyExit,
 			"red": self.KeyExit,
 			"green": self.KeyGreen,
 			"yellow": self.KeyYellow,
-			"menu": self.KeyMenu,
+			"blue": self.KeyBlue,
 			"ok": self.KeyOk
 		}, -1)
 
 		self["key_red"] = StaticText(_("Close"))
 		self["key_green"] = StaticText(_("Thumbnails"))
 		self["key_yellow"] = StaticText("")
+		self["key_blue"] = StaticText(_("Setup"))
 		self["label"] = StaticText("")
 		self["thn"] = Pixmap()
 
@@ -86,7 +81,7 @@ class picshow(Screen):
 
 	def showPic(self, picInfo=""):
 		ptr = self.picload.getData()
-		if ptr is not None:
+		if ptr != None:
 			self["thn"].instance.setPixmap(ptr.__deref__())
 			self["thn"].show()
 
@@ -116,7 +111,7 @@ class picshow(Screen):
 		if not self.filelist.canDescent():
 			self.session.open(Pic_Exif, self.picload.getInfo(self.filelist.getCurrentDirectory() + self.filelist.getFilename()))
 
-	def KeyMenu(self):
+	def KeyBlue(self):
 		self.session.openWithCallback(self.setConf ,Pic_Setup)
 
 	def KeyOk(self):
@@ -139,9 +134,9 @@ class picshow(Screen):
 		del self.picload
 
 		if self.filelist.getCurrentDirectory() is None:
-			config.pic.lastDir.setValue("/")
+			config.pic.lastDir.value = "/"
 		else:
-			config.pic.lastDir.setValue(self.filelist.getCurrentDirectory())
+			config.pic.lastDir.value = self.filelist.getCurrentDirectory()
 
 		config.pic.save()
 		self.close()
@@ -183,7 +178,6 @@ class Pic_Setup(Screen, ConfigListScreen):
 			getConfigListEntry(_("Slide picture in loop"), config.pic.loop),
 			getConfigListEntry(_("Background color"), config.pic.bgcolor),
 			getConfigListEntry(_("Text color"), config.pic.textcolor),
-			getConfigListEntry(_("Fullview resolution"), config.pic.fullview_resolution),
 		]
 		self["config"].list = setup_list
 		self["config"].l.setList(setup_list)
@@ -193,9 +187,6 @@ class Pic_Setup(Screen, ConfigListScreen):
 
 	def keyRight(self):
 		ConfigListScreen.keyRight(self)
-
-	def keyCancel(self):
-		self.close()		
 
 	# for summary:
 	def changedEntry(self):
@@ -274,10 +265,10 @@ class Pic_Thumb(Screen):
 		self.spaceY = 30
 		self.picY = 200
 
-		self.size_w = getDesktop(0).size().width()
-		self.size_h = getDesktop(0).size().height()
-		self.thumbsX = self.size_w / (self.spaceX + self.picX) # thumbnails in X
-		self.thumbsY = self.size_h / (self.spaceY + self.picY) # thumbnails in Y
+		size_w = getDesktop(0).size().width()
+		size_h = getDesktop(0).size().height()
+		self.thumbsX = size_w / (self.spaceX + self.picX) # thumbnails in X
+		self.thumbsY = size_h / (self.spaceY + self.picY) # thumbnails in Y
 		self.thumbsC = self.thumbsX * self.thumbsY # all thumbnails
 
 		self.positionlist = []
@@ -297,8 +288,8 @@ class Pic_Thumb(Screen):
 			skincontent += "<widget name=\"thumb" + str(x) + "\" position=\"" + str(absX+5)+ "," + str(absY+5) + "\" size=\"" + str(self.picX -10) + "," + str(self.picY - (textsize*2)) + "\" zPosition=\"2\" transparent=\"1\" alphatest=\"on\" />"
 
 		# Screen, backgroundlabel and MovingPixmap
-		self.skin = "<screen position=\"0,0\" size=\"" + str(self.size_w) + "," + str(self.size_h) + "\" flags=\"wfNoBorder\" > \
-			<eLabel position=\"0,0\" zPosition=\"0\" size=\""+ str(self.size_w) + "," + str(self.size_h) + "\" backgroundColor=\"" + self.color + "\" /><widget name=\"frame\" position=\"35,30\" size=\"190,200\" pixmap=\"pic_frame.png\" zPosition=\"1\" alphatest=\"on\" />"  + skincontent + "</screen>"
+		self.skin = "<screen position=\"0,0\" size=\"" + str(size_w) + "," + str(size_h) + "\" flags=\"wfNoBorder\" > \
+			<eLabel position=\"0,0\" zPosition=\"0\" size=\""+ str(size_w) + "," + str(size_h) + "\" backgroundColor=\"" + self.color + "\" /><widget name=\"frame\" position=\"35,30\" size=\"190,200\" pixmap=\"pic_frame.png\" zPosition=\"1\" alphatest=\"on\" />"  + skincontent + "</screen>"
 
 		Screen.__init__(self, session)
 
@@ -328,7 +319,7 @@ class Pic_Thumb(Screen):
 		framePos = 0
 		Page = 0
 		for x in piclist:
-			if not x[0][1]:
+			if x[0][1] == False:
 				self.filelist.append((index, framePos, Page, x[0][0],  path + x[0][0]))
 				index += 1
 				framePos += 1
@@ -395,7 +386,7 @@ class Pic_Thumb(Screen):
 			elif self.Thumbnaillist[x][0] == 1:
 				self.Thumbnaillist[x][0] = 2
 				ptr = self.picload.getData()
-				if ptr is not None:
+				if ptr != None:
 					self["thumb" + str(self.Thumbnaillist[x][1])].instance.setPixmap(ptr.__deref__())
 					self["thumb" + str(self.Thumbnaillist[x][1])].show()
 
@@ -450,19 +441,8 @@ class Pic_Full_View(Screen):
 		self.textcolor = config.pic.textcolor.getValue()
 		self.bgcolor = config.pic.bgcolor.getValue()
 		space = config.pic.framesize.getValue()
-
-		self.size_w = getDesktop(0).size().width()
-		self.size_h = getDesktop(0).size().height()
-		(size_w, size_h) = (self.size_w, self.size_h)
-		print 'A:',self.size_w
-		print 'B:',self.size_h
-
-		if config.pic.fullview_resolution.getValue() and (self.size_w, self.size_h) != eval(config.pic.fullview_resolution.getValue()):
-			(size_w, size_h) = eval(config.pic.fullview_resolution.getValue())
-			print 'C:',size_w
-			print 'D:',size_h
-			gMainDC.getInstance().setResolution(size_w, size_h)
-			getDesktop(0).resize(eSize(size_w, size_h))
+		size_w = getDesktop(0).size().width()
+		size_h = getDesktop(0).size().height()
 
 		self.skin = "<screen position=\"0,0\" size=\"" + str(size_w) + "," + str(size_h) + "\" flags=\"wfNoBorder\" > \
 			<eLabel position=\"0,0\" zPosition=\"0\" size=\""+ str(size_w) + "," + str(size_h) + "\" backgroundColor=\""+ self.bgcolor +"\" /><widget name=\"pic\" position=\"" + str(space) + "," + str(space) + "\" size=\"" + str(size_w-(space*2)) + "," + str(size_h-(space*2)) + "\" zPosition=\"1\" alphatest=\"on\" /> \
@@ -498,12 +478,12 @@ class Pic_Full_View(Screen):
 
 		for x in filelist:
 			if len(filelist[0]) == 3: #orig. filelist
-				if not x[0][1]:
+				if x[0][1] == False:
 					self.filelist.append(path + x[0][0])
 				else:
 					self.dirlistcount += 1
 			elif len(filelist[0]) == 2: #scanlist
-				if not x[0][1]:
+				if x[0][1] == False:
 					self.filelist.append(x[0][0])
 				else:
 					self.dirlistcount += 1
@@ -522,28 +502,14 @@ class Pic_Full_View(Screen):
 		self.slideTimer.callback.append(self.slidePic)
 
 		if self.maxentry >= 0:
-			# self.onLayoutFinish.append(self.setPicloadConf)
-			if config.pic.fullview_resolution.getValue() and (self.size_w, self.size_h) != eval(config.pic.fullview_resolution.getValue()):
-				self.createTimer = eTimer()
-				self.createTimer.callback.append(self.setPicloadConf)
-				self.onLayoutFinish.append(self.LayoutFinish)
-			else:
-				self.onLayoutFinish.append(self.setPicloadConf)
-
-	def LayoutFinish(self):
-		if about.getCPUString() != 'BCM7346B2' and about.getCPUString() != 'BCM7425B2':
-			self.createTimer.start(800)
-		else:
-			self.createTimer.start(1600)
+			self.onLayoutFinish.append(self.setPicloadConf)
 
 	def setPicloadConf(self):
-		if config.pic.fullview_resolution.getValue() and (self.size_w, self.size_h) != eval(config.pic.fullview_resolution.getValue()):
-			self.createTimer.stop()
 		sc = getScale()
 		self.picload.setPara([self["pic"].instance.size().width(), self["pic"].instance.size().height(), sc[0], sc[1], 0, int(config.pic.resize.getValue()), self.bgcolor])
 
 		self["play_icon"].hide()
-		if not config.pic.infoline.getValue():
+		if config.pic.infoline.getValue() == False:
 			self["file"].setText("")
 		self.start_decode()
 
@@ -564,7 +530,7 @@ class Pic_Full_View(Screen):
 	def finish_decode(self, picInfo=""):
 		self["point"].hide()
 		ptr = self.picload.getData()
-		if ptr is not None:
+		if ptr != None:
 			text = ""
 			try:
 				text = picInfo.split('\n',1)
@@ -593,7 +559,7 @@ class Pic_Full_View(Screen):
 
 	def slidePic(self):
 		print "slide to next Picture index=" + str(self.lastindex)
-		if config.pic.loop.getValue() == False and self.lastindex == self.maxentry:
+		if config.pic.loop.value==False and self.lastindex == self.maxentry:
 			self.PlayPause()
 		self.shownow = True
 		self.ShowPicture()
@@ -625,10 +591,5 @@ class Pic_Full_View(Screen):
 
 	def Exit(self):
 		del self.picload
-
-		if config.pic.fullview_resolution.getValue() and (self.size_w, self.size_h) != eval(config.pic.fullview_resolution.getValue()):
-			gMainDC.getInstance().setResolution(self.size_w, self.size_h)
-			getDesktop(0).resize(eSize(self.size_w, self.size_h))
-
 		self.close(self.lastindex + self.dirlistcount)
 

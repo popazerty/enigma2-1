@@ -1,6 +1,5 @@
 import os
-from enigma import eEPGCache, getBestPlayableServiceReference, eServiceReference, eServiceCenter, iRecordableService, quitMainloop, eActionMap
-from boxbranding import getMachineBrand, getMachineName
+from enigma import eEPGCache, getBestPlayableServiceReference, eServiceReference, eServiceCenter, iRecordableService, quitMainloop, getMachineBrand, getMachineName
 
 from Components.config import config
 from Components import Harddisk
@@ -19,8 +18,6 @@ from ServiceReference import ServiceReference
 
 from time import localtime, strftime, ctime, time
 from bisect import insort
-from sys import maxint
-
 import os
 
 # ok, for descriptions etc we have:
@@ -46,12 +43,9 @@ def parseEvent(ev, description = True):
 	eit = ev.getEventId()
 	begin -= config.recording.margin_before.getValue() * 60
 	end += config.recording.margin_after.getValue() * 60
-	return begin, end, name, description, eit
+	return (begin, end, name, description, eit)
 
 class AFTEREVENT:
-	def __init__(self):
-		pass
-
 	NONE = 0
 	STANDBY = 1
 	DEEPSTANDBY = 2
@@ -88,9 +82,9 @@ wasRecTimerWakeup = False
 
 # please do not translate log messages
 class RecordTimerEntry(timer.TimerEntry, object):
-	def __init__(self, serviceref, begin, end, name, description, eit, disabled = False, justplay = False, afterEvent = AFTEREVENT.AUTO, checkOldTimers = False, dirname = None, tags = None, descramble = 'notset', record_ecm = 'notset', isAutoTimer = False, always_zap = False, MountPath = None):
+	def __init__(self, serviceref, begin, end, name, description, eit, disabled = False, justplay = False, afterEvent = AFTEREVENT.AUTO, checkOldTimers = False, dirname = None, tags = None, descramble = 'notset', record_ecm = 'notset', isAutoTimer = False, always_zap = False):
 		timer.TimerEntry.__init__(self, int(begin), int(end))
-		if checkOldTimers:
+		if checkOldTimers == True:
 			if self.begin < time() - 1209600:
 				self.begin = int(time())
 
@@ -99,7 +93,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 
 		assert isinstance(serviceref, ServiceReference)
 
-		if serviceref and serviceref.isRecordable():
+		if serviceref.isRecordable():
 			self.service_ref = serviceref
 		else:
 			self.service_ref = ServiceReference(None)
@@ -119,7 +113,6 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		self.autoincrease = False
 		self.autoincreasetime = 3600 * 24 # 1 day
 		self.tags = tags or []
-		self.MountPath = None
 
 		if descramble == 'notset' and record_ecm == 'notset':
 			if config.recording.ecm_data.getValue() == 'descrambled+ecm':
@@ -136,16 +129,15 @@ class RecordTimerEntry(timer.TimerEntry, object):
 			self.record_ecm = record_ecm
 
 		self.isAutoTimer = isAutoTimer
-		self.wasInStandby = False
 
 		self.log_entries = []
 		self.resetState()
 
 	def __repr__(self):
 		if not self.disabled:
-			return "RecordTimerEntry(name=%s, begin=%s, serviceref=%s, justplay=%s, isAutoTimer=%s)" % (self.name, ctime(self.begin), self.service_ref, self.justplay, self.isAutoTimer)
+			return "RecordTimerEntry(name=%s, begin=%s, serviceref=%s, justplay=%s)" % (self.name, ctime(self.begin), self.service_ref, self.justplay)
 		else:
-			return "RecordTimerEntry(name=%s, begin=%s, serviceref=%s, justplay=%s, isAutoTimer=%s, Disabled)" % (self.name, ctime(self.begin), self.service_ref, self.justplay, self.isAutoTimer)
+			return "RecordTimerEntry(name=%s, begin=%s, serviceref=%s, justplay=%s, Disabled)" % (self.name, ctime(self.begin), self.service_ref, self.justplay)
 
 	def log(self, code, msg):
 		self.log_entries.append((int(time()), code, msg))
@@ -166,7 +158,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		self.MountPath = dirname
 		mountwriteable = os.access(dirname, os.W_OK)
 		if not mountwriteable:
-			self.log(0, ("Mount '%s' is not writeable." % dirname))
+			self.log(0, ("Mount '%s' is not writeable.", dirname))
 			return False
 
 		s = os.statvfs(dirname)
@@ -280,8 +272,6 @@ class RecordTimerEntry(timer.TimerEntry, object):
 
 			if self.always_zap:
 				if Screens.Standby.inStandby:
-					self.wasInStandby = True
-					eActionMap.getInstance().bindAction('', -maxint - 1, self.keypress)
 					#set service to zap after standby
 					Screens.Standby.inStandby.prev_running_service = self.service_ref.ref
 					Screens.Standby.inStandby.paused_service = None
@@ -349,8 +339,6 @@ class RecordTimerEntry(timer.TimerEntry, object):
 
 			if self.justplay:
 				if Screens.Standby.inStandby:
-					self.wasInStandby = True
-					eActionMap.getInstance().bindAction('', -maxint - 1, self.keypress)
 					self.log(11, "wakeup and zap")
 					#set service to zap after standby
 					Screens.Standby.inStandby.prev_running_service = self.service_ref.ref
@@ -367,7 +355,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 						if config.usage.multibouquet.getValue():
 							bqrootstr = '1:7:1:0:0:0:0:0:0:0:FROM BOUQUET "bouquets.tv" ORDER BY bouquet'
 						else:
-							bqrootstr = '%s FROM BOUQUET "userbouquet.favourites.tv" ORDER BY bouquet'% self.service_types
+							bqrootstr = '%s FROM BOUQUET "userbouquet.favourites.tv" ORDER BY bouquet'%(self.service_types)
 						rootstr = ''
 						serviceHandler = eServiceCenter.getInstance()
 						rootbouquet = eServiceReference(bqrootstr)
@@ -420,11 +408,10 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					self.record_service = None
 
 			NavigationInstance.instance.RecordTimer.saveTimer()
-			if self.afterEvent == AFTEREVENT.STANDBY or (not wasRecTimerWakeup and self.autostate and self.afterEvent == AFTEREVENT.AUTO) or self.wasInStandby:
-				self.keypress() #this unbinds the keypress detection
+			if self.afterEvent == AFTEREVENT.STANDBY or (not wasRecTimerWakeup and self.autostate and self.afterEvent == AFTEREVENT.AUTO):
 				if not Screens.Standby.inStandby: # not already in standby
 					Notifications.AddNotificationWithCallback(self.sendStandbyNotification, MessageBox, _("A finished record timer wants to set your\n%s %s to standby. Do that now?") % (getMachineBrand(), getMachineName()), timeout = 180)
-			elif self.afterEvent == AFTEREVENT.DEEPSTANDBY:
+			elif self.afterEvent == AFTEREVENT.DEEPSTANDBY or (wasRecTimerWakeup and self.afterEvent == AFTEREVENT.AUTO):
 				if (abs(NavigationInstance.instance.RecordTimer.getNextRecordingTime() - time()) <= 900 or abs(NavigationInstance.instance.RecordTimer.getNextZapTime() - time()) <= 900) or NavigationInstance.instance.RecordTimer.getStillRecording():
 					print '[Timer] Recording or Recording due is next 15 mins, not return to deepstandby'
 					return True
@@ -432,20 +419,8 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					if Screens.Standby.inStandby: # in standby
 						quitMainloop(1)
 					else:
-						Notifications.AddNotificationWithCallback(self.sendTryQuitMainloopNotification, MessageBox, _("A finished record timer wants to shut down\nyour %s %s. Shutdown now?") % (getMachineBrand(), getMachineName()), default = True, timeout = 180)
-			elif wasRecTimerWakeup and self.afterEvent == AFTEREVENT.AUTO:
-				if (abs(NavigationInstance.instance.RecordTimer.getNextRecordingTime() - time()) <= 900 or abs(NavigationInstance.instance.RecordTimer.getNextZapTime() - time()) <= 900) or NavigationInstance.instance.RecordTimer.getStillRecording():
-					return True
-				if not Screens.Standby.inTryQuitMainloop: # not a shutdown messagebox is open
-					if Screens.Standby.inStandby: # in standby
-						quitMainloop(1)
-
+						Notifications.AddNotificationWithCallback(self.sendTryQuitMainloopNotification, MessageBox, _("A finished record timer wants to shut down\nyour %s %s. Shutdown now?") % (getMachineBrand(), getMachineName()), timeout = 180)
 			return True
-
-	def keypress(self, key=None, flag=1):
-		if flag and self.wasInStandby:
-			self.wasInStandby = False
-			eActionMap.getInstance().unbindAction('', self.keypress)
 
 	def setAutoincreaseEnd(self, entry = None):
 		if not self.autoincrease:
@@ -494,42 +469,9 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				self.StateEnded: self.end}[next_state]
 
 	def failureCB(self, answer):
-		if answer:
+		if answer == True:
 			self.log(13, "ok, zapped away")
 			#NavigationInstance.instance.stopUserServices()
-			from Screens.ChannelSelection import ChannelSelection
-			ChannelSelectionInstance = ChannelSelection.instance
-			self.service_types = service_types_tv
-			if ChannelSelectionInstance:
-				if config.usage.multibouquet.getValue():
-					bqrootstr = '1:7:1:0:0:0:0:0:0:0:FROM BOUQUET "bouquets.tv" ORDER BY bouquet'
-				else:
-					bqrootstr = '%s FROM BOUQUET "userbouquet.favourites.tv" ORDER BY bouquet'% self.service_types
-				rootstr = ''
-				serviceHandler = eServiceCenter.getInstance()
-				rootbouquet = eServiceReference(bqrootstr)
-				bouquet = eServiceReference(bqrootstr)
-				bouquetlist = serviceHandler.list(bouquet)
-				if not bouquetlist is None:
-					while True:
-						bouquet = bouquetlist.getNext()
-						if bouquet.flags & eServiceReference.isDirectory:
-							ChannelSelectionInstance.clearPath()
-							ChannelSelectionInstance.setRoot(bouquet)
-							servicelist = serviceHandler.list(bouquet)
-							if not servicelist is None:
-								serviceIterator = servicelist.getNext()
-								while serviceIterator.valid():
-									if self.service_ref.ref == serviceIterator:
-										break
-									serviceIterator = servicelist.getNext()
-								if self.service_ref.ref == serviceIterator:
-									break
-					ChannelSelectionInstance.enterPath(rootbouquet)
-					ChannelSelectionInstance.enterPath(bouquet)
-					ChannelSelectionInstance.saveRoot()
-					ChannelSelectionInstance.saveChannel(self.service_ref.ref)
-				ChannelSelectionInstance.addToHistory(self.service_ref.ref)
 			NavigationInstance.instance.playService(self.service_ref.ref)
 		else:
 			self.log(14, "user didn't want to zap away, record will probably fail")
@@ -618,7 +560,7 @@ def createTimer(xml):
 
 	name = xml.get("name").encode("utf-8")
 	#filename = xml.get("filename").encode("utf-8")
-	entry = RecordTimerEntry(serviceref, begin, end, name, description, eit, disabled, justplay, afterevent, dirname = location, tags = tags, descramble = descramble, record_ecm = record_ecm, isAutoTimer = isAutoTimer, always_zap = always_zap)
+	entry = RecordTimerEntry(serviceref, begin, end, name, description, eit, disabled, justplay, afterevent, dirname = location, tags = tags, descramble = descramble, record_ecm = record_ecm, always_zap = always_zap)
 	entry.repeated = int(repeated)
 
 	for l in xml.findall("log"):
@@ -666,11 +608,8 @@ class RecordTimer(timer.Timer):
 			if w.repeated:
 				w.processRepeated()
 				w.state = RecordTimerEntry.StateWaiting
-				w.first_try_prepare = True
 				self.addTimerEntry(w)
 			else:
-				# check for disabled timers, if time as passed set to completed.
-				self.cleanupDisabled()
 				# Remove old timers as set in config
 				self.cleanupDaily(config.recording.keep_timers.getValue())
 				insort(self.processed_timers, w)
@@ -723,7 +662,9 @@ class RecordTimer(timer.Timer):
 				checkit = False # at moment it is enough when the message is displayed one time
 
 	def saveTimer(self):
-		list = ['<?xml version="1.0" ?>\n', '<timers>\n']
+		list = []
+		list.append('<?xml version="1.0" ?>\n')
+		list.append('<timers>\n')
 
 		for timer in self.timer_list + self.processed_timers:
 			if timer.dontSave:
@@ -772,6 +713,7 @@ class RecordTimer(timer.Timer):
 			file.write(x)
 		file.flush()
 
+		import os
 		os.fsync(file.fileno())
 		file.close()
 		os.rename(self.Filename + ".writing", self.Filename)
@@ -786,12 +728,8 @@ class RecordTimer(timer.Timer):
 
 	def getStillRecording(self):
 		isStillRecording = False
-		now = time()
 		for timer in self.timer_list:
 			if timer.isStillRecording:
-				isStillRecording = True
-				break
-			elif abs(timer.begin - now) <= 10:
 				isStillRecording = True
 				break
 		return isStillRecording
@@ -810,7 +748,7 @@ class RecordTimer(timer.Timer):
 		faketime = time()+300
 
 		if config.timeshift.isRecording.getValue():
-			if 0 < nextrectime < faketime:
+			if nextrectime > 0 and nextrectime < faketime:
 				return nextrectime
 			else:
 				return faketime
@@ -825,10 +763,10 @@ class RecordTimer(timer.Timer):
 				return True
 		return False
 
-	def record(self, entry, ignoreTSC=False, dosave=True): # wird von loadTimer mit dosave=False aufgerufen
+	def record(self, entry, ignoreTSC=False, dosave=True):		#wird von loadTimer mit dosave=False aufgerufen
 		timersanitycheck = TimerSanityCheck(self.timer_list,entry)
 		if not timersanitycheck.check():
-			if not ignoreTSC:
+			if ignoreTSC != True:
 				print "timer conflict detected!"
 				return timersanitycheck.getSimulTimerList()
 			else:
@@ -845,27 +783,18 @@ class RecordTimer(timer.Timer):
 		return None
 
 	def isInTimer(self, eventid, begin, duration, service):
-		returnValue = None
-		type = 0
 		time_match = 0
-
-		isAutoTimer = False
+		type = 0
 		bt = None
-		check_offset_time = not config.recording.margin_before.getValue() and not config.recording.margin_after.getValue()
 		end = begin + duration
-		refstr = ':'.join(service.split(':')[:11])
+		refstr = str(service)
 		for x in self.timer_list:
-			if x.isAutoTimer == 1:
-				isAutoTimer = True
-			else:
-				isAutoTimer = False
-			check = ':'.join(x.service_ref.ref.toString().split(':')[:11]) == refstr
+			check = x.service_ref.ref.toString() == refstr
 			if not check:
 				sref = x.service_ref.ref
 				parent_sid = sref.getUnsignedData(5)
 				parent_tsid = sref.getUnsignedData(6)
-				if parent_sid and parent_tsid:
-					# check for subservice
+				if parent_sid and parent_tsid: # check for subservice
 					sid = sref.getUnsignedData(1)
 					tsid = sref.getUnsignedData(2)
 					sref.setUnsignedData(1, parent_sid)
@@ -889,125 +818,64 @@ class RecordTimer(timer.Timer):
 							break
 			if check:
 				timer_end = x.end
-				timer_begin = x.begin
-				type_offset = 0
-				if not x.repeated and check_offset_time:
-					if 0 < end - timer_end <= 59:
-						timer_end = end
-					elif 0 < timer_begin - begin <= 59:
-						timer_begin = begin
-				if x.justplay:
-					type_offset = 5
-					if (timer_end - x.begin) <= 1:
-						timer_end += 60
-				if x.always_zap:
-					type_offset = 10
-
+				if x.justplay and (timer_end - x.begin) <= 1:
+					timer_end += 60
 				if x.repeated != 0:
 					if bt is None:
 						bt = localtime(begin)
+						et = localtime(end)
 						bday = bt.tm_wday
-						begin2 = 1440 + bt.tm_hour * 60 + bt.tm_min
-						end2 = begin2 + duration / 60
-					xbt = localtime(x.begin)
-					xet = localtime(timer_end)
-					offset_day = False
-					checking_time = x.begin < begin or begin <= x.begin <= end
-					if xbt.tm_yday != xet.tm_yday:
-						oday = bday - 1
-						if oday == -1: oday = 6
-						offset_day = x.repeated & (1 << oday)
-					xbegin = 1440 + xbt.tm_hour * 60 + xbt.tm_min
-					xend = xbegin + ((timer_end - x.begin) / 60)
-					if xend < xbegin:
-						xend += 1440
-					if x.repeated & (1 << bday) and checking_time:
+						begin2 = bday * 1440 + bt.tm_hour * 60 + bt.tm_min
+						end2   = et.tm_wday * 1440 + et.tm_hour * 60 + et.tm_min
+					if x.repeated & (1 << bday):
+						xbt = localtime(x.begin)
+						xet = localtime(timer_end)
+						xbegin = bday * 1440 + xbt.tm_hour * 60 + xbt.tm_min
+						xend   = bday * 1440 + xet.tm_hour * 60 + xet.tm_min
+						if xend < xbegin:
+							xend += 1440
 						if begin2 < xbegin <= end2:
-							if xend < end2:
-								# recording within event
+							if xend < end2: # recording within event
 								time_match = (xend - xbegin) * 60
-								type = type_offset + 3
-							else:
-								# recording last part of event
+								type = 4
+							else:			# recording last part of event
 								time_match = (end2 - xbegin) * 60
-								type = type_offset + 1
+								type = 1
 						elif xbegin <= begin2 <= xend:
-							if xend < end2:
-								# recording first part of event
+							if xend < end2: # recording first part of event
 								time_match = (xend - begin2) * 60
-								type = type_offset + 4
-							else:
-								# recording whole event
+								type = 5
+							else:			# recording whole event
 								time_match = (end2 - begin2) * 60
-								type = type_offset + 2
-						elif offset_day:
-							xbegin -= 1440
-							xend -= 1440
-							if begin2 < xbegin <= end2:
-								if xend < end2:
-									# recording within event
-									time_match = (xend - xbegin) * 60
-									type = type_offset + 3
-								else:
-									# recording last part of event
-									time_match = (end2 - xbegin) * 60
-									type = type_offset + 1
-							elif xbegin <= begin2 <= xend:
-								if xend < end2:
-									# recording first part of event
-									time_match = (xend - begin2) * 60
-									type = type_offset + 4
-								else:
-									# recording whole event
-									time_match = (end2 - begin2) * 60
-									type = type_offset + 2
-					elif offset_day and checking_time:
-						xbegin -= 1440
-						xend -= 1440
-						if begin2 < xbegin <= end2:
-							if xend < end2:
-								# recording within event
-								time_match = (xend - xbegin) * 60
-								type = type_offset + 3
-							else:
-								# recording last part of event
-								time_match = (end2 - xbegin) * 60
-								type = type_offset + 1
-						elif xbegin <= begin2 <= xend:
-							if xend < end2:
-								# recording first part of event
-								time_match = (xend - begin2) * 60
-								type = type_offset + 4
-							else:
-								# recording whole event
-								time_match = (end2 - begin2) * 60
-								type = type_offset + 2
+								type = 2
 				else:
-					if begin < timer_begin <= end:
-						if timer_end < end:
-							# recording within event
-							time_match = timer_end - timer_begin
-							type = type_offset + 3
-						else:
-							# recording last part of event
-							time_match = end - timer_begin
-							type = type_offset + 1
-					elif timer_begin <= begin <= timer_end:
-						if timer_end < end:
-							# recording first part of event
+					if begin < x.begin <= end:
+						if timer_end < end: # recording within event
+							time_match = timer_end - x.begin
+							type = 3
+						else:           # recording last part of event
+							time_match = end - x.begin
+							type = 1
+					elif x.begin <= begin <= timer_end:
+						if timer_end < end: # recording first part of event
 							time_match = timer_end - begin
-							type = type_offset + 4
-							if x.justplay:
-								type = type_offset + 2
-						else: # recording whole event
+							if not x.justplay:
+#							if not x.justplay or (x.end - (x.begin + (config.recording.margin_before.getValue() * 60))) > 1:
+								type = 5
+							elif x.justplay:
+								type = 3
+						else:           # recording whole event
 							time_match = end - begin
-							type = type_offset + 2
-
-				if time_match:
-					returnValue = (time_match, type, isAutoTimer)
-					if type in (2,7,12): # When full recording do not look further
-						break
-		return returnValue
+							if not x.justplay:
+								type = 2
+							else:
+								type = 3
+				if type == 2 or type == 3: # stop searching if a full recording is found
+					break
+		if time_match:
+			return (time_match, type)
+		else:
+			return None
 
 	def removeEntry(self, entry):
 		print "[Timer] Remove " + str(entry)

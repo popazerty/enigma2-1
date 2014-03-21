@@ -45,7 +45,6 @@ public:
 	virtual RESULT stop() = 0;
 
 	virtual RESULT getCurrentPCR(pts_t &pcr) = 0;
-	virtual RESULT getFirstPTS(pts_t &pts) = 0;
 	
 	enum {
 		eventWriteError,

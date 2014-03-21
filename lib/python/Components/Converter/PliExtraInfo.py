@@ -7,7 +7,6 @@ from Components.config import config
 from Tools.Transponder import ConvertToHumanReadable
 from Tools.GetEcmInfo import GetEcmInfo
 from Poll import Poll
-from Components.Converter.ChannelNumbers import channelnumbers
 
 def addspace(text):
 	if text:
@@ -68,7 +67,7 @@ class PliExtraInfo(Poll, Converter, object):
 		self.feraw = self.fedata = self.updateFEdata = None
 
 	def getCryptoInfo(self, info):
-		if info.getInfo(iServiceInformation.sIsCrypted) == 1:
+		if (info.getInfo(iServiceInformation.sIsCrypted) == 1):
 			data = self.ecmdata.getEcmData()
 			self.current_source = data[0]
 			self.current_caid = data[1]
@@ -85,13 +84,13 @@ class PliExtraInfo(Poll, Converter, object):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
 
 		for caid_entry in self.caid_data:
-			if int(caid_entry[0], 16) <= int(self.current_caid, 16) <= int(caid_entry[1], 16):
+			if int(self.current_caid, 16) >= int(caid_entry[0], 16) and int(self.current_caid, 16) <= int(caid_entry[1], 16):
 				color="\c0000??00"
 			else:
 				color = "\c007?7?7?"
 				try:
 					for caid in available_caids:
-						if int(caid_entry[0], 16) <= caid <= int(caid_entry[1], 16):
+						if caid >= int(caid_entry[0], 16) and caid <= int(caid_entry[1], 16):
 							color="\c00????00"
 				except:
 					pass
@@ -105,13 +104,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoSeca(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x100', 16) <= int(self.current_caid, 16) <= int('0x1ff', 16):
+		if int(self.current_caid, 16) >= int('0x100', 16) and int(self.current_caid, 16) <= int('0x1ff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x100', 16) <= caid <= int('0x1ff', 16):
+					if caid >= int('0x100', 16) and caid <= int('0x1ff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -121,13 +120,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoVia(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x500', 16) <= int(self.current_caid, 16) <= int('0x5ff', 16):
+		if int(self.current_caid, 16) >= int('0x500', 16) and int(self.current_caid, 16) <= int('0x5ff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x500', 16) <= caid <= int('0x5ff', 16):
+					if caid >= int('0x500', 16) and caid <= int('0x5ff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -137,13 +136,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoIrdeto(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x600', 16) <= int(self.current_caid, 16) <= int('0x6ff', 16):
+		if int(self.current_caid, 16) >= int('0x600', 16) and int(self.current_caid, 16) <= int('0x6ff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x600', 16) <= caid <= int('0x6ff', 16):
+					if caid >= int('0x600', 16) and caid <= int('0x6ff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -153,13 +152,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoNDS(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x900', 16) <= int(self.current_caid, 16) <= int('0x9ff', 16):
+		if int(self.current_caid, 16) >= int('0x900', 16) and int(self.current_caid, 16) <= int('0x9ff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x900', 16) <= caid <= int('0x9ff', 16):
+					if caid >= int('0x900', 16) and caid <= int('0x9ff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -169,13 +168,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoConax(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0xb00', 16) <= int(self.current_caid, 16) <= int('0xbff', 16):
+		if int(self.current_caid, 16) >= int('0xb00', 16) and int(self.current_caid, 16) <= int('0xbff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0xb00', 16) <= caid <= int('0xbff', 16):
+					if caid >= int('0xb00', 16) and caid <= int('0xbff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -185,13 +184,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoCryptoW(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0xd00', 16) <= int(self.current_caid, 16) <= int('0xdff', 16):
+		if int(self.current_caid, 16) >= int('0xd00', 16) and int(self.current_caid, 16) <= int('0xdff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0xd00', 16) <= caid <= int('0xdff', 16):
+					if caid >= int('0xd00', 16) and caid <= int('0xdff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -201,13 +200,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoPowerVU(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0xe00', 16) <= int(self.current_caid, 16) <= int('0xeff', 16):
+		if int(self.current_caid, 16) >= int('0xe00', 16) and int(self.current_caid, 16) <= int('0xeff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0xe00', 16) <= caid <= int('0xeff', 16):
+					if caid >= int('0xe00', 16) and caid <= int('0xeff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -217,13 +216,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoBeta(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x1700', 16) <= int(self.current_caid, 16) <= int('0x17ff', 16):
+		if int(self.current_caid, 16) >= int('0x1700', 16) and int(self.current_caid, 16) <= int('0x17ff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x1700', 16) <= caid <= int('0x17ff', 16):
+					if caid >= int('0x1700', 16) and caid <= int('0x17ff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -233,13 +232,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoNagra(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x1800', 16) <= int(self.current_caid, 16) <= int('0x18ff', 16):
+		if int(self.current_caid, 16) >= int('0x1800', 16) and int(self.current_caid, 16) <= int('0x18ff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x1800', 16) <= caid <= int('0x18ff', 16):
+					if caid >= int('0x1800', 16) and caid <= int('0x18ff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -249,13 +248,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoBiss(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x2600', 16) <= int(self.current_caid, 16) <= int('0x26ff', 16):
+		if int(self.current_caid, 16) >= int('0x2600', 16) and int(self.current_caid, 16) <= int('0x26ff', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x2600', 16) <= caid <= int('0x26ff', 16):
+					if caid >= int('0x2600', 16) and caid <= int('0x26ff', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -265,13 +264,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 	def createCryptoDre(self, info):
 		available_caids = info.getInfoObject(iServiceInformation.sCAIDs)
-		if int('0x4ae0', 16) <= int(self.current_caid, 16) <= int('0x4ae1', 16):
+		if int(self.current_caid, 16) >= int('0x4ae0', 16) and int(self.current_caid, 16) <= int('0x4ae1', 16):
 			color="\c004c7d3f"
 		else:
 			color = "\c009?9?9?"
 			try:
 				for caid in available_caids:
-					if int('0x4ae0', 16) <= caid <= int('0x4ae1', 16):
+					if caid >= int('0x4ae0', 16) and caid <= int('0x4ae1', 16):
 						color="\c00eeee00"
 			except:
 				pass
@@ -283,7 +282,7 @@ class PliExtraInfo(Poll, Converter, object):
 		caid_name = "FTA"
 		try:
 			for caid_entry in self.caid_data:
-				if int(caid_entry[0], 16) <= int(self.current_caid, 16) <= int(caid_entry[1], 16):
+				if int(self.current_caid, 16) >= int(caid_entry[0], 16) and int(self.current_caid, 16) <= int(caid_entry[1], 16):
 					caid_name = caid_entry[2]
 					break
 			return caid_name + ":%04x:%04x:%04x:%04x" % (int(self.current_caid,16), int(self.current_provid,16), info.getInfo(iServiceInformation.sSID), int(self.current_ecmpid,16))
@@ -317,23 +316,14 @@ class PliExtraInfo(Poll, Converter, object):
 		return "Pids:%04d:%04d:%04d:%05d" % (vpid, apid, pcrpid, sidpid)
 
 	def createTransponderInfo(self, fedata, feraw):
-		if "DVB-T" in feraw.get("tuner_type"):
-			tmp = addspace(self.createChannelNumber(fedata, feraw)) + self.createFrequency(fedata) + "/" + self.createPolarization(fedata)
-		else:
-			tmp = addspace(self.createFrequency(fedata)) + addspace(self.createPolarization(fedata))
-		return addspace(self.createTunerSystem(fedata)) + tmp + addspace(self.createSymbolRate(fedata, feraw)) + addspace(self.createFEC(fedata, feraw)) \
-			+ addspace(self.createModulation(fedata)) + self.createOrbPos(feraw)
+		return addspace(self.createTunerSystem(fedata)) + addspace(self.createFrequency(fedata)) + addspace(self.createPolarization(fedata)) \
+			+ addspace(self.createSymbolRate(fedata, feraw)) + addspace(self.createFEC(fedata, feraw)) + addspace(self.createModulation(fedata)) \
+			+ self.createOrbPos(feraw)
 
 	def createFrequency(self, feraw):
 		frequency = feraw.get("frequency")
 		if frequency:
 			return str(frequency)
-		return ""
-
-	def createChannelNumber(self, fedata, feraw):
-		channel = channelnumbers.getChannelNumber(feraw.get("frequency"), feraw.get("tuner_number"))
-		if channel:
-			return _("CH") + "%s" % channel
 		return ""
 
 	def createSymbolRate(self, fedata, feraw):
@@ -789,9 +779,6 @@ class PliExtraInfo(Poll, Converter, object):
 		if self.type == "PIDInfo":
 			return self.createPIDInfo(info)
 
-		if self.type == "TerrestrialChannelNumber":
-			return self.createChannelNumber(fedata, feraw)
-
 		return _("invalid type")
 
 	text = property(getText)
@@ -828,13 +815,13 @@ class PliExtraInfo(Poll, Converter, object):
 
 		for caid_entry in self.caid_data:
 			if caid_entry[3] == request_caid:
-				if request_selected:
-					if int(caid_entry[0], 16) <= int(current_caid, 16) <= int(caid_entry[1], 16):
+				if(request_selected):
+					if int(current_caid, 16) >= int(caid_entry[0], 16) and int(current_caid, 16) <= int(caid_entry[1], 16):
 						return True
 				else: # request available
 					try:
 						for caid in available_caids:
-							if int(caid_entry[0], 16) <= caid <= int(caid_entry[1], 16):
+							if caid >= int(caid_entry[0], 16) and caid <= int(caid_entry[1], 16):
 								return True
 					except:
 						pass

@@ -86,8 +86,7 @@ class eDVBServicePlay: public eDVBServiceBase,
 		public iAudioTrackSelection, public iAudioChannelSelection,
 		public iSubserviceList, public iTimeshiftService,
 		public iCueSheet, public iSubtitleOutput, public iAudioDelay,
-		public iRdsDecoder, public iStreamableService, 
-		public iStreamedService
+		public iRdsDecoder, public iStreamableService
 {
 	DECLARE_REF(eDVBServicePlay);
 public:
@@ -112,12 +111,7 @@ public:
 	RESULT audioDelay(ePtr<iAudioDelay> &ptr);
 	RESULT rdsDecoder(ePtr<iRdsDecoder> &ptr);
 	RESULT keys(ePtr<iServiceKeys> &ptr) { ptr = 0; return -1; }
-
-		// iStreamedService
-	RESULT streamed(ePtr<iStreamedService> &ptr);
-	ePtr<iStreamBufferInfo> getBufferCharge();
-	int setBufferSize(int size);
-
+	RESULT streamed(ePtr<iStreamedService> &ptr) { ptr = 0; return -1; }
 
 		// iPauseableService
 	RESULT pause();
@@ -139,7 +133,6 @@ public:
 	int getInfo(int w);
 	std::string getInfoString(int w);
 	ePtr<iDVBTransponderData> getTransponderData();
-	void getAITApplications(std::map<int, std::string> &aitlist);
 	void getCaIds(std::vector<int> &caids, std::vector<int> &ecmpids);
 
 		// iAudioTrackSelection	
@@ -201,7 +194,7 @@ protected:
 	ePtr<eDVBService> m_dvb_service;
 	
 	ePtr<iTSMPEGDecoder> m_decoder;
-	int m_decoder_index;
+	int m_is_primary;
 	int m_have_video_pid;
 	int m_tune_state;
 	

@@ -1,6 +1,6 @@
 from Screens.Screen import Screen
 from Screens.Setup import setupdom
-from Screens.LocationBox import MovieLocationBox, TimeshiftLocationBox, AutorecordLocationBox
+from Screens.LocationBox import MovieLocationBox, TimeshiftLocationBox
 from Screens.MessageBox import MessageBox
 from Components.Label import Label
 from Components.config import config, configfile, ConfigYesNo, ConfigNothing, ConfigSelection, getConfigListEntry
@@ -42,8 +42,7 @@ class SetupSummary(Screen):
 
 class RecordingSettings(Screen,ConfigListScreen):
 	def removeNotifier(self):
-		if config.usage.setup_level.notifiers:
-			config.usage.setup_level.notifiers.remove(self.levelChanged)
+		config.usage.setup_level.notifiers.remove(self.levelChanged)
 
 	def levelChanged(self, configElement):
 		list = []
@@ -178,7 +177,6 @@ class RecordingSettings(Screen,ConfigListScreen):
 		currentry = self["config"].getCurrent()
 		self.lastvideodirs = config.movielist.videodirs.getValue()
 		self.lasttimeshiftdirs = config.usage.allowed_timeshift_paths.getValue()
-		self.lastautorecorddirs = config.usage.allowed_autorecord_paths.getValue()
 		if config.usage.setup_level.index >= 2:
 			txt = _("Default movie location")
 		else:

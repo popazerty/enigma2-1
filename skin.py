@@ -5,19 +5,12 @@ import os
 
 profile("LOAD:enigma_skin")
 from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, addFont, gRGB, eWindowStyleSkinned, getDesktop
-from Components.config import ConfigSubsection, ConfigText, config, ConfigYesNo, ConfigSelection, ConfigNothing
-from Components.Converter.Converter import Converter
-from Components.Sources.Source import Source, ObsoleteSource
+from Components.config import ConfigSubsection, ConfigText, config, ConfigYesNo
+from Components.Sources.Source import ObsoleteSource
 from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_SKIN_IMAGE, SCOPE_FONTS, SCOPE_ACTIVE_SKIN, SCOPE_ACTIVE_LCDSKIN, SCOPE_CURRENT_SKIN, SCOPE_CONFIG, fileExists
 from Tools.Import import my_import
 from Tools.LoadPixmap import LoadPixmap
 from Components.RcModel import rc_model
-from boxbranding import getBoxType
-
-config.vfd = ConfigSubsection()
-config.vfd.show = ConfigSelection([("skin_text.xml", _("Channel Name")), ("skin_text_clock.xml", _("Clock"))], "skin_text.xml")
-if not os.path.exists("/usr/share/enigma2/skin_text.xml"):
-	config.vfd.show = ConfigNothing()
 
 colorNames = {}
 # Predefined fonts, typically used in built-in screens and for components like
@@ -80,11 +73,13 @@ def skin_user_skinname():
 
 # example: loadSkin("nemesis_greenline/skin.xml")
 config.skin = ConfigSubsection()
-DEFAULT_SKIN = "mega32/skin.xml"
 
+# on SD hardware, ViX Night HD will not be available
+DEFAULT_SKIN = "mega32/skin.xml"
 if not fileExists(resolveFilename(SCOPE_SKIN, DEFAULT_SKIN)):
 	# in that case, fallback to Magic (which is an SD skin)
 	DEFAULT_SKIN = "skin.xml"
+
 config.skin.primary_skin = ConfigText(default=DEFAULT_SKIN)
 
 DEFAULT_DISPLAY_SKIN = "skin_display.xml"
@@ -105,8 +100,6 @@ addSkin('skin_box.xml')
 # add optional discrete second infobar
 addSkin('skin_second_infobar.xml')
 display_skin_id = 1
-if getBoxType().startswith('dm'):
-	display_skin_id = 2
 try:
 	if not addSkin(os.path.join('display', config.skin.display_skin.getValue())):
 		raise DisplaySkinError, "display skin not found"
@@ -120,12 +113,6 @@ except Exception, err:
 	skin = os.path.join('display', skin)
 	addSkin(skin)
 	del skin
-
-# Add Skin for Display
-try:
-	addSkin(config.vfd.show.getValue())
-except:
-	addSkin('skin_text.xml')
 
 addSkin('skin_subtitles.xml')
 
@@ -226,7 +213,7 @@ def parseColor(s):
 		try:
 			return colorNames[s]
 		except:
-			raise SkinError("color '%s' must be #aarrggbb or valid named color" % s)
+			raise SkinError("color '%s' must be #aarrggbb or valid named color" % (s))
 	return gRGB(int(s[1:], 0x10))
 
 def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, ignore=(), filenames=frozenset(("pixmap", "pointer", "seek_pointer", "backgroundPixmap", "selectionPixmap", "sliderPixmap", "scrollbarbackgroundPixmap"))):
@@ -264,19 +251,20 @@ def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, igno
 
 def morphRcImagePath(value):
 	if rc_model.rcIsDefault() is False:
-		if value == '/usr/share/enigma2/skin_default/rc.png' or value == '/usr/share/enigma2/skin_default/rcold.png':
-			value = rc_model.getRcLocation() + 'rc.png'
-		elif value == '/usr/share/enigma2/skin_default/rc0.png' or value == '/usr/share/enigma2/skin_default/rc1.png' or value == '/usr/share/enigma2/skin_default/rc2.png':
+		if value.find('rc.png') != -1 or value.find('oldrc.png') != -1:
 			value = rc_model.getRcLocation() + 'rc.png'
 	return value
 
 def loadPixmap(path, desktop):
+	cached = False
 	option = path.find("#")
 	if option != -1:
+		options = path[option+1:].split(',')
 		path = path[:option]
-	ptr = LoadPixmap(morphRcImagePath(path), desktop)
+		cached = "cached" in options
+	ptr = LoadPixmap(morphRcImagePath(path), desktop, cached)
 	if ptr is None:
-		raise SkinError("pixmap file %s not found!" % path)
+		raise SkinError("pixmap file %s not found!" % (path))
 	return ptr
 
 class AttributeParser:
@@ -355,7 +343,7 @@ class AttributeParser:
 					"orRightToLeft": (self.guiObject.orHorizontal, True),
 				}[value])
 		except KeyError:
-			print "oprientation must be either orVertical or orHorizontal!, not %s. Please contact the skin's author!" % value
+			print "oprientation must be either orVertical or orHorizontal!, not %s. Please contact the skin's author!" % (value)
 	def valign(self, value):
 		try:
 			self.guiObject.setVAlign(
@@ -364,7 +352,7 @@ class AttributeParser:
 					"bottom": self.guiObject.alignBottom
 				}[value])
 		except KeyError:
-			print "valign must be either top, center or bottom!, not %s. Please contact the skin's author!" % value
+			print "valign must be either top, center or bottom!, not %s. Please contact the skin's author!" % (value)
 	def halign(self, value):
 		try:
 			self.guiObject.setHAlign(
@@ -374,7 +362,7 @@ class AttributeParser:
 					"block": self.guiObject.alignBlock
 				}[value])
 		except KeyError:
-			print "halign must be either left, center, right or block!, not %s. Please contact the skin's author!" % value
+			print "halign must be either left, center, right or block!, not %s. Please contact the skin's author!" % (value)
 	def textOffset(self, value):
 		x, y = value.split(',')
 		self.guiObject.setTextOffset(ePoint(int(x) * self.scale[0][0] / self.scale[0][1], int(y) * self.scale[1][0] / self.scale[1][1]))
@@ -490,10 +478,12 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 			skinfile = resolveFilename(SCOPE_ACTIVE_SKIN, filename, path_prefix=path_prefix)
 			if not fileExists(skinfile):
 				skinfile = resolveFilename(SCOPE_SKIN_IMAGE, filename, path_prefix=path_prefix)
-			if fileExists(skinfile):
-				print "[SKIN] loading include:", skinfile
+			print "[SKIN] loading include:", skinfile
+			try:
 				loadSkin(skinfile)
-
+			except Exception, err:
+				print "not loading user skin: ", err
+				
 	for c in skin.findall("colors"):
 		for color in c.findall("color"):
 			get_attr = color.attrib.get
@@ -609,7 +599,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 			try:
 				style.setColor(eWindowStyleSkinned.__dict__["col" + colorType], color)
 			except:
-				raise SkinError("Unknown color %s" % colorType)
+				raise SkinError("Unknown color %s" % (colorType))
 				#pass
 			#print "  color:", type, color
 		x = eWindowStyleManager.getInstance()
@@ -695,14 +685,13 @@ def loadSkinData(desktop):
 	del dom_skins
 
 class additionalWidget:
-	def __init__(self):
-		pass
+	pass
 
 # Class that makes a tuple look like something else. Some plugins just assume
 # that size is a string and try to parse it. This class makes that work.
 class SizeTuple(tuple):
 	def split(self, *args):
-		return str(self[0]), str(self[1])
+		return (str(self[0]), str(self[1]))
 	def strip(self, *args):
 		return '%s,%s' % self
 	def __str__(self):
@@ -754,7 +743,7 @@ class SkinContext:
 				size = (w, h)
 				pos = pos.split(',')
 				pos = (self.x + parseCoordinate(pos[0], self.w, size[0], font), self.y + parseCoordinate(pos[1], self.h, size[1], font))
-		return SizeTuple(pos), SizeTuple(size)
+		return (SizeTuple(pos), SizeTuple(size))
 
 class SkinContextStack(SkinContext):
 	# A context that stacks things instead of aligning them
@@ -782,7 +771,7 @@ class SkinContextStack(SkinContext):
 				size = (w, h)
 				pos = pos.split(',')
 				pos = (self.x + parseCoordinate(pos[0], self.w, size[0], font), self.y + parseCoordinate(pos[1], self.h, size[1], font))
-		return SizeTuple(pos), SizeTuple(size)
+		return (SizeTuple(pos), SizeTuple(size))
 
 def readSkin(screen, skin, names, desktop):
 	if not isinstance(names, list):
@@ -807,7 +796,7 @@ def readSkin(screen, skin, names, desktop):
 	if myscreen is None and getattr(screen, "skin", None):
 		skin = screen.skin
 		print "[SKIN] Parsing embedded skin", name
-		if isinstance(skin, tuple):
+		if (isinstance(skin, tuple)):
 			for s in skin:
 				candidate = xml.etree.cElementTree.fromstring(s)
 				if candidate.tag == 'screen':
@@ -886,7 +875,7 @@ def readSkin(screen, skin, names, desktop):
 				if isinstance(source, ObsoleteSource):
 					# however, if we found an "obsolete source", issue warning, and resolve the real source.
 					print "WARNING: SKIN '%s' USES OBSOLETE SOURCE '%s', USE '%s' INSTEAD!" % (name, wsource, source.new_source)
-					print "OBSOLETE SOURCE WILL BE REMOVED %s, PLEASE UPDATE!" % source.removal_date
+					print "OBSOLETE SOURCE WILL BE REMOVED %s, PLEASE UPDATE!" % (source.removal_date)
 					if source.description:
 						print source.description
 					wsource = source.new_source
@@ -899,7 +888,7 @@ def readSkin(screen, skin, names, desktop):
 
 			wrender = get_attr('render')
 			if not wrender:
-				raise SkinError("you must define a renderer with render= for source '%s'" % wsource)
+				raise SkinError("you must define a renderer with render= for source '%s'" % (wsource))
 			for converter in widget.findall("convert"):
 				ctype = converter.get('type')
 				assert ctype, "'convert'-tag needs a 'type'-attribute"

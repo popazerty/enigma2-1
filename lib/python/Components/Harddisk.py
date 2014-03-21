@@ -3,7 +3,6 @@ import time
 from Tools.CList import CList
 from SystemInfo import SystemInfo
 from Components.Console import Console
-from Tools.HardwareInfo import HardwareInfo
 import Task
 
 def readFile(filename):
@@ -122,11 +121,7 @@ class Harddisk:
 		elif self.type == DEVTYPE_DEVFS:
 			ide_cf = self.device[:2] == "hd" and "host0" not in self.dev_path
 
-		hw_type = HardwareInfo().get_device_name()
-		if hw_type == 'elite' or hw_type == 'premium' or hw_type == 'premium+' or hw_type == 'ultra' :
-			internal = "ide" in self.phys_path
-		else:
-			internal = "pci" in self.phys_path
+		internal = ("pci" or "ata") in self.phys_path
 
 		if ide_cf:
 			ret = _("External (CF)")
@@ -228,12 +223,12 @@ class Harddisk:
 		cmd = 'umount ' + dev
 		print "[Harddisk]", cmd
 		res = os.system(cmd)
-		return res >> 8
+		return (res >> 8)
 
 	def createPartition(self):
 		cmd = 'printf "8,\n;0,0\n;0,0\n;0,0\ny\n" | sfdisk -f -uS ' + self.disk_path
 		res = os.system(cmd)
-		return res >> 8
+		return (res >> 8)
 
 	def mkfs(self):
 		# No longer supported, use createInitializeJob instead
@@ -259,7 +254,7 @@ class Harddisk:
 				print "[Harddisk] mounting:", fspath
 				cmd = "mount -t auto " + fspath
 				res = os.system(cmd)
-				return res >> 8
+				return (res >> 8)
 		# device is not in fstab
 		res = -1
 		if self.type == DEVTYPE_UDEV:
@@ -268,7 +263,7 @@ class Harddisk:
 			# give udev some time to make the mount, which it will do asynchronously
 			from time import sleep
 			sleep(3)
-		return res >> 8
+		return (res >> 8)
 
 	def fsck(self):
 		# No longer supported, use createCheckJob instead
@@ -330,7 +325,11 @@ class Harddisk:
 			else:
 				# Prefer optimal alignment for performance
 				alignment = 'opt'
-			task.args += ['-a', alignment, '-s', self.disk_path, 'mklabel', 'gpt', 'mkpart', 'primary', '0%', '100%']
+			if size > 2097151:
+				parttype = 'gpt'
+			else:
+				parttype = 'msdos'
+			task.args += ['-a', alignment, '-s', self.disk_path, 'mklabel', parttype, 'mkpart', 'primary', '0%', '100%']
 		else:
 			task.setTool('sfdisk')
 			task.args.append('-f')
@@ -349,34 +348,27 @@ class Harddisk:
 		task.weighting = 1
 
 		task = MkfsTask(job, _("Creating filesystem"))
-		big_o_options = ["dir_index"]
 		if isFileSystemSupported("ext4"):
 			task.setTool("mkfs.ext4")
 			if size > 20000:
-				try:
-					file = open("/proc/version","r")
-					version = map(int, file.read().split(' ', 4)[2].split('.',2)[:2])
-					file.close()
-					if (version[0] > 3) or (version[0] > 2 and version[1] >= 2):
-						# Linux version 3.2 supports bigalloc and -C option, use 256k blocks
-						task.args += ["-C", "262144"]
-						big_o_options.append("bigalloc")
-				except Exception, ex:
-					print "Failed to detect Linux version:", ex
+				file = open("/proc/version","r")
+				version = file.read().split(' ', 4)[2].split('.',2)[:2]
+				file.close()
+				if (version[0] > 3) or ((version[0] > 2) and (version[1] >= 2)):
+					# Linux version 3.2 supports bigalloc and -C option, use 256k blocks
+					task.args += ["-O", "bigalloc", "-C", "262144"]
 		else:
 			task.setTool("mkfs.ext3")
 		if size > 250000:
 			# No more than 256k i-nodes (prevent problems with fsck memory requirements)
-			task.args += ["-T", "largefile", "-N", "262144"]
-			big_o_options.append("sparse_super")
+			task.args += ["-T", "largefile", "-O", "sparse_super", "-N", "262144"]
 		elif size > 16384:
 			# between 16GB and 250GB: 1 i-node per megabyte
-			task.args += ["-T", "largefile"]
-			big_o_options.append("sparse_super")
+			task.args += ["-T", "largefile", "-O", "sparse_super"]
 		elif size > 2048:
 			# Over 2GB: 32 i-nodes per megabyte
 			task.args += ["-T", "largefile", "-N", str(size * 32)]
-		task.args += ["-m0", "-O", ",".join(big_o_options), self.partitionPath("1")]
+		task.args += ["-m0", "-O", "dir_index", self.partitionPath("1")]
 
 		task = MountTask(job, self)
 		task.weighting = 3
@@ -467,7 +459,7 @@ class Harddisk:
 			l = f.read()
 			f.close()
 			data = l.split(None,5)
-			return int(data[0]), int(data[4])
+			return (int(data[0]), int(data[4]))
 		else:
 			return -1,-1
 
@@ -482,10 +474,6 @@ class Harddisk:
 		self.timer = eTimer()
 		self.timer.callback.append(self.runIdle)
 		self.idle_running = True
-		self.hdd_timer = False
-		configsettings = readFile('/etc/enigma2/settings')
-		if "config.usage.hdd_timer" in configsettings:
-			self.hdd_timer = True
 		self.setIdleTime(self.max_idle_time) # kick the idle polling loop
 
 	def runIdle(self):
@@ -513,7 +501,7 @@ class Harddisk:
 			Console().ePopen(("sdparm", "sdparm", "--flexible", "--readonly", "--command=stop", self.disk_path))
 		else:
 			Console().ePopen(("hdparm", "hdparm", "-y", self.disk_path))
-			
+
 	def setIdleTime(self, idle):
 		self.max_idle_time = idle
 		if self.idle_running:
@@ -557,7 +545,7 @@ class Partition:
 			return None
 
 	def tabbedDescription(self):
-		if self.mountpoint.startswith('/media/net') or self.mountpoint.startswith('/media/autofs'):
+		if self.mountpoint.startswith('/media/net'):
 			# Network devices have a user defined name
 			return self.description
 		return self.description + '\t' + self.mountpoint
@@ -628,9 +616,11 @@ class HarddiskManager:
 		self.devices_scanned_on_init = [ ]
 		self.on_partition_list_change = CList()
 		self.enumerateBlockDevices()
+		# Find stuff not detected by the enumeration
 		self.enumerateNetworkMounts()
 		# Find stuff not detected by the enumeration
-		p = [("/", _("Internal flash"))]
+		p = [("/", _("Internal Flash")),("/media/upnp", _("DLNA")),]
+
 		self.partitions.extend([ Partition(mountpoint = x[0], description = x[1]) for x in p ])
 
 	def getBlockDevInfo(self, blockdev):
@@ -695,19 +685,19 @@ class HarddiskManager:
 			for fil in netmount:
 				if os.path.ismount('/media/net/' + fil):
 					print "new Network Mount", fil, '->', os.path.join('/media/net/',fil)
-					self.partitions.append(Partition(mountpoint = os.path.join('/media/net/',fil + '/'), description = fil))
-		autofsmount = (os.path.exists('/media/autofs') and os.listdir('/media/autofs')) or ""
-		if len(autofsmount) > 0:
-			for fil in autofsmount:
-				if os.path.ismount('/media/autofs/' + fil) or os.path.exists('/media/autofs/' + fil):
-					print "new Network Mount", fil, '->', os.path.join('/media/autofs/',fil)
-					self.partitions.append(Partition(mountpoint = os.path.join('/media/autofs/',fil + '/'), description = fil))
+					self.partitions.append(Partition(mountpoint = os.path.join('/media/net/',fil), description = fil))
+		#upnpmount = (os.path.exists('/media/upnp') and os.listdir('/media/upnp')) or ""
+		#if len(upnpmount) > 0:
+		#	for fil in upnpmount:
+		#		if os.path.ismount('/media/upnp/'):
+		#			print "new UPNP DLNA -> /media/upnp/"
+		#			self.partitions.append(Partition(mountpoint = '/media/upnp/', description = 'DLNA'))
 		if os.path.ismount('/media/hdd') and '/media/hdd/' not in [p.mountpoint for p in self.partitions]:
 			print "new Network Mount being used as HDD replacement -> /media/hdd/"
 			self.partitions.append(Partition(mountpoint = '/media/hdd/', description = '/media/hdd'))
 
 	def getAutofsMountpoint(self, device):
-		return "/autofs/%s" % device
+		return "/autofs/%s" % (device)
 
 	def getMountpoint(self, device):
 		dev = "/dev/%s" % device
@@ -727,9 +717,6 @@ class HarddiskManager:
 				physdev = dev
 				print "couldn't determine blockdev physdev for device", device
 		error, blacklisted, removable, is_cdrom, partitions, medium_found = self.getBlockDevInfo(self.splitDeviceName(device)[0])
-		hw_type = HardwareInfo().get_device_name()
-		if hw_type == 'elite' or hw_type == 'premium' or hw_type == 'premium+' or hw_type == 'ultra' :
-			if device[0:3] == "hda": blacklisted = True
 		if not blacklisted and medium_found:
 			description = self.getUserfriendlyDeviceName(device, physdev)
 			p = Partition(mountpoint = self.getMountpoint(device), description = description, force_mounted = True, device = device)
@@ -918,7 +905,7 @@ class MkfsTask(Task.LoggingTask):
 			if '/' in data:
 				try:
 					d = data.strip(' \x08\r\n').split('/',1)
-					if '\x08' in d[1]:
+					if ('\x08' in d[1]):
 						d[1] = d[1].split('\x08',1)[0]
 					self.setProgress(80*int(d[0])/int(d[1]))
 				except Exception, e:

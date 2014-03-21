@@ -9,8 +9,7 @@ from Components.Sources.StaticText import StaticText
 from Components.Label import Label
 from Components.Sources.Boolean import Boolean
 
-from enigma import eEnv
-from boxbranding import getMachineBrand, getMachineName
+from enigma import eEnv, getMachineBrand, getMachineName
 
 import xml.etree.cElementTree
 
@@ -18,7 +17,7 @@ def setupdom(plugin=None):
 	# read the setupmenu
 	try:
 		# first we search in the current path
-		setupfile = file(resolveFilename(SCOPE_CURRENT_PLUGIN, plugin + '/setup.xml'), 'r')
+		setupfile = file(resolveFilename(SCOPE_CURRENT_PLUGIN, plugin + '/data/setup.xml'), 'r')
 	except:
 		# if not found in the current path, we use the global datadir-path
 		setupfile = file(eEnv.resolve('${datadir}/enigma2/setup.xml'), 'r')
@@ -71,7 +70,7 @@ class Setup(ConfigListScreen, Screen):
 	ALLOW_SUSPEND = True
 
 	def removeNotifier(self):
-		self.onNotifiers.remove(self.levelChanged)
+		config.usage.setup_level.notifiers.remove(self.levelChanged)
 
 	def levelChanged(self, configElement):
 		list = []
@@ -96,14 +95,15 @@ class Setup(ConfigListScreen, Screen):
 		self["HelpWindow"] = Pixmap()
 		self["HelpWindow"].hide()
 		self["VKeyIcon"] = Boolean(False)
-		self["status"] = StaticText()
+
 		self.onChangedEntry = [ ]
 		self.item = None
 		self.setup = setup
 		self.plugin = plugin
 		list = []
-		self.onNotifiers = [ ]
+
 		self.refill(list)
+		
 		ConfigListScreen.__init__(self, list, session = session, on_change = self.changedEntry)
 		self.createSetup()
 
@@ -153,7 +153,6 @@ class Setup(ConfigListScreen, Screen):
 		self["config"].setCurrentIndex(newIdx)
 
 	def handleInputHelpers(self):
-		self["status"].setText(self["config"].getCurrent()[2])
 		if self["config"].getCurrent() is not None:
 			try:
 				if isinstance(self["config"].getCurrent()[1], ConfigText) or isinstance(self["config"].getCurrent()[1], ConfigPassword):
@@ -231,11 +230,11 @@ class Setup(ConfigListScreen, Screen):
 			if x.tag == 'item':
 				item_level = int(x.get("level", 0))
 
-				if not self.onNotifiers:
-					self.onNotifiers.append(self.levelChanged)
+				if not self.levelChanged in config.usage.setup_level.notifiers:
+					config.usage.setup_level.notifiers.append(self.levelChanged)
 					self.onClose.append(self.removeNotifier)
 
-				if item_level > self.onNotifiers.index:
+				if item_level > config.usage.setup_level.index:
 					continue
 
 				requires = x.get("requires")
@@ -267,7 +266,7 @@ def getSetupTitle(id):
 	xmldata = setupdom().getroot()
 	for x in xmldata.findall("setup"):
 		if x.get("key") == id:
-			if _(x.get("title", "").encode("UTF-8")) == _("OSD Settings") or _(x.get("title", "").encode("UTF-8")) == _("Softcam Setup") or _(x.get("title", "").encode("UTF-8")) == _("EPG settings"):
+			if _(x.get("title", "").encode("UTF-8")) == _("EPG settings") or _(x.get("title", "").encode("UTF-8")) == _("Logs settings") or _(x.get("title", "").encode("UTF-8")) == _("OSD settings") or _(x.get("title", "").encode("UTF-8")) == _("Softcam setings"):
 				return _("Settings...")
 			return x.get("title", "").encode("UTF-8")
 	raise SetupError("unknown setup id '%s'!" % repr(id))

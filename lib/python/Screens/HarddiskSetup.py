@@ -46,7 +46,8 @@ class HarddiskSelection(Screen):
 		Screen.setTitle(self, _("Initialization"))
 		self.skinName = "HarddiskSelection" # For derived classes
 		if harddiskmanager.HDDCount() == 0:
-			tlist = [(_("no storage devices found"), 0)]
+			tlist = []
+			tlist.append((_("no storage devices found"), 0))
 			self["hddlist"] = MenuList(tlist)
 		else:
 			self["hddlist"] = MenuList(harddiskmanager.HDDList())
@@ -79,7 +80,7 @@ class HarddiskFsckSelection(HarddiskSelection):
 		self.session.openWithCallback(self.close, HarddiskSetup, selection,
 			 action=selection.createCheckJob,
 			 text=_("Check"),
-			 question=_("Do you really want to check the filesystem?\nThis could take a long time!"))
+			 question=_("Do you really want to check the filesystem?\nThis could take lots of time!"))
 
 class HarddiskConvertExt4Selection(HarddiskSelection):
 	def __init__(self, session):

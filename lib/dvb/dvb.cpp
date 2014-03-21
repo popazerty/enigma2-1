@@ -110,24 +110,12 @@ eDVBResourceManager::eDVBResourceManager()
 		m_boxtype = DM8000;
 	else if (!strncmp(tmp, "dm800\n", rd))
 		m_boxtype = DM800;
-	else if (!strncmp(tmp, "dm800hd\n", rd))
-		m_boxtype = DM800;
 	else if (!strncmp(tmp, "dm500hd\n", rd))
 		m_boxtype = DM500HD;
 	else if (!strncmp(tmp, "dm800se\n", rd))
 		m_boxtype = DM800SE;
 	else if (!strncmp(tmp, "dm7020hd\n", rd))
 		m_boxtype = DM7020HD;
-	else if (!strncmp(tmp, "Gigablue\n", rd))
-		m_boxtype = GIGABLUE;
-	else if (!strncmp(tmp, "ebox5000\n", rd))
-		m_boxtype = DM800;
-	else if (!strncmp(tmp, "ebox5100\n", rd))
-		m_boxtype = DM800;
-	else if (!strncmp(tmp, "eboxlumi\n", rd))
-		m_boxtype = DM800;		
-	else if (!strncmp(tmp, "ebox7358\n", rd))
-		m_boxtype = DM800SE;		
 	else {
 		eDebug("boxtype detection via /proc/stb/info not possible... use fallback via demux count!\n");
 		if (m_demux.size() == 3)
@@ -488,14 +476,6 @@ void *eDVBUsbAdapter::threadproc(void *arg)
 	return user->vtunerPump();
 }
 
-static bool exist_in_pidlist(unsigned short int* pidlist, unsigned short int value)
-{
-	for (int i=0; i<30; ++i)
-		if (pidlist[i] == value)
-			return true;
-	return false;
-}
-
 void *eDVBUsbAdapter::vtunerPump()
 {
 	int pidcount = 0;
@@ -553,6 +533,8 @@ void *eDVBUsbAdapter::vtunerPump()
 		{
 			if (FD_ISSET(vtunerFd, &xset))
 			{
+				int i, j;
+				int count = 0;
 				struct vtuner_message message;
 				memset(message.pidlist, 0xff, sizeof(message.pidlist));
 				::ioctl(vtunerFd, VTUNER_GET_MESSAGE, &message);
@@ -561,12 +543,20 @@ void *eDVBUsbAdapter::vtunerPump()
 				{
 				case MSG_PIDLIST:
 					/* remove old pids */
-					for (int i = 0; i < 30; i++)
+					for (i = 0; i < 30; i++)
 					{
-						if (pidList[i] == 0xffff)
-							continue;
-						if (exist_in_pidlist(message.pidlist, pidList[i]))
-							continue;
+						bool found = false;
+						if (pidList[i] == 0xffff) continue;
+						for (j = 0; j < 30; j++)
+						{
+							if (pidList[i] == message.pidlist[j])
+							{
+								found = true;
+								break;
+							}
+						}
+
+						if (found) continue;
 
 						if (pidcount > 1)
 						{
@@ -581,12 +571,20 @@ void *eDVBUsbAdapter::vtunerPump()
 					}
 
 					/* add new pids */
-					for (int i = 0; i < 30; i++)
+					for (i = 0; i < 30; i++)
 					{
-						if (message.pidlist[i] == 0xffff)
-							continue;
-						if (exist_in_pidlist(pidList, message.pidlist[i]))
-							continue;
+						bool found = false;
+						if (message.pidlist[i] == 0xffff) continue;
+						for (j = 0; j < 30; j++)
+						{
+							if (message.pidlist[i] == pidList[j])
+							{
+								found = true;
+								break;
+							}
+						}
+
+						if (found) continue;
 
 						if (pidcount)
 						{
@@ -610,8 +608,10 @@ void *eDVBUsbAdapter::vtunerPump()
 					}
 
 					/* copy pids */
-					memcpy(pidList, message.pidlist, sizeof(message.pidlist));
-
+					for (i = 0; i < 30; i++)
+					{
+						pidList[i] = message.pidlist[i];
+					}
 					break;
 				}
 			}
@@ -784,7 +784,7 @@ bool eDVBResourceManager::frontendIsCompatible(int index, const char *type)
 			}
 			else if (!strcmp(type, "DVB-C"))
 			{
-#if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 6
+#ifdef SYS_DVBC_ANNEX_A
 				return i->m_frontend->supportsDeliverySystem(SYS_DVBC_ANNEX_A, false) || i->m_frontend->supportsDeliverySystem(SYS_DVBC_ANNEX_C, false);
 #else
 				return i->m_frontend->supportsDeliverySystem(SYS_DVBC_ANNEX_AC, false);
@@ -819,7 +819,7 @@ void eDVBResourceManager::setFrontendType(int index, const char *type)
 			}
 			else if (!strcmp(type, "DVB-C"))
 			{
-#if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 6
+#ifdef SYS_DVBC_ANNEX_A
 				whitelist.push_back(SYS_DVBC_ANNEX_A);
 				whitelist.push_back(SYS_DVBC_ANNEX_C);
 #else
@@ -2223,7 +2223,6 @@ RESULT eDVBChannel::getCurrentPosition(iDVBDemux *decoding_demux, pts_t &pos, in
 		now = pos; /* fixup supplied */
 
 	m_tstools_lock.lock();
-	/* Interesting: the only place where iTSSource->offset() is ever used */
 	r = m_tstools.fixupPTS(m_source ? m_source->offset() : 0, now);
 	m_tstools_lock.unlock();
 	if (r)

@@ -2,9 +2,6 @@
 #include <lib/gui/elistboxcontent.h>
 #include <lib/gdi/font.h>
 #include <lib/python/python.h>
-#include <sstream>
-
-using namespace std;
 
 /*
     The basic idea is to have an interface which gives all relevant list
@@ -147,6 +144,7 @@ void eListboxPythonStringContent::paint(gPainter &painter, eWindowStyle &style, 
 	bool validitem = (m_list && cursorValid());
 	eListboxStyle *local_style = 0;
 	bool cursorValid = this->cursorValid();
+	ePoint text_offset = offset;
 	gRGB border_color;
 	int border_size = 0;
 
@@ -461,20 +459,13 @@ void eListboxPythonConfigContent::paint(gPainter &painter, eWindowStyle &style, 
 						int size = (pvalue && PyInt_Check(psize)) ? PyInt_AsLong(psize) : 100;
 
 							/* calc. slider length */
-						valueWidth = (itemsize.width() - m_seperation -40) * value / size;
+						valueWidth = (itemsize.width() - m_seperation) * value / size;
 						int height = itemsize.height();
 
 							/* draw slider */
 						//painter.fill(eRect(offset.x() + m_seperation, offset.y(), width, height));
 						//hack - make it customizable
 						painter.fill(eRect(textoffset.x() + m_seperation, offset.y() + 5, valueWidth, height-10));
-						
-							/* draw text value at the end of the slider*/
-						std::ostringstream sin;
-						sin << value;
-						std::string cvalue = sin.str();
-						painter.setFont(fnt2);
-						painter.renderText(eRect(offset, m_itemsize), cvalue, value_alignment_left ? gPainter::RT_HALIGN_LEFT : gPainter::RT_HALIGN_RIGHT);
 
 							/* pvalue is borrowed */
 					} else if (!strcmp(atype, "mtext"))
@@ -1097,7 +1088,6 @@ void eListboxPythonMultiContent::paint(gPainter &painter, eWindowStyle &style, c
 				int y = PyInt_AsLong(py) + offset.y();
 				int width = PyInt_AsLong(pwidth);
 				int height = PyInt_AsLong(pheight);
-				int flags = 0;
 				ePtr<gPixmap> pixmap;
 				if (SwigFromPython(pixmap, ppixmap))
 				{
@@ -1111,9 +1101,6 @@ void eListboxPythonMultiContent::paint(gPainter &painter, eWindowStyle &style, c
 				if (size > 7)
 					pbackColorSelected = lookupColor(PyTuple_GET_ITEM(item, 7), data);
 
-				if (size > 8)
-					flags = PyInt_AsLong(PyTuple_GET_ITEM(item, 8));
-
 				eRect rect(x, y, width, height);
 				painter.clip(rect);
 
@@ -1122,11 +1109,8 @@ void eListboxPythonMultiContent::paint(gPainter &painter, eWindowStyle &style, c
 					bool mustClear = (selected && pbackColorSelected) || (!selected && pbackColor);
 					clearRegion(painter, style, local_style, ePyObject(), ePyObject(), pbackColor, pbackColorSelected, selected, rc, sel_clip, offset, cursorValid, mustClear);
 				}
-				flags |= (type == TYPE_PIXMAP_ALPHATEST) ? gPainter::BT_ALPHATEST : (type == TYPE_PIXMAP_ALPHABLEND) ? gPainter::BT_ALPHABLEND : 0;
-				if (flags & gPainter::BT_SCALE)
-					painter.blitScale(pixmap, rect, rect, flags);
-				else
-					painter.blit(pixmap, rect.topLeft(), rect, flags);
+
+				painter.blit(pixmap, rect.topLeft(), rect, (type == TYPE_PIXMAP_ALPHATEST) ? gPainter::BT_ALPHATEST : (type == TYPE_PIXMAP_ALPHABLEND) ? gPainter::BT_ALPHABLEND : 0);
 				painter.clippop();
 				break;
 			}
