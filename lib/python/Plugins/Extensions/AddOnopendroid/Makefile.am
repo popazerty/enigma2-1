@@ -1,10 +1,7 @@
 installdir = $(pkglibdir)/python/Plugins/Extensions/AddOnopendroid
 
-SUBDIRS = 
 
-install_PYTHON = *.py
-
-dist_install_DATA = \
+install_PYTHON =	\
     __init__ \
 	blue.png \
 	green.png \
