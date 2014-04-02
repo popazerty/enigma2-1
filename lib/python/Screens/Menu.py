@@ -1,4 +1,4 @@
-from Screen import Screen
+from Screens.Screen import Screen
 from Components.Sources.List import List
 from Components.ActionMap import NumberActionMap
 from Components.Sources.StaticText import StaticText
@@ -7,37 +7,35 @@ from Components.PluginComponent import plugins
 from Components.config import config
 from Components.SystemInfo import SystemInfo
 
+from Tools.BoundFunction import boundFunction
 from Tools.Directories import resolveFilename, SCOPE_SKIN
 
 import xml.etree.cElementTree
 
 from Screens.Setup import Setup, getSetupTitle
 
-# read the menu
-mdom = xml.etree.cElementTree.parse(resolveFilename(SCOPE_SKIN, 'menu.xml'))
+mainmenu = _("Main menu")
 
-class boundFunction:
-	def __init__(self, fnc, *args):
-		self.fnc = fnc
-		self.args = args
-	def __call__(self):
-		self.fnc(*self.args)
-		
+# read the menu
+file = open(resolveFilename(SCOPE_SKIN, 'menu.xml'), 'r')
+mdom = xml.etree.cElementTree.parse(file)
+file.close()
+
 class MenuUpdater:
 	def __init__(self):
 		self.updatedMenuItems = {}
-	
+
 	def addMenuItem(self, id, pos, text, module, screen, weight):
 		if not self.updatedMenuAvailable(id):
 			self.updatedMenuItems[id] = []
 		self.updatedMenuItems[id].append([text, pos, module, screen, weight])
-	
+
 	def delMenuItem(self, id, pos, text, module, screen, weight):
 		self.updatedMenuItems[id].remove([text, pos, module, screen, weight])
-	
+
 	def updatedMenuAvailable(self, id):
 		return self.updatedMenuItems.has_key(id)
-	
+
 	def getUpdatedMenu(self, id):
 		return self.updatedMenuItems[id]
 
@@ -50,7 +48,7 @@ class Menu(Screen):
 	ALLOW_SUSPEND = True
 
 	def okbuttonClick(self):
-		print "okbuttonClick"
+		# print "okbuttonClick"
 		selection = self["menu"].getCurrent()
 		if selection is not None:
 			selection[1]()
@@ -60,9 +58,9 @@ class Menu(Screen):
 
 	def runScreen(self, arg):
 		# arg[0] is the module (as string)
-		# arg[1] is Screen inside this module 
-		#        plus possible arguments, as 
-		#        string (as we want to reference 
+		# arg[1] is Screen inside this module
+		#        plus possible arguments, as
+		#        string (as we want to reference
 		#        stuff which is just imported)
 		# FIXME. somehow
 		if arg[0] != "":
@@ -128,9 +126,36 @@ class Menu(Screen):
 				if screen is None:
 					screen = module
 
-				print module, screen
+				# print module, screen
 				if module:
 					module = "Screens." + module
+				else:
+					module = ""
+
+				# check for arguments. they will be appended to the
+				# openDialog call
+				args = x.text or ""
+				screen += ", " + args
+
+				destList.append((_(item_text or "??"), boundFunction(self.runScreen, (module, screen)), entryID, weight))
+				return
+			elif x.tag == 'plugin':
+				extensions = x.get("extensions")
+				system = x.get("system")
+				screen = x.get("screen")
+
+				if extensions:
+					module = extensions
+				elif system:
+					module = system
+
+				if screen is None:
+					screen = module
+
+				if extensions:
+					module = "Plugins.Extensions." + extensions + '.plugin'
+				elif system:
+					module = "Plugins.SystemPlugins." + system + '.plugin'
 				else:
 					module = ""
 
@@ -157,9 +182,9 @@ class Menu(Screen):
 
 	def __init__(self, session, parent):
 		Screen.__init__(self, session)
-		
+
 		list = []
-		
+
 		menuID = None
 		for x in parent:						#walk through the actual nodelist
 			if not x.tag:
@@ -193,7 +218,10 @@ class Menu(Screen):
 					if x[2] == plugin_menuid:
 						list.remove(x)
 						break
-				list.append((l[0], boundFunction(l[1], self.session), l[2], l[3] or 50))
+				if len(l) > 4 and l[4]:
+					list.append((l[0], boundFunction(l[1], self.session, self.close), l[2], l[3] or 50))
+				else:
+					list.append((l[0], boundFunction(l[1], self.session), l[2], l[3] or 50))
 
 		# for the skin: first try a menu_<menuID>, then Menu
 		self.skinName = [ ]
@@ -202,7 +230,10 @@ class Menu(Screen):
 		self.skinName.append("Menu")
 
 		# Sort by Weight
-		list.sort(key=lambda x: int(x[3]))
+		if config.usage.sort_menus.value:
+			list.sort()
+		else:
+			list.sort(key=lambda x: int(x[3]))
 
 		self["menu"] = List(list)
 
@@ -227,10 +258,11 @@ class Menu(Screen):
 		if a is None:
 			a = _(parent.get("text", "").encode("UTF-8"))
 		self["title"] = StaticText(a)
+		Screen.setTitle(self, a)
 		self.menu_title = a
 
 	def keyNumberGlobal(self, number):
-		print "menu keyNumber:", number
+		# print "menu keyNumber:", number
 		# Calculate index
 		number -= 1
 
@@ -249,7 +281,7 @@ class Menu(Screen):
 
 class MainMenu(Menu):
 	#add file load functions for the xml-file
-	
+
 	def __init__(self, *x):
 		self.skinName = "Menu"
 		Menu.__init__(self, *x)

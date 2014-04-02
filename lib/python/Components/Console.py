@@ -8,13 +8,14 @@ class Console(object):
 		self.callbacks = {}
 		self.extra_args = {}
 
-	def ePopen(self, cmd, callback=None, extra_args=[]):
+	def ePopen(self, cmd, callback=None, extra_args=None):
+		if not extra_args: extra_args = []
 		name = cmd
 		i = 0
 		while self.appContainers.has_key(name):
 			name = cmd +'_'+ str(i)
 			i += 1
-		print "[ePopen] command:", cmd
+#		print "[ePopen] command:", cmd
 		self.appResults[name] = ""
 		self.extra_args[name] = extra_args
 		self.callbacks[name] = callback
@@ -27,7 +28,8 @@ class Console(object):
 		if retval:
 			self.finishedCB(name, retval)
 
-	def eBatch(self, cmds, callback, extra_args=[], debug=False):
+	def eBatch(self, cmds, callback, extra_args=None, debug=False):
+		if not extra_args: extra_args = []
 		self.debug = debug
 		cmd = cmds.pop(0)
 		self.ePopen(cmd, self.eBatchCB, [cmds, callback, extra_args])

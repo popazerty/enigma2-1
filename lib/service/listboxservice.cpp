@@ -82,7 +82,7 @@ void eListboxServiceContent::setRoot(const eServiceReference &root, bool justSet
 	FillFinished();
 }
 
-void eListboxServiceContent::setCurrent(const eServiceReference &ref)
+bool eListboxServiceContent::setCurrent(const eServiceReference &ref)
 {
 	int index=0;
 	for (list::iterator i(m_list.begin()); i != m_list.end(); ++i, ++index)
@@ -90,10 +90,12 @@ void eListboxServiceContent::setCurrent(const eServiceReference &ref)
 		{
 			m_cursor = i;
 			m_cursor_number = index;
+			if (m_listbox)
+				m_listbox->moveSelectionTo(cursorResolve(index));
+				return true;
 			break;
 		}
-	if (m_listbox)
-		m_listbox->moveSelectionTo(cursorResolve(index));
+	return false;
 }
 
 void eListboxServiceContent::getCurrent(eServiceReference &ref)
@@ -141,14 +143,14 @@ int eListboxServiceContent::getPrevMarkerPos()
 	{
 		--i;
 		--index;
-		if (!(i->flags & eServiceReference::isMarker && !(i->flags & eServiceReference::isInvisible)))
+		if (! ((i->flags & eServiceReference::isMarker) && !(i->flags & eServiceReference::isInvisible)))
 			break;
 	}
 	while (index)
 	{
 		--i;
 		--index;
-		if (i->flags & eServiceReference::isMarker && !(i->flags & eServiceReference::isInvisible))
+		if ((i->flags & eServiceReference::isMarker) && !(i->flags & eServiceReference::isInvisible))
 			break;
 	}
 	return cursorResolve(index);
@@ -164,7 +166,7 @@ int eListboxServiceContent::getNextMarkerPos()
 	{
 		++i;
 		++index;
-		if (i->flags & eServiceReference::isMarker && !(i->flags & eServiceReference::isInvisible))
+		if ((i->flags & eServiceReference::isMarker) && !(i->flags & eServiceReference::isInvisible))
 			break;
 	}
 	return cursorResolve(index);
@@ -272,7 +274,7 @@ void eListboxServiceContent::sort()
 DEFINE_REF(eListboxServiceContent);
 
 eListboxServiceContent::eListboxServiceContent()
-	:m_visual_mode(visModeSimple), m_size(0), m_current_marked(false), m_itemheight(25), m_hide_number_marker(false), m_servicetype_icon_mode(0)
+	:m_visual_mode(visModeSimple), m_size(0), m_current_marked(false), m_itemheight(25), m_servicetype_icon_mode(0)
 {
 	memset(m_color_set, 0, sizeof(m_color_set));
 	cursorHome();
@@ -400,7 +402,7 @@ int eListboxServiceContent::cursorMove(int count)
 					m_listbox->entryChanged(cursorResolve(m_cursor_number));
 			}
 			++m_cursor_number;
-			if (!(m_hide_number_marker && m_cursor->flags & eServiceReference::isNumberedMarker) && !(m_cursor->flags & eServiceReference::isInvisible))
+			if (!(m_cursor->flags & eServiceReference::isInvisible))
 				--count;
 		}
 	}
@@ -416,7 +418,7 @@ int eListboxServiceContent::cursorMove(int count)
 					m_listbox->entryChanged(cursorResolve(m_cursor_number));
 			}
 			--m_cursor_number;
-			if (!(m_hide_number_marker && m_cursor->flags & eServiceReference::isNumberedMarker) && !(m_cursor->flags & eServiceReference::isInvisible))
+			if (!(m_cursor->flags & eServiceReference::isInvisible))
 				++count;
 		}
 	}
@@ -435,20 +437,23 @@ int eListboxServiceContent::cursorSet(int n)
 	return 0;
 }
 
-int eListboxServiceContent::cursorResolve(int cursorPosition)
+int eListboxServiceContent::cursorResolve(int cursor_position)
 {
-	int strippedCursor = 0;
+	int m_stripped_cursor = 0;
 	int count = 0;
 	for (list::iterator i(m_list.begin()); i != m_list.end(); ++i)
 	{
-		if (count == cursorPosition)
+		if (count == cursor_position)
 			break;
+
 		count++;
-		if (m_hide_number_marker && (i->flags & eServiceReference::isNumberedMarker) || (i->flags & eServiceReference::isInvisible))
+
+		if (i->flags & eServiceReference::isInvisible)
 			continue;
-		strippedCursor++;
+		m_stripped_cursor++;
 	}
-	return strippedCursor;
+
+	return m_stripped_cursor;
 }
 
 int eListboxServiceContent::cursorGet()
@@ -485,7 +490,7 @@ int eListboxServiceContent::size()
 	int size = 0;
 	for (list::iterator i(m_list.begin()); i != m_list.end(); ++i)
 	{
-		if (m_hide_number_marker && (i->flags & eServiceReference::isNumberedMarker) || (i->flags & eServiceReference::isInvisible))
+		if (i->flags & eServiceReference::isInvisible)
 			continue;
 		size++;
 	}
@@ -498,11 +503,6 @@ void eListboxServiceContent::setSize(const eSize &size)
 	m_itemsize = size;
 	if (m_visual_mode == visModeSimple)
 		setVisualMode(m_visual_mode);
-}
-
-void eListboxServiceContent::setHideNumberMarker(bool doHide)
-{
-	m_hide_number_marker = doHide;
 }
 
 void eListboxServiceContent::setServiceTypeIconMode(int mode)

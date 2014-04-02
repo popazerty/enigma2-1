@@ -1,9 +1,12 @@
+from enigma import eListboxPythonMultiContent, gFont, RT_HALIGN_LEFT
+
 from MenuList import MenuList
-from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN
-from enigma import eListboxPythonMultiContent, eListbox, gFont, RT_HALIGN_LEFT
+from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
 from Tools.LoadPixmap import LoadPixmap
 
-selectionpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/icons/lock_on.png"))
+
+selectiononpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "icons/lock_on.png"))
+selectionoffpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "icons/lock_off.png"))
 
 def SelectionEntryComponent(description, value, index, selected):
 	res = [
@@ -11,7 +14,9 @@ def SelectionEntryComponent(description, value, index, selected):
 		(eListboxPythonMultiContent.TYPE_TEXT, 25, 3, 505, 30, 0, RT_HALIGN_LEFT, description)
 	]
 	if selected:
-		res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 0, 2, 25, 24, selectionpng))
+		res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 0, 2, 25, 24, selectiononpng))
+	else:
+		res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 0, 2, 25, 24, selectionoffpng))
 	return res
 
 class SelectionList(MenuList):
@@ -25,10 +30,11 @@ class SelectionList(MenuList):
 		self.setList(self.list)
 
 	def toggleSelection(self):
-		idx = self.getSelectedIndex()
-		item = self.list[idx][0]
-		self.list[idx] = SelectionEntryComponent(item[0], item[1], item[2], not item[3])
-		self.setList(self.list)
+		if len(self.list) > 0:
+			idx = self.getSelectedIndex()
+			item = self.list[idx][0]
+			self.list[idx] = SelectionEntryComponent(item[0], item[1], item[2], not item[3])
+			self.setList(self.list)
 
 	def getSelectionsList(self):
 		return [ (item[0][0], item[0][1], item[0][2]) for item in self.list if item[0][3] ]

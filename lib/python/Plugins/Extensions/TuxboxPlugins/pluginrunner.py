@@ -12,7 +12,7 @@ class PluginRunner(Screen):
 		self.container = eConsoleAppContainer()
 		self.container.appClosed.append(self.finishedExecution)
 		self.runPlugin(pluginname)
-		
+
 	def runPlugin(self, pluginname):
 		eDBoxLCD.getInstance().lock()
 		eRCInput.getInstance().lock()
@@ -20,18 +20,18 @@ class PluginRunner(Screen):
 		print "executing:", ("pluginlauncher -x %s" % pluginname)
 		if self.container.execute("pluginlauncher -x %s" % pluginname):
 			self.finishedExecution(None)
-			
+
 	def finishedExecution(self, retval = 1):
 		print "PluginRunner retval:", retval
 		fbClass.getInstance().unlock()
 		eRCInput.getInstance().unlock()
 		eDBoxLCD.getInstance().unlock()
-		
+
 		if retval is None or retval != 1:
 			self.session.openWithCallback(
 				self.finishedExecution,
 				MessageBox,
-				_("Error executing plugin") % (param)
+				_("Error executing plugin") % param
 			)
 		else:
 			self.close()

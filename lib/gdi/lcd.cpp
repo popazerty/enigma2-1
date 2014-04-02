@@ -70,8 +70,7 @@ eDBoxLCD::eDBoxLCD()
 	lcdfd = open("/dev/dbox/oled0", O_RDWR);
 	if (lcdfd < 0)
 	{
-		if (!access("/proc/stb/lcd/oled_brightness", W_OK) ||
-		    !access("/proc/stb/fp/oled_brightness", W_OK) )
+		if (!access("/proc/stb/lcd/oled_brightness", W_OK) || !access("/proc/stb/fp/oled_brightness", W_OK) )
 			is_oled = 2;
 		lcdfd = open("/dev/dbox/lcd0", O_RDWR);
 	} else
@@ -119,6 +118,11 @@ eDBoxLCD::eDBoxLCD()
 		}
 	}
 #endif
+	if (FILE * file = fopen("/proc/stb/lcd/right_half", "w"))
+	{
+		fprintf(file,"skin");
+		fclose(file);
+	}
 	instance=this;
 
 	setSize(xres, yres, bpp);
@@ -186,11 +190,33 @@ int eDBoxLCD::setLCDBrightness(int brightness)
 #define FP_IOCTL_LCD_DIMM       3
 #endif
 		if(ioctl(fp, FP_IOCTL_LCD_DIMM, &brightness) < 0)
-			eDebug("[LCD] can't set lcd brightness (%m)");
+			eDebug("[LCD] can't set lcd brightness");
 		close(fp);
 	}
 #endif
 	return(0);
+}
+
+int eDBoxLCD::setLED(int value, int option)
+{
+	switch(option)
+	{
+		case LED_BRIGHTNESS:
+			eDebug("setLEDNormalState %d", value);
+			if(ioctl(lcdfd, LED_IOCTL_BRIGHTNESS_NORMAL, (unsigned char)value) < 0)
+				eDebug("[LED] can't set led brightness");
+			break;
+		case LED_DEEPSTANDBY:
+			eDebug("setLEDBlinkingTime %d", value);
+			if(ioctl(lcdfd, LED_IOCTL_BRIGHTNESS_DEEPSTANDBY, (unsigned char)value) < 0)
+				eDebug("[LED] can't set led deep standby");
+			break;
+		case LED_BLINKINGTIME:
+			eDebug("setLEDBlinkingTime %d", value);
+			if(ioctl(lcdfd, LED_IOCTL_BLINKING_TIME, (unsigned char)value) < 0)
+				eDebug("[LED] can't set led blinking time");
+			break;
+	}
 }
 
 eDBoxLCD::~eDBoxLCD()
@@ -266,7 +292,21 @@ void eDBoxLCD::update()
 			}
 			else
 			{
-				write(lcdfd, _buffer, _stride * res.height());
+				if (FILE * file = fopen("/proc/stb/info/gbmodel", "r"))
+				{
+					unsigned char gb_buffer[_stride * res.height()];
+					for (int offset = 0; offset < _stride * res.height(); offset += 2)
+					{
+						gb_buffer[offset] = (_buffer[offset] & 0x1F) | ((_buffer[offset + 1] << 3) & 0xE0);
+						gb_buffer[offset + 1] = ((_buffer[offset + 1] >> 5) & 0x03) | ((_buffer[offset] >> 3) & 0x1C) | ((_buffer[offset + 1] << 5) & 0x60);
+					}
+					write(lcdfd, gb_buffer, _stride * res.height());
+					fclose(file);
+				}
+				else
+				{
+					write(lcdfd, _buffer, _stride * res.height());
+				}
 			}
 		}
 		else /* is_oled == 1 */
