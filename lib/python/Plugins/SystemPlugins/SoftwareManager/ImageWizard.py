@@ -1,15 +1,18 @@
-from os import access, W_OK, R_OK
-
-from enigma import eEnv
-
+from Screens.Wizard import WizardSummary
 from Screens.WizardLanguage import WizardLanguage
 from Screens.Wizard import wizardManager
 from Screens.Rc import Rc
-from Tools.Directories import fileExists, resolveFilename, SCOPE_PLUGINS
-from Components.Pixmap import Pixmap
-from Components.config import config, ConfigSubsection, ConfigText, ConfigLocations, ConfigBoolean
-from Components.Harddisk import harddiskmanager
+from Components.Label import Label
+from Components.MenuList import MenuList
+from Components.PluginComponent import plugins
+from Plugins.Plugin import PluginDescriptor
+from Tools.Directories import fileExists, resolveFilename, SCOPE_PLUGINS, SCOPE_SKIN_IMAGE
+from Components.Pixmap import Pixmap, MovingPixmap, MultiPixmap
+from os import popen, path, makedirs, listdir, access, stat, rename, remove, W_OK, R_OK
+from enigma import eEnv
 
+from Components.config import config, getConfigListEntry, ConfigSubsection, ConfigText, ConfigLocations, ConfigBoolean
+from Components.Harddisk import harddiskmanager
 
 config.misc.firstrun = ConfigBoolean(default = True)
 config.plugins.configurationbackup = ConfigSubsection()
@@ -70,14 +73,14 @@ class ImageWizard(WizardLanguage, Rc):
 				<convert type="StringList" />
 			</widget>
 			<widget name="config" position="53,340" zPosition="1" size="440,180" transparent="1" scrollbarMode="showOnDemand" />
-			<ePixmap pixmap="buttons/button_red.png" position="40,225" zPosition="0" size="15,16" transparent="1" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/button_red.png" position="40,225" zPosition="0" size="15,16" transparent="1" alphatest="on" />
 			<widget name="languagetext" position="55,225" size="95,30" font="Regular;18" />
-			<widget name="wizard" pixmap="wizard.png" position="40,50" zPosition="10" size="110,174" alphatest="on" />
-			<widget name="rc" pixmaps="rc.png,rcold.png" position="530,50" zPosition="10" size="154,500" alphatest="on" />
-			<widget name="arrowdown" pixmap="arrowdown.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
-			<widget name="arrowdown2" pixmap="arrowdown.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
-			<widget name="arrowup" pixmap="arrowup.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
-			<widget name="arrowup2" pixmap="arrowup.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
+			<widget name="wizard" pixmap="skin_default/wizard.png" position="40,50" zPosition="10" size="110,174" alphatest="on" />
+			<widget name="rc" pixmaps="skin_default/rc.png,skin_default/rcold.png" position="530,50" zPosition="10" size="154,500" alphatest="on" />
+			<widget name="arrowdown" pixmap="skin_default/arrowdown.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
+			<widget name="arrowdown2" pixmap="skin_default/arrowdown.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
+			<widget name="arrowup" pixmap="skin_default/arrowup.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
+			<widget name="arrowup2" pixmap="skin_default/arrowup.png" position="-100,-100" zPosition="11" size="37,70" alphatest="on" />
 		</screen>"""
 	def __init__(self, session):
 		self.xmlfile = resolveFilename(SCOPE_PLUGINS, "SystemPlugins/SoftwareManager/imagewizard.xml")

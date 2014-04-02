@@ -17,17 +17,17 @@ from enigma import eTimer, eDVBDB
 class DefaultServiceScan(ServiceScan):
 	skin = """
 		<screen position="150,115" size="420,390" title="Service Scan">
-		<widget source="FrontendInfo" render="Pixmap" pixmap="icons/scan-s.png" position="5,5" size="64,64" transparent="1" alphatest="on">
+		<widget source="FrontendInfo" render="Pixmap" pixmap="skin_default/icons/scan-s.png" position="5,5" size="64,64" transparent="1" alphatest="on">
 			<convert type="FrontendInfo">TYPE</convert>
 			<convert type="ValueRange">0,0</convert>
 			<convert type="ConditionalShowHide" />
 		</widget>
-		<widget source="FrontendInfo" render="Pixmap" pixmap="icons/scan-c.png" position="5,5" size="64,64" transparent="1" alphatest="on">
+		<widget source="FrontendInfo" render="Pixmap" pixmap="skin_default/icons/scan-c.png" position="5,5" size="64,64" transparent="1" alphatest="on">
 			<convert type="FrontendInfo">TYPE</convert>
 			<convert type="ValueRange">1,1</convert>
 			<convert type="ConditionalShowHide" />
 		</widget>
-		<widget source="FrontendInfo" render="Pixmap" pixmap="icons/scan-t.png" position="5,5" size="64,64" transparent="1" alphatest="on">
+		<widget source="FrontendInfo" render="Pixmap" pixmap="skin_default/icons/scan-t.png" position="5,5" size="64,64" transparent="1" alphatest="on">
 			<convert type="FrontendInfo">TYPE</convert>
 			<convert type="ValueRange">2,2</convert>
 			<convert type="ConditionalShowHide" />
@@ -36,13 +36,13 @@ class DefaultServiceScan(ServiceScan):
 		<widget name="transponder" position="80,40" size="330,20" font="Regular;20" />
 		<widget name="scan_state" position="10,80" zPosition="2" size="400,20" font="Regular;18" />
 		<widget name="pass" position="10,80" size="400,20" font="Regular;18" />
-		<widget name="scan_progress" position="10,105" size="400,15" pixmap="progress_big.png" borderWidth="2" borderColor="#cccccc" />
+		<widget name="scan_progress" position="10,105" size="400,15" pixmap="skin_default/progress_big.png" borderWidth="2" borderColor="#cccccc" />
 		<widget name="servicelist" position="10,135" size="400,265" selectionDisabled="1" />
 	</screen>"""
 
 	def __init__(self, session, scanList):
 		try:
-			unlink(resolveFilename(SCOPE_CONFIG) + "/lamedb")
+			unlink(resolveFilename(SCOPE_CONFIG) + "/lamedb");
 		except OSError:
 			pass
 		db = eDVBDB.getInstance()
@@ -58,7 +58,7 @@ class DefaultServicesScannerPlugin(ScanSetup):
 			<widget name="config" position="10,10" size="500,350" scrollbarMode="showOnDemand" />
 			<widget name="introduction" position="10,365" size="500,25" font="Regular;20" halign="center" />
 		</screen>"""
-
+		
 	def __init__(self, session, args = None):
 		ScanSetup.__init__(self, session)
 		# backup lamedb
@@ -69,14 +69,14 @@ class DefaultServicesScannerPlugin(ScanSetup):
 		self.scanIndex = 0
 		self.selectSat(0)
 		self.onFirstExecBegin.append(self.runScan)
-
+		
 	def selectSat(self, index):
 		for satindex in range(len(self.multiscanlist)):
 			if satindex != index:
 				self.multiscanlist[satindex][1].value = False
 			else:
 				self.multiscanlist[satindex][1].value = True
-
+				
 	def runScan(self):
 		print "runScan"
 		self.keyGo()
@@ -105,7 +105,7 @@ class DefaultServicesScannerPlugin(ScanSetup):
 		<bcastsystem type="DVB-S" />
 		<satellite type="%d" />
 	</prerequisites>
-
+	
 	<info>
 		<author>%s</author>
 		<name>%s</name>
@@ -115,10 +115,10 @@ class DefaultServicesScannerPlugin(ScanSetup):
 		<file type="services" name="lamedb.%d">
 		</file>
 	</files>
-</default>""" % (satint, "OpenPli", nimmanager.getSatDescription(satint), satint)
+</default>""" % (satint, "Dream", nimmanager.getSatDescription(satint), satint)
 			file.write(xml)
 			file.close()
-
+		
 		self.scanIndex += 1
 		if self.scanIndex + 1 >= len(self.multiscanlist):
 			print "no more sats to scan"

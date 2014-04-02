@@ -1,5 +1,7 @@
 # fake-enigma
 
+import fake_time
+
 class slot:
 	def __init__(self):
 		self.list = [ ]
@@ -261,7 +263,7 @@ class eDBoxLCD:
 	def setInverted(self, value):
 		print "[eDBoxLCD] set inverted to %d" % value
 
-eDBoxLCD()
+eDBoxLCD();
 
 Misc_Options = None
 

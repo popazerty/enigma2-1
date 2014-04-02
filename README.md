@@ -1,4 +1,2 @@
-enigma2
-=======
-
-OpenDroid Enigma2
+opendroid-enigma2
+==========

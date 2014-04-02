@@ -34,7 +34,6 @@ public:
 	void stopCaching();
 	void resetPid() { pid = 0; demux = 0; }
 	void setEnableTtCachingOnOff( int onoff );
-	void handleKey( int key );
 	PSignal0<void> appClosed;
 };
 

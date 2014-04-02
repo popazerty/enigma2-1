@@ -1,7 +1,9 @@
-from time import localtime, mktime
-from datetime import datetime
-import xml.etree.cElementTree
-from os import path
+from Tools.HardwareInfo import HardwareInfo
+from Tools.BoundFunction import boundFunction
+
+from config import config, ConfigSubsection, ConfigSelection, ConfigFloat, \
+	ConfigSatlist, ConfigYesNo, ConfigInteger, ConfigSubList, ConfigNothing, \
+	ConfigSubDict, ConfigOnOff, ConfigDateTime
 
 from enigma import eDVBSatelliteEquipmentControl as secClass, \
 	eDVBSatelliteLNBParameters as lnbParam, \
@@ -10,12 +12,12 @@ from enigma import eDVBSatelliteEquipmentControl as secClass, \
 	eDVBSatelliteRotorParameters as rotorParam, \
 	eDVBResourceManager, eDVBDB, eEnv
 
-from Tools.HardwareInfo import HardwareInfo
-from Components.About import about
-from config import config, ConfigSubsection, ConfigSelection, ConfigFloat, \
-	ConfigSatlist, ConfigYesNo, ConfigInteger, ConfigSubList, ConfigNothing, \
-	ConfigSubDict, ConfigOnOff, ConfigDateTime
+from time import localtime, mktime
+from datetime import datetime
 from Tools.BoundFunction import boundFunction
+
+from Tools import Directories
+import xml.etree.cElementTree
 
 def getConfigSatlist(orbpos, satlist):
 	default_orbpos = None
@@ -72,10 +74,9 @@ class SecConfigure:
 					sec.setVoltageMode(switchParam.HV)
 				sec.setToneMode(switchParam.HILO)
 			else:
-				# noinspection PyProtectedMember
 				sec.setVoltageMode(switchParam._14V)
 				sec.setToneMode(switchParam.OFF)
-		elif diseqcmode == 3: # diseqc 1.2
+		elif (diseqcmode == 3): # diseqc 1.2
 			if self.satposdepends.has_key(slotid):
 				for slot in self.satposdepends[slotid]:
 					tunermask |= (1 << slot)
@@ -110,16 +111,13 @@ class SecConfigure:
 
 	def linkNIMs(self, sec, nim1, nim2):
 		print "link tuner", nim1, "to tuner", nim2
-		# for internally connect tuner A to B
-		if '7356' not in about.getChipSetString() and nim2 == (nim1 - 1):
-			self.linkInternally(nim1)
-		elif '7356' in about.getChipSetString():
+		if nim2 == (nim1 - 1):
 			self.linkInternally(nim1)
 		sec.setTunerLinked(nim1, nim2)
 
 	def getRoot(self, slotid, connto):
 		visited = []
-		while self.NimManager.getNimConfig(connto).configMode.value in ("satposdepends", "equal", "loopthrough"):
+		while (self.NimManager.getNimConfig(connto).configMode.value in ("satposdepends", "equal", "loopthrough")):
 			connto = int(self.NimManager.getNimConfig(connto).connectedTo.value)
 			if connto in visited: # prevent endless loop
 				return slotid
@@ -150,7 +148,7 @@ class SecConfigure:
 
 		for slot in nim_slots:
 			if slot.frontend_id is not None:
-				types = [type for type in ["DVB-C", "DVB-T", "DVB-T2", "DVB-S", "DVB-S2", "ATSC"] if eDVBResourceManager.getInstance().frontendIsCompatible(slot.frontend_id, type)]
+				types = [type for type in ["DVB-T2", "DVB-T", "DVB-C", "DVB-S2", "DVB-S", "ATSC"] if eDVBResourceManager.getInstance().frontendIsCompatible(slot.frontend_id, type)]
 				if "DVB-T2" in types:
 					# DVB-T2 implies DVB-T support
 					types.remove("DVB-T")
@@ -258,7 +256,7 @@ class SecConfigure:
 	def updateAdvanced(self, sec, slotid):
 		try:
 			if config.Nims[slotid].advanced.unicableconnected is not None:
-				if config.Nims[slotid].advanced.unicableconnected.value:
+				if config.Nims[slotid].advanced.unicableconnected.value == True:
 					config.Nims[slotid].advanced.unicableconnectedTo.save_forced = True
 					self.linkNIMs(sec, slotid, int(config.Nims[slotid].advanced.unicableconnectedTo.value))
 					connto = self.getRoot(slotid, int(config.Nims[slotid].advanced.unicableconnectedTo.value))
@@ -317,7 +315,7 @@ class SecConfigure:
 						manufacturer = ProductDict[manufacturer_name]
 						product_name = manufacturer.product.value
 						sec.setLNBSatCR(manufacturer.scr[product_name].index)
-						sec.setLNBSatCRvco(manufacturer.vco[product_name][manufacturer.scr[product_name].index].value * 1000)
+						sec.setLNBSatCRvco(manufacturer.vco[product_name][manufacturer.scr[product_name].index].value*1000)
 						sec.setLNBSatCRpositions(manufacturer.positions[product_name][0].value)
 						sec.setLNBLOFL(manufacturer.lofl[product_name][0].value * 1000)
 						sec.setLNBLOFH(manufacturer.lofh[product_name][0].value * 1000)
@@ -332,7 +330,7 @@ class SecConfigure:
 						sec.setLNBLOFH(currLnb.lofh.value * 1000)
 						sec.setLNBThreshold(currLnb.threshold.value * 1000)
 						sec.setLNBSatCR(currLnb.satcruser.index)
-						sec.setLNBSatCRvco(currLnb.satcrvcouser[currLnb.satcruser.index].value * 1000)
+						sec.setLNBSatCRvco(currLnb.satcrvcouser[currLnb.satcruser.index].value*1000)
 						sec.setLNBSatCRpositions(1)	#HACK
 					elif currLnb.unicable.value == "unicable_matrix":
 						setupUnicable(currLnb.unicableMatrixManufacturer, currLnb.unicableMatrix)
@@ -469,10 +467,8 @@ class SecConfigure:
 						else:
 							sec.setVoltageMode(switchParam.HV)
 					elif currSat.voltage.value == "13V":
-						# noinspection PyProtectedMember
 						sec.setVoltageMode(switchParam._14V)
 					elif currSat.voltage.value == "18V":
-						# noinspection PyProtectedMember
 						sec.setVoltageMode(switchParam._18V)
 
 					if currSat.tonemode.value == "band":
@@ -493,8 +489,7 @@ class SecConfigure:
 		self.update()
 
 class NIM(object):
-	def __init__(self, slot, type, description, has_outputs=True, internally_connectable=None, multi_type=None, frontend_id=None, i2c=None, is_empty=False):
-		if not multi_type: multi_type = {}
+	def __init__(self, slot, type, description, has_outputs = True, internally_connectable = None, multi_type = {}, frontend_id = None, i2c = None, is_empty = False):
 		self.slot = slot
 
 		if type not in ("DVB-S", "DVB-C", "DVB-T", "DVB-S2", "DVB-T2", "DVB-C2", "ATSC", None):
@@ -552,7 +547,7 @@ class NIM(object):
 				"DVB-S2": ("DVB-S", "DVB-S2"),
 				"DVB-C2": ("DVB-C", "DVB-C2"),
 				"DVB-T2": ("DVB-T", "DVB-T2"),
-				"ATSC": "ATSC",
+				"ATSC": ("ATSC"),
 			}
 		return connectable[self.getType()]
 
@@ -579,19 +574,15 @@ class NIM(object):
 	def setInternalLink(self):
 		if self.internally_connectable is not None:
 			print "setting internal link on frontend id", self.frontend_id
-			f = open("/proc/stb/frontend/%d/rf_switch" % self.frontend_id, "w")
-			f.write("internal")
-			f.close()
+			open("/proc/stb/frontend/%d/rf_switch" % self.frontend_id, "w").write("internal")
 
 	def removeInternalLink(self):
 		if self.internally_connectable is not None:
 			print "removing internal link on frontend id", self.frontend_id
-			f = open("/proc/stb/frontend/%d/rf_switch" % self.frontend_id, "w")
-			f.write("external")
-			f.close()
+			open("/proc/stb/frontend/%d/rf_switch" % self.frontend_id, "w").write("external")
 
 	def isMultiType(self):
-		return len(self.multi_type) > 0
+		return (len(self.multi_type) > 0)
 
 	def isEmpty(self):
 		return self.__is_empty
@@ -695,12 +686,13 @@ class NimManager:
 			#print "SATS", self.satellites
 			#print "TRANSPONDERS", self.transponders
 
-		if self.hasNimType("DVB-C") or self.hasNimType("DVB-T"):
+		if self.hasNimType("DVB-C"):
 			print "Reading cables.xml"
 			db.readCables(self.cablesList, self.transponderscable)
 #			print "CABLIST", self.cablesList
 #			print "TRANSPONDERS", self.transponders
 
+		if self.hasNimType("DVB-T"):
 			print "Reading terrestrial.xml"
 			db.readTerrestrials(self.terrestrialsList, self.transpondersterrestrial)
 #			print "TERLIST", self.terrestrialsList
@@ -764,14 +756,15 @@ class NimManager:
 			elif line.startswith("Frontend_Device:"):
 				input = int(line[len("Frontend_Device:") + 1:])
 				entries[current_slot]["frontend_device"] = input
-			elif line.startswith("Mode"):
-				# "Mode 1: DVB-T" -> ["Mode 1", "DVB-T"]
-				split = line.split(":")
-				split[1] = split[1].replace(' ','')
-				split2 = split[0].split(" ")
-				modes = entries[current_slot].get("multi_type", {})
-				modes[split2[1]] = split[1]
-				entries[current_slot]["multi_type"] = modes
+			elif  line.startswith("Mode"):
+				# "Mode 0: DVB-T" -> ["Mode 0", "DVB-T"]
+				split = line.split(": ")
+				if len(split) > 1 and split[1]:
+					# "Mode 0" -> ["Mode", "0"]
+					split2 = split[0].split(" ")
+					modes = entries[current_slot].get("multi_type", {})
+					modes[split2[1]] = split[1]
+					entries[current_slot]["multi_type"] = modes
 			elif line.startswith("I2C_Device:"):
 				input = int(line[len("I2C_Device:") + 1:])
 				entries[current_slot]["i2c"] = input
@@ -780,6 +773,8 @@ class NimManager:
 				entries[current_slot]["name"] = _("N/A")
 				entries[current_slot]["isempty"] = True
 		nimfile.close()
+
+		from os import path
 
 		for id, entry in entries.items():
 			if not (entry.has_key("name") and entry.has_key("type")):
@@ -935,7 +930,7 @@ class NimManager:
 	# returns True if something is configured to be connected to this nim
 	# if slotid == -1, returns if something is connected to ANY nim
 	def somethingConnected(self, slotid = -1):
-		if slotid == -1:
+		if (slotid == -1):
 			connected = False
 			for id in range(self.getSlotCount()):
 				if self.somethingConnected(id):
@@ -1125,9 +1120,7 @@ def InitNimManager(nimmgr):
 
 	unicablelnbproducts = {}
 	unicablematrixproducts = {}
-	file = open(eEnv.resolve("${datadir}/enigma2/unicable.xml"), 'r')
-	doc = xml.etree.cElementTree.parse(file)
-	file.close()
+	doc = xml.etree.cElementTree.parse(eEnv.resolve("${datadir}/enigma2/unicable.xml"))
 	root = doc.getroot()
 
 	entry = root.find("lnb")
@@ -1142,8 +1135,12 @@ def InitNimManager(nimmgr):
 				if scr[len(lscr)-i-1] == "0":
 					scr.pop()
 				else:
-					break
-			lof= [int(product.get("positions", 1)), int(product.get("lofl", 9750)), int(product.get("lofh", 10600)), int(product.get("threshold", 11700))]
+					break;
+			lof=[]
+			lof.append(int(product.get("positions",1)))
+			lof.append(int(product.get("lofl",9750)))
+			lof.append(int(product.get("lofh",10600)))
+			lof.append(int(product.get("threshold",11700)))
 			scr.append(tuple(lof))
 			m.update({product.get("name"):tuple(scr)})
 		unicablelnbproducts.update({manufacturer.get("name"):m})
@@ -1160,8 +1157,12 @@ def InitNimManager(nimmgr):
 				if scr[len(lscr)-i-1] == "0":
 					scr.pop()
 				else:
-					break
-			lof= [int(product.get("positions", 1)), int(product.get("lofl", 9750)), int(product.get("lofh", 10600)), int(product.get("threshold", 11700))]
+					break;
+			lof=[]
+			lof.append(int(product.get("positions",1)))
+			lof.append(int(product.get("lofl",9750)))
+			lof.append(int(product.get("lofh",10600)))
+			lof.append(int(product.get("threshold",11700)))
 			scr.append(tuple(lof))
 			m.update({product.get("name"):tuple(scr)})
 		unicablematrixproducts.update({manufacturer.get("name"):m})
@@ -1173,7 +1174,7 @@ def InitNimManager(nimmgr):
 
 	unicable_choices = {
 		"unicable_lnb": _("Unicable LNB"),
-		"unicable_matrix": _("Unicable Matrix"),
+		"unicable_matrix": _("Unicable Martix"),
 		"unicable_user": "Unicable "+_("User defined")}
 	unicable_choices_default = "unicable_lnb"
 
@@ -1216,8 +1217,8 @@ def InitNimManager(nimmgr):
 		("cut", "committed, uncommitted, toneburst"), ("tcu", "toneburst, committed, uncommitted"),
 		("uct", "uncommitted, committed, toneburst"), ("tuc", "toneburst, uncommitted, commmitted")]
 	advanced_lnb_diseqc_repeat_choices = [("none", _("None")), ("one", _("One")), ("two", _("Two")), ("three", _("Three"))]
-	advanced_lnb_fast_turning_btime = mktime(datetime(1970, 1, 1, 7, 0).timetuple())
-	advanced_lnb_fast_turning_etime = mktime(datetime(1970, 1, 1, 19, 0).timetuple())
+	advanced_lnb_fast_turning_btime = mktime(datetime(1970, 1, 1, 7, 0).timetuple());
+	advanced_lnb_fast_turning_etime = mktime(datetime(1970, 1, 1, 19, 0).timetuple());
 
 	def configLOFChanged(configElement):
 		if configElement.value == "unicable":
@@ -1230,7 +1231,7 @@ def InitNimManager(nimmgr):
 				if lnb == 1:
 					section.unicable = ConfigSelection(unicable_choices, unicable_choices_default)
 				elif lnb == 2:
-					section.unicable = ConfigSelection(choices = {"unicable_matrix": _("Unicable Matrix"),"unicable_user": "Unicable "+_("User defined")}, default = "unicable_matrix")
+					section.unicable = ConfigSelection(choices = {"unicable_matrix": _("Unicable Martix"),"unicable_user": "Unicable "+_("User defined")}, default = "unicable_matrix")
 				else:
 					section.unicable = ConfigSelection(choices = {"unicable_user": _("User defined")}, default = "unicable_user")
 
@@ -1364,7 +1365,7 @@ def InitNimManager(nimmgr):
 
 	def configModeChanged(configMode):
 		slot_id = configMode.slot_id
-		nim = config.Nims[slot_id]
+ 		nim = config.Nims[slot_id]
 		if configMode.value == "advanced" and isinstance(nim.advanced, ConfigNothing):
 			# advanced config:
 			nim.advanced = ConfigSubsection()
@@ -1390,7 +1391,7 @@ def InitNimManager(nimmgr):
 				tmp.usals = ConfigYesNo(default=True)
 				tmp.rotorposition = ConfigInteger(default=1, limits=(1, 255))
 				lnbnum = 33+x-3601
-				lnb = ConfigSelection([("0", "not available"), (str(lnbnum), "LNB %d"% lnbnum)], "0")
+				lnb = ConfigSelection([("0", "not available"), (str(lnbnum), "LNB %d"%(lnbnum))], "0")
 				lnb.slot_id = slot_id
 				lnb.addNotifier(configLNBChanged, initial_call = False)
 				tmp.lnb = lnb
@@ -1399,10 +1400,8 @@ def InitNimManager(nimmgr):
 	def toneAmplitudeChanged(configElement):
 		fe_id = configElement.fe_id
 		slot_id = configElement.slot_id
-		if path.exists("/proc/stb/frontend/%d/tone_amplitude" % fe_id):
-			f = open("/proc/stb/frontend/%d/tone_amplitude" % fe_id, "w")
-			f.write(configElement.value)
-			f.close()
+		if nimmgr.nim_slots[slot_id].description == 'Alps BSBE2':
+			open("/proc/stb/frontend/%d/tone_amplitude" %(fe_id), "w").write(configElement.value)
 
 	def createSatConfig(nim, x, empty_slots):
 		try:
@@ -1413,7 +1412,7 @@ def InitNimManager(nimmgr):
 			nim.toneAmplitude.slot_id = x
 			nim.toneAmplitude.addNotifier(toneAmplitudeChanged)
 			nim.diseqc13V = ConfigYesNo(False)
-			nim.diseqcMode = ConfigSelection(diseqc_mode_choices, "single")
+			nim.diseqcMode = ConfigSelection(diseqc_mode_choices, "diseqc_a_b")
 			nim.connectedTo = ConfigSelection([(str(id), nimmgr.getNimDescription(id)) for id in nimmgr.getNimListOfType("DVB-S") if id != x])
 			nim.simpleSingleSendDiSEqC = ConfigYesNo(False)
 			nim.simpleDiSEqCSetVoltageTone = ConfigYesNo(True)
@@ -1431,12 +1430,12 @@ def InitNimManager(nimmgr):
 			nim.rotorPositions = ConfigInteger(default = 49, limits = [1,999])
 			nim.turningspeedH = ConfigFloat(default = [2,3], limits = [(0,9),(0,9)])
 			nim.turningspeedV = ConfigFloat(default = [1,7], limits = [(0,9),(0,9)])
-			nim.powerMeasurement = ConfigYesNo(False)
+			nim.powerMeasurement = ConfigYesNo(True)
 			nim.powerThreshold = ConfigInteger(default=hw.get_device_name() == "dm8000" and 15 or 50, limits=(0, 100))
 			nim.turningSpeed = ConfigSelection(turning_speed_choices, "fast")
-			btime = datetime(1970, 1, 1, 7, 0)
+			btime = datetime(1970, 1, 1, 7, 0);
 			nim.fastTurningBegin = ConfigDateTime(default = mktime(btime.timetuple()), formatstring = _("%H:%M"), increment = 900)
-			etime = datetime(1970, 1, 1, 19, 0)
+			etime = datetime(1970, 1, 1, 19, 0);
 			nim.fastTurningEnd = ConfigDateTime(default = mktime(etime.timetuple()), formatstring = _("%H:%M"), increment = 900)
 
 	def createCableConfig(nim, x):
@@ -1449,7 +1448,7 @@ def InitNimManager(nimmgr):
 				list.append((str(n), x[0]))
 				n += 1
 			nim.cable = ConfigSubsection()
-			nim.cable.scan_networkid = ConfigInteger(default = 0, limits = (0, 99999))
+			nim.cable.scan_networkid = ConfigInteger(default = 0, limits = (0, 9999))
 			possible_scan_types = [("bands", _("Frequency bands")), ("steps", _("Frequency steps"))]
 			if n:
 				possible_scan_types.append(("provider", _("Provider")))
@@ -1527,7 +1526,7 @@ def InitNimManager(nimmgr):
 			createTerrestrialConfig(nim, x)
 		else:
 			empty_slots += 1
-			nim.configMode = ConfigSelection(choices = { "nothing": _("disabled") }, default="nothing")
+			nim.configMode = ConfigSelection(choices = { "nothing": _("disabled") }, default="nothing");
 			if slot.type is not None:
 				print "pls add support for this frontend type!", slot.type
 #			assert False
@@ -1537,29 +1536,24 @@ def InitNimManager(nimmgr):
 	def tunerTypeChanged(nimmgr, configElement):
 		fe_id = configElement.fe_id
 		eDVBResourceManager.getInstance().setFrontendType(nimmgr.nim_slots[fe_id].frontend_id, nimmgr.nim_slots[fe_id].getType())
-		if path.exists("/proc/stb/frontend/%d/mode" % fe_id):
-			cur_type = int(open("/proc/stb/frontend/%d/mode" % fe_id, "r").read())
+		import os
+		if os.path.exists("/proc/stb/frontend/%d/mode" % fe_id):
+			cur_type = int(open("/proc/stb/frontend/%d/mode" % (fe_id), "r").read())
 			if cur_type != int(configElement.value):
 				print "tunerTypeChanged feid %d from %d to mode %d" % (fe_id, cur_type, int(configElement.value))
 
 				try:
 					oldvalue = open("/sys/module/dvb_core/parameters/dvb_shutdown_timeout", "r").readline()
-					f = open("/sys/module/dvb_core/parameters/dvb_shutdown_timeout", "w")
-					f.write("0")
-					f.close()
+					open("/sys/module/dvb_core/parameters/dvb_shutdown_timeout", "w").write("0")
 				except:
 					print "[info] no /sys/module/dvb_core/parameters/dvb_shutdown_timeout available"
 
 				frontend = eDVBResourceManager.getInstance().allocateRawChannel(fe_id).getFrontend()
 				frontend.closeFrontend()
-				f = open("/proc/stb/frontend/%d/mode" % fe_id, "w")
-				f.write(configElement.value)
-				f.close()
+				open("/proc/stb/frontend/%d/mode" % (fe_id), "w").write(configElement.value)
 				frontend.reopenFrontend()
 				try:
-					f = open("/sys/module/dvb_core/parameters/dvb_shutdown_timeout", "w")
-					f.write(oldvalue)
-					f.close()
+					open("/sys/module/dvb_core/parameters/dvb_shutdown_timeout", "w").write(oldvalue)
 				except:
 					print "[info] no /sys/module/dvb_core/parameters/dvb_shutdown_timeout available"
 				nimmgr.enumerateNIMs()

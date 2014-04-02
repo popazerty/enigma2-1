@@ -1,7 +1,6 @@
 import os
 from enigma import eConsoleAppContainer
 from Components.Harddisk import harddiskmanager
-from shutil import rmtree
 
 opkgDestinations = []
 opkgStatusPath = ''
@@ -20,7 +19,7 @@ def onPartitionChange(why, part):
 	global opkgDestinations
 	global opkgStatusPath
 	mountpoint = os.path.normpath(part.mountpoint)
-	if mountpoint and not mountpoint.startswith('/media/net'):
+	if mountpoint and mountpoint != '/':
 		if why == 'add':
 			if opkgStatusPath == '':
 				# recent opkg versions
@@ -82,7 +81,6 @@ class IpkgComponent:
 
 	def startCmd(self, cmd, args = None):
 		if cmd == self.CMD_UPDATE:
-			rmtree('/var/lib/opkg/lists')
 			self.runCmdEx("update")
 		elif cmd == self.CMD_UPGRADE:
 			append = ""
@@ -110,7 +108,7 @@ class IpkgComponent:
 		self.cmd.dataAvail.remove(self.cmdData)
 
 	def cmdData(self, data):
-# 		print "data:", data
+		print "data:", data
 		if self.cache is None:
 			self.cache = data
 		else:

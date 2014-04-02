@@ -1,5 +1,6 @@
 import os
-from Tools.Directories import fileExists
+from Components.config import config
+from Tools.Directories import pathExists, fileExists
 from Plugins.Plugin import PluginDescriptor
 from Components.Harddisk import harddiskmanager
 
@@ -40,7 +41,7 @@ def filescan_open(list, session, **kwargs):
 			if x.mimetype == "video/x-dvd-iso":
 				dvd_filelist.append(x.path)
 			if x.mimetype == "video/x-dvd":
-				dvd_filelist.append(x.path.rsplit('/',1)[0])
+				dvd_filelist.append(x.path.rsplit('/',1)[0])			
 		session.open(DVD.DVDPlayer, dvd_filelist=dvd_filelist)
 
 def filescan(**kwargs):

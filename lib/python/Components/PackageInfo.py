@@ -3,7 +3,7 @@ from Tools.Directories import crawlDirectory, resolveFilename, SCOPE_CONFIG, SCO
 from Components.NimManager import nimmanager
 from Components.Ipkg import IpkgComponent
 from Components.config import config, configfile
-from boxbranding import getBoxType
+from Tools.HardwareInfo import HardwareInfo
 from enigma import eConsoleAppContainer, eDVBDB
 import os
 
@@ -130,6 +130,7 @@ class PackageInfoHandler:
 	STATUS_INIT = 4
 
 	def __init__(self, statusCallback, blocking = False, neededTag = None, neededFlag = None):
+		self.hardware_info = HardwareInfo()
 		self.directory = "/"
 
 		self.neededTag = neededTag
@@ -269,7 +270,7 @@ class PackageInfoHandler:
 		if prerequisites.has_key("hardware"):
 			hardware_found = False
 			for hardware in prerequisites["hardware"]:
-				if hardware == getBoxType():
+				if hardware == self.hardware_info.device_name:
 					hardware_found = True
 			if not hardware_found:
 				return False

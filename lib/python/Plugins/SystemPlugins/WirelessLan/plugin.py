@@ -1,26 +1,38 @@
-from re import escape as re_escape
-
 from enigma import eTimer, eEnv
-
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap, NumberActionMap
-from Components.Pixmap import MultiPixmap
+from Components.Pixmap import Pixmap,MultiPixmap
+from Components.Label import Label
 from Components.Sources.StaticText import StaticText
 from Components.Sources.List import List
-from Components.config import config, ConfigYesNo, NoSave, ConfigSubsection, ConfigText, ConfigSelection, ConfigPassword
+from Components.MenuList import MenuList
+from Components.config import config, getConfigListEntry, ConfigYesNo, NoSave, ConfigSubsection, ConfigText, ConfigSelection, ConfigPassword
+from Components.ConfigList import ConfigListScreen
 from Components.Network import iNetwork
+from Components.Console import Console
 from Plugins.Plugin import PluginDescriptor
-from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
+from os import system, path as os_path, listdir
+from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_SKIN_IMAGE
 from Tools.LoadPixmap import LoadPixmap
-from Wlan import iWlan, iStatus, getWlanConfigName
-
+from Tools.HardwareInfo import HardwareInfo
+from Wlan import iWlan, wpaSupplicant, iStatus, getWlanConfigName
+from time import time
+from os import system
+from re import escape as re_escape
 
 plugin_path = eEnv.resolve("${libdir}/enigma2/python/Plugins/SystemPlugins/WirelessLan")
 
 
-list = ["Unencrypted", "WEP", "WPA", "WPA/WPA2", "WPA2"]
+list = []
+list.append("Unencrypted")
+list.append("WEP")
+list.append("WPA")
+list.append("WPA/WPA2")
+list.append("WPA2")
 
-weplist = ["ASCII", "HEX"]
+weplist = []
+weplist.append("ASCII")
+weplist.append("HEX")
 
 config.plugins.wlan = ConfigSubsection()
 config.plugins.wlan.essid = NoSave(ConfigText(default = "", fixed_size = False))
@@ -49,26 +61,26 @@ class WlanStatus(Screen):
 			<widget source="signal" render="Label" position="220,180" size="330,25" valign="center" font="Regular;20" transparent="1" foregroundColor="#FFFFFF" />
 			<widget source="bitrate" render="Label" position="220,220" size="330,25" valign="center" font="Regular;20" transparent="1" foregroundColor="#FFFFFF" />
 			<widget source="enc" render="Label" position="220,260" size="330,25" valign="center" font="Regular;20" transparent="1" foregroundColor="#FFFFFF" />
-
-			<ePixmap pixmap="skin_default/div-h.png" position="0,350" zPosition="1" size="560,2" />
+	
+			<ePixmap pixmap="skin_default/div-h.png" position="0,350" zPosition="1" size="560,2" />		
 			<widget source="IFtext" render="Label" position="10,355" size="120,21" zPosition="10" font="Regular;20" halign="left" backgroundColor="#25062748" transparent="1" />
 			<widget source="IF" render="Label" position="120,355" size="400,21" zPosition="10" font="Regular;20" halign="left" backgroundColor="#25062748" transparent="1" />
 			<widget source="Statustext" render="Label" position="10,375" size="115,21" zPosition="10" font="Regular;20" halign="left" backgroundColor="#25062748" transparent="1"/>
 			<widget name="statuspic" pixmaps="skin_default/buttons/button_green.png,skin_default/buttons/button_green_off.png" position="130,380" zPosition="10" size="15,16" transparent="1" alphatest="on"/>
 		</screen>"""
-
+	
 	def __init__(self, session, iface):
 		Screen.__init__(self, session)
 		self.session = session
 		self.iface = iface
-
+				    
 		self["LabelBSSID"] = StaticText(_('Accesspoint:'))
 		self["LabelESSID"] = StaticText(_('SSID:'))
 		self["LabelQuality"] = StaticText(_('Link quality:'))
 		self["LabelSignal"] = StaticText(_('Signal strength:'))
 		self["LabelBitrate"] = StaticText(_('Bitrate:'))
 		self["LabelEnc"] = StaticText(_('Encryption:'))
-
+			
 		self["BSSID"] = StaticText()
 		self["ESSID"] = StaticText()
 		self["quality"] = StaticText()
@@ -85,7 +97,7 @@ class WlanStatus(Screen):
 
 		self.resetList()
 		self.updateStatusbar()
-
+		
 		self["actions"] = NumberActionMap(["WizardActions", "InputActions", "EPGSelectActions", "ShortcutActions"],
 		{
 			"ok": self.exit,
@@ -93,20 +105,20 @@ class WlanStatus(Screen):
 			"red": self.exit,
 		}, -1)
 		self.timer = eTimer()
-		self.timer.timeout.get().append(self.resetList)
+		self.timer.timeout.get().append(self.resetList) 
 		self.onShown.append(lambda: self.timer.start(8000))
 		self.onLayoutFinish.append(self.layoutFinished)
 		self.onClose.append(self.cleanup)
 
 	def cleanup(self):
 		iStatus.stopWlanConsole()
-
+		
 	def layoutFinished(self):
 		self.setTitle(_("Wireless network state"))
-
+		
 	def resetList(self):
 		iStatus.getDataForInterface(self.iface,self.getInfoCB)
-
+		
 	def getInfoCB(self,data,status):
 		if data is not None:
 			if data is True:
@@ -128,14 +140,14 @@ class WlanStatus(Screen):
 					quality = status[self.iface]["quality"]
 					if self.has_key("quality"):
 						self["quality"].setText(quality)
-
+						
 					if status[self.iface]["bitrate"] == '0':
 						bitrate = _("Unsupported")
 					else:
 						bitrate = str(status[self.iface]["bitrate"]) + " Mb/s"
 					if self.has_key("bitrate"):
-						self["bitrate"].setText(bitrate)
-
+						self["bitrate"].setText(bitrate)					
+					
 					signal = status[self.iface]["signal"]
 					if self.has_key("signal"):
 						self["signal"].setText(signal)
@@ -173,7 +185,7 @@ class WlanStatus(Screen):
 				self["statuspic"].setPixmapNum(1)
 			else:
 				self["statuspic"].setPixmapNum(0)
-			self["statuspic"].show()
+			self["statuspic"].show()		
 
 
 class WlanScan(Screen):
@@ -200,7 +212,7 @@ class WlanScan(Screen):
 					}
 				</convert>
 			</widget>
-			<ePixmap pixmap="skin_default/div-h.png" position="0,340" zPosition="1" size="560,2" />
+			<ePixmap pixmap="skin_default/div-h.png" position="0,340" zPosition="1" size="560,2" />		
 			<widget source="info" render="Label" position="0,350" size="560,50" font="Regular;24" halign="center" valign="center" backgroundColor="#25062748" transparent="1" />
 		</screen>"""
 
@@ -216,26 +228,26 @@ class WlanScan(Screen):
 		self.cleanList = None
 		self.oldlist = {}
 		self.listLength = None
-		self.divpng = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+		self.divpng = LoadPixmap(path=resolveFilename(SCOPE_SKIN_IMAGE, "skin_default/div-h.png"))
 
 		self.rescanTimer = eTimer()
 		self.rescanTimer.callback.append(self.rescanTimerFired)
-
+		
 		self["info"] = StaticText()
-
+		
 		self.list = []
 		self["list"] = List(self.list)
-
+		
 		self["key_red"] = StaticText(_("Close"))
 		self["key_green"] = StaticText(_("Connect"))
 		self["key_yellow"] = StaticText()
-
+			
 		self["actions"] = NumberActionMap(["WizardActions", "InputActions", "EPGSelectActions"],
 		{
 			"ok": self.select,
 			"back": self.cancel,
 		}, -1)
-
+		
 		self["shortcuts"] = ActionMap(["ShortcutActions"],
 		{
 			"red": self.cancel,
@@ -245,10 +257,10 @@ class WlanScan(Screen):
 		self.w = iWlan.getInterface()
 		self.onLayoutFinish.append(self.layoutFinished)
 		self.getAccessPoints(refresh = False)
-
+		
 	def layoutFinished(self):
 		self.setTitle(_("Select a wireless network"))
-
+	
 	def select(self):
 		cur = self["list"].getCurrent()
 		if cur is not None:
@@ -264,7 +276,7 @@ class WlanScan(Screen):
 			self.rescanTimer.stop()
 			del self.rescanTimer
 			self.close(None)
-
+	
 	def cancel(self):
 		iWlan.stopGetNetworkList()
 		self.rescanTimer.stop()
@@ -277,11 +289,11 @@ class WlanScan(Screen):
 
 	def buildEntryComponent(self, essid, bssid, encrypted, iface, maxrate, signal):
 		encryption = encrypted and _("Yes") or _("No")
-		return essid, bssid, _("Signal: ") + str(signal), _("Max. bitrate: ") + str(maxrate), _("Encrypted: ") + encryption, _("Interface: ") + str(iface), self.divpng
+		return((essid, bssid, _("Signal: ") + str(signal), _("Max. bitrate: ") + str(maxrate), _("Encrypted: ") + encryption, _("Interface: ") + str(iface), self.divpng))
 
 	def updateAPList(self):
 		newList = []
-		newList = self.getAccessPoints(refresh = True)
+		newList = self.getAccessPoints(refresh = True)	
 		self.newAPList = []
 		tmpList = []
 		newListIndex = None
@@ -296,7 +308,7 @@ class WlanScan(Screen):
 		if len(tmpList):
 			for entry in tmpList:
 				self.newAPList.append(self.buildEntryComponent( entry[0], entry[1], entry[2], entry[3], entry[4], entry[5] ))
-
+	
 			currentListEntry = self["list"].getCurrent()
 			if currentListEntry is not None:
 				idx = 0
@@ -337,10 +349,10 @@ class WlanScan(Screen):
 					self.oldlist[entry[0]] = { 'data': entry }
 				else:
 					self.oldlist[entry[0]]['data'] = entry
-
+		
 		for entry in self.cleanList:
 			self.APList.append(self.buildEntryComponent( entry[0], entry[1], entry[2], entry[3], entry[4], entry[5] ))
-
+		
 		if refresh is False:
 			self['list'].setList(self.APList)
 		self.listLength = len(self.APList)
@@ -361,7 +373,7 @@ class WlanScan(Screen):
 			self.WlanList.append( (entry[0], entry[0]) )
 
 	def getLength(self):
-		return self.listLength
+		return self.listLength		
 
 	def getWlanList(self):
 		if self.WlanList is None:

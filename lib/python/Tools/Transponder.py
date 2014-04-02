@@ -1,11 +1,11 @@
 from enigma import eDVBFrontendParametersSatellite, eDVBFrontendParametersCable, eDVBFrontendParametersTerrestrial
 from Components.NimManager import nimmanager
 
-def ConvertToHumanReadable(tp, tunertype = None):
+def ConvertToHumanReadable(tp, type = None):
 	ret = { }
-	if tunertype is None:
-		tunertype = tp.get("tuner_type", "None")
-	if tunertype == "DVB-S":
+	if type is None:
+		type = tp.get("tuner_type", "None")
+	if type == "DVB-S":
 		ret["tuner_type"] = _("Satellite")
 		ret["inversion"] = {
 			eDVBFrontendParametersSatellite.Inversion_Unknown : _("Auto"),
@@ -53,9 +53,7 @@ def ConvertToHumanReadable(tp, tunertype = None):
 				eDVBFrontendParametersSatellite.Pilot_Unknown : _("Auto"),
 				eDVBFrontendParametersSatellite.Pilot_On : _("On"),
 				eDVBFrontendParametersSatellite.Pilot_Off : _("Off")}.get(tp.get("pilot"))
-		ret["frequency"] = (tp.get("frequency") and str(tp.get("frequency")/1000) + ' Mhz') or '0 Mhz'
-		ret["symbol_rate"] = (tp.get("symbol_rate") and tp.get("symbol_rate")/1000) or 0
-	elif tunertype == "DVB-C":
+	elif type == "DVB-C":
 		ret["tuner_type"] = _("Cable")
 		ret["modulation"] = {
 			eDVBFrontendParametersCable.Modulation_Auto: _("Auto"),
@@ -81,8 +79,7 @@ def ConvertToHumanReadable(tp, tunertype = None):
 		ret["system"] = {
 			eDVBFrontendParametersCable.System_DVB_C_ANNEX_A : "DVB-C",
 			eDVBFrontendParametersCable.System_DVB_C_ANNEX_C : "DVB-C ANNEX C"}.get(tp.get("system"))
-		ret["frequency"] = (tp.get("frequency") and str(tp.get("frequency")/1000) + ' Mhz') or '0 Mhz'
-	elif tunertype == "DVB-T":
+	elif type == "DVB-T":
 		ret["tuner_type"] = _("Terrestrial")
 		ret["bandwidth"] = {
 			0 : _("Auto"),
@@ -146,8 +143,7 @@ def ConvertToHumanReadable(tp, tunertype = None):
 		ret["system"] = {
 			eDVBFrontendParametersTerrestrial.System_DVB_T : "DVB-T",
 			eDVBFrontendParametersTerrestrial.System_DVB_T2 : "DVB-T2"}.get(tp.get("system"))
-		ret["frequency"] = (tp.get("frequency") and str(tp.get("frequency")/1000000) + ' Mhz') or '0 Mhz'
-	elif tunertype == "ATSC":
+	elif type == "ATSC":
 		ret["tuner_type"] = "ATSC"
 		ret["modulation"] = {
 			eDVBFrontendParametersATSC.Modulation_Auto: _("Auto"),
@@ -165,8 +161,8 @@ def ConvertToHumanReadable(tp, tunertype = None):
 		ret["system"] = {
 			eDVBFrontendParametersATSC.System_ATSC : "ATSC",
 			eDVBFrontendParametersATSC.System_DVB_C_ANNEX_B : "DVB-C ANNEX B"}.get(tp.get("system"))
-	elif tunertype != "None":
-		print "ConvertToHumanReadable: no or unknown tunertype in tpdata dict for tunertype:", tunertype
+	elif type != "None":
+		print "ConvertToHumanReadable: no or unknown type in tpdata dict for type:", type
 	for k,v in tp.items():
 		if k not in ret:
 			ret[k] = v

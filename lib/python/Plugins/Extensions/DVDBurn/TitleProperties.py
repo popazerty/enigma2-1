@@ -1,22 +1,28 @@
-from enigma import ePicLoad
-
 from Screens.Screen import Screen
-from Components.ActionMap import ActionMap
+from Screens.ChoiceBox import ChoiceBox
+from Screens.InputBox import InputBox
+from Screens.MessageBox import MessageBox
+from Screens.HelpMenu import HelpableScreen
+from Components.ActionMap import HelpableActionMap, ActionMap
+from Components.Sources.List import List
 from Components.Sources.StaticText import StaticText
+from Components.Sources.Progress import Progress
+from Components.FileList import FileList
 from Components.Pixmap import Pixmap
-from Components.config import config, getConfigListEntry, ConfigInteger
+from enigma import ePicLoad
+from Tools.Directories import fileExists, resolveFilename, SCOPE_PLUGINS, SCOPE_FONTS, SCOPE_HDD
+from Components.config import config, getConfigListEntry, ConfigInteger, ConfigSubsection, ConfigSelection
 from Components.ConfigList import ConfigListScreen
 from Components.AVSwitch import AVSwitch
 import DVDTitle
 
-
 class TitleProperties(Screen,ConfigListScreen):
 	skin = """
 		<screen name="TitleProperties" position="center,center" size="560,445" title="Properties of current title" >
-			<ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="buttons/green.png" position="140,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
-			<ePixmap pixmap="buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
+			<ePixmap pixmap="skin_default/buttons/blue.png" position="420,0" size="140,40" alphatest="on" />
 			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
 			<widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
 			<widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;19" halign="center" valign="center" backgroundColor="#a08500" transparent="1" />
@@ -58,7 +64,7 @@ class TitleProperties(Screen,ConfigListScreen):
 		    "cancel": self.cancel,
 		    "ok": self.ok,
 		}, -2)
-
+		
 		self.onShown.append(self.update)
 		self.onLayoutFinish.append(self.layoutFinished)
 
@@ -75,13 +81,14 @@ class TitleProperties(Screen,ConfigListScreen):
 			self.list.append(getConfigListEntry("DVD " + _("Description"), self.properties.menusubtitle))
 			if config.usage.setup_level.index >= 2: # expert+
 				for audiotrack in self.properties.audiotracks:
-					DVB_aud = audiotrack.DVB_lang.value or audiotrack.pid.value
+					DVB_aud = audiotrack.DVB_lang.getValue() or audiotrack.pid.getValue()
 					self.list.append(getConfigListEntry(_("Burn audio track (%s)") % DVB_aud, audiotrack.active))
-					if audiotrack.active.value:
+					if audiotrack.active.getValue():
 						self.list.append(getConfigListEntry(_("Audio track (%s) format") % DVB_aud, audiotrack.format))
 						self.list.append(getConfigListEntry(_("Audio track (%s) language") % DVB_aud, audiotrack.language))
+						
 				self.list.append(getConfigListEntry("DVD " + _("Aspect ratio"), self.properties.aspect))
-				if self.properties.aspect.value == "16:9":
+				if self.properties.aspect.getValue() == "16:9":
 					self.list.append(getConfigListEntry("DVD " + "widescreen", self.properties.widescreen))
 				else:
 					self.list.append(getConfigListEntry("DVD " + "widescreen", self.properties.crop))
@@ -114,7 +121,7 @@ class TitleProperties(Screen,ConfigListScreen):
 
 	def paintThumbPixmapCB(self, picInfo=None):
 		ptr = self.picload.getData()
-		if ptr is not None:
+		if ptr != None:
 			self["thumbnail"].instance.setPixmap(ptr.__deref__())
 
 	def changedConfigList(self):
@@ -128,7 +135,7 @@ class TitleProperties(Screen,ConfigListScreen):
 		for x in self["config"].list:
 			x[1].save()
 		current_pos = self.title_idx+1
-		new_pos = self.properties.position.value
+		new_pos = self.properties.position.getValue()
 		if new_pos != current_pos:
 			print "title got repositioned from ", current_pos, "to", new_pos
 			swaptitle = self.project.titles.pop(current_pos-1)
@@ -158,7 +165,7 @@ class LanguageChoices():
 				self.langdict[key] = val
 				self.choices.append((key, val))
 		self.choices.sort()
-		self.choices.insert(0,("nolang", "unspecified"))
+		self.choices.insert(0,("nolang", ("unspecified")))
 		self.choices.insert(1,(syslang, self.langdict[syslang]))
 		if syslang != "en":
 			self.choices.insert(2,("en", self.langdict["en"]))

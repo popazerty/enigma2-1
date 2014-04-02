@@ -26,11 +26,6 @@ class ServiceInfo(Converter, object):
 	AUDIOTRACKS_AVAILABLE = 18
 	SUBTITLES_AVAILABLE = 19
 	EDITMODE = 20
-	IS_STREAM = 21
-	IS_SD = 22
-	IS_HD = 23
-	IS_SD_AND_WIDESCREEN = 24
-	IS_SD_AND_NOT_WIDESCREEN = 25
 
 	def __init__(self, type):
 		Converter.__init__(self, type)
@@ -56,11 +51,6 @@ class ServiceInfo(Converter, object):
 				"AudioTracksAvailable": (self.AUDIOTRACKS_AVAILABLE, (iPlayableService.evUpdatedInfo,)),
 				"SubtitlesAvailable": (self.SUBTITLES_AVAILABLE, (iPlayableService.evUpdatedInfo,)),
 				"Editmode": (self.EDITMODE, (iPlayableService.evUpdatedInfo,)),
-				"IsStream": (self.IS_STREAM, (iPlayableService.evUpdatedInfo,)),
-				"IsSD": (self.IS_SD, (iPlayableService.evVideoSizeChanged,)),
-				"IsHD": (self.IS_HD, (iPlayableService.evVideoSizeChanged,)),
-				"IsSDAndWidescreen": (self.IS_SD_AND_WIDESCREEN, (iPlayableService.evVideoSizeChanged,)),
-				"IsSDAndNotWidescreen": (self.IS_SD_AND_NOT_WIDESCREEN, (iPlayableService.evVideoSizeChanged,)),
 			}[type]
 
 	def getServiceInfoString(self, info, what, convert = lambda x: "%d" % x):
@@ -77,7 +67,7 @@ class ServiceInfo(Converter, object):
 		info = service and service.info()
 		if not info:
 			return False
-
+		
 		if self.type == self.HAS_TELETEXT:
 			tpid = info.getInfo(iServiceInformation.sTXTPID)
 			return tpid != -1
@@ -89,7 +79,7 @@ class ServiceInfo(Converter, object):
 				idx = 0
 				while idx < n:
 					i = audio.getTrackInfo(idx)
-					description = i.getDescription()
+					description = i.getDescription();
 					if "AC3" in description or "AC-3" in description or "DTS" in description:
 						return True
 					idx += 1
@@ -114,20 +104,10 @@ class ServiceInfo(Converter, object):
 			return False
 		elif self.type == self.EDITMODE:
 			return hasattr(self.source, "editmode") and not not self.source.editmode
-		elif self.type == self.IS_STREAM:
-			return service.streamed() is not None
-		elif self.type == self.IS_SD:
-			return info.getInfo(iServiceInformation.sVideoHeight) < 720
-		elif self.type == self.IS_HD:
-			return info.getInfo(iServiceInformation.sVideoHeight) >= 720
-		elif self.type == self.IS_SD_AND_WIDESCREEN:
-			return info.getInfo(iServiceInformation.sVideoHeight) < 720 and info.getInfo(iServiceInformation.sAspect) in WIDESCREEN
-		elif self.type == self.IS_SD_AND_NOT_WIDESCREEN:
-			return info.getInfo(iServiceInformation.sVideoHeight) < 720 and info.getInfo(iServiceInformation.sAspect) not in WIDESCREEN
 		return False
 
 	boolean = property(getBoolean)
-
+	
 	@cached
 	def getText(self):
 		service = self.source.service

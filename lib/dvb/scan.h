@@ -111,7 +111,6 @@ public:
 	
 	void getStats(int &transponders_done, int &transponders_total, int &services);
 	void getLastServiceName(std::string &name);
-	void getLastServiceRef(std::string &name);
 	RESULT getFrontend(ePtr<iDVBFrontend> &);
 	RESULT getCurrentTransponder(ePtr<iDVBFrontendParameters> &);
 	eDVBChannelID getCurrentChannelID() { return m_chid_current; }
