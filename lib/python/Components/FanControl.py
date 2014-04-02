@@ -5,6 +5,7 @@ from Tools.BoundFunction import boundFunction
 
 import NavigationInstance
 from enigma import iRecordableService
+from boxbranding import getBoxType
 
 class FanControl:
 	# ATM there's only support for one fan
@@ -19,16 +20,16 @@ class FanControl:
 	def setVoltage_PWM(self):
 		for fanid in range(self.getFanCount()):
 			cfg = self.getConfig(fanid)
-			self.setVoltage(fanid, cfg.vlt.value)
-			self.setPWM(fanid, cfg.pwm.value)
-			print "[FanControl]: setting fan values: fanid = %d, voltage = %d, pwm = %d" % (fanid, cfg.vlt.value, cfg.pwm.value)
+			self.setVoltage(fanid, cfg.vlt.getValue())
+			self.setPWM(fanid, cfg.pwm.getValue())
+			print "[FanControl]: setting fan values: fanid = %d, voltage = %d, pwm = %d" % (fanid, cfg.vlt.getValue(), cfg.pwm.getValue())
 
 	def setVoltage_PWM_Standby(self):
 		for fanid in range(self.getFanCount()):
 			cfg = self.getConfig(fanid)
-			self.setVoltage(fanid, cfg.vlt_standby.value)
-			self.setPWM(fanid, cfg.pwm_standby.value)
-			print "[FanControl]: setting fan values (standby mode): fanid = %d, voltage = %d, pwm = %d" % (fanid, cfg.vlt_standby.value, cfg.pwm_standby.value)
+			self.setVoltage(fanid, cfg.vlt_standby.getValue())
+			self.setPWM(fanid, cfg.pwm_standby.getValue())
+			print "[FanControl]: setting fan values (standby mode): fanid = %d, voltage = %d, pwm = %d" % (fanid, cfg.vlt_standby.getValue(), cfg.pwm_standby.getValue())
 
 	def getRecordEvent(self, recservice, event):
 		recordings = len(NavigationInstance.instance.getRecordings())
@@ -55,63 +56,68 @@ class FanControl:
 
 	def createConfig(self):
 		def setVlt(fancontrol, fanid, configElement):
-			fancontrol.setVoltage(fanid, configElement.value)
+			fancontrol.setVoltage(fanid, configElement.getValue())
 		def setPWM(fancontrol, fanid, configElement):
-			fancontrol.setPWM(fanid, configElement.value)
-		
+			fancontrol.setPWM(fanid, configElement.getValue())
+
 		config.fans = ConfigSubList()
 		for fanid in range(self.getFanCount()):
 			fan = ConfigSubsection()
 			fan.vlt = ConfigSlider(default = 15, increment = 5, limits = (0, 255))
-			fan.pwm = ConfigSlider(default = 0, increment = 5, limits = (0, 255))
+			if getBoxType() == 'tm2t':
+				fan.pwm = ConfigSlider(default = 150, increment = 5, limits = (0, 255))
+			if getBoxType() == 'tmsingle':
+				fan.pwm = ConfigSlider(default = 100, increment = 5, limits = (0, 255))
+			else:
+				fan.pwm = ConfigSlider(default = 50, increment = 5, limits = (0, 255))
 			fan.vlt_standby = ConfigSlider(default = 5, increment = 5, limits = (0, 255))
 			fan.pwm_standby = ConfigSlider(default = 0, increment = 5, limits = (0, 255))
 			fan.vlt.addNotifier(boundFunction(setVlt, self, fanid))
 			fan.pwm.addNotifier(boundFunction(setPWM, self, fanid))
 			config.fans.append(fan)
-	
+
 	def getConfig(self, fanid):
 		return config.fans[fanid]
-	
+
 	def getFanCount(self):
 		return self.fancount
-	
+
 	def hasRPMSensor(self, fanid):
 		return os.path.exists("/proc/stb/fp/fan_speed")
-	
+
 	def hasFanControl(self, fanid):
 		return os.path.exists("/proc/stb/fp/fan_vlt") or os.path.exists("/proc/stb/fp/fan_pwm")
-	
+
 	def getFanSpeed(self, fanid):
 		f = open("/proc/stb/fp/fan_speed", "r")
 		value = int(f.readline().strip()[:-4])
 		f.close()
 		return value
-	
+
 	def getVoltage(self, fanid):
 		f = open("/proc/stb/fp/fan_vlt", "r")
 		value = int(f.readline().strip(), 16)
 		f.close()
 		return value
-	
+
 	def setVoltage(self, fanid, value):
 		if value > 255:
 			return
 		f = open("/proc/stb/fp/fan_vlt", "w")
 		f.write("%x" % value)
 		f.close()
-		
+
 	def getPWM(self, fanid):
 		f = open("/proc/stb/fp/fan_pwm", "r")
 		value = int(f.readline().strip(), 16)
 		f.close()
 		return value
-	
+
 	def setPWM(self, fanid, value):
 		if value > 255:
 			return
 		f = open("/proc/stb/fp/fan_pwm", "w")
 		f.write("%x" % value)
 		f.close()
-	
+
 fancontrol = FanControl()

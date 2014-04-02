@@ -4,29 +4,27 @@ from Components.Label import Label
 
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
-from InfoBarGenerics import InfoBarShowHide, InfoBarMenu, InfoBarInstantRecord, InfoBarTimeshift, InfoBarSeek, InfoBarTimeshiftState, InfoBarExtensions, InfoBarSubtitleSupport, InfoBarAudioSelection
+from InfoBarGenerics import InfoBarShowHide, InfoBarMenu, InfoBarInstantRecord, InfoBarSeek, InfoBarTimeshiftState, InfoBarExtensions, InfoBarSubtitleSupport, InfoBarAudioSelection
 from Components.ServiceEventTracker import InfoBarBase
+from Components.Timeshift import InfoBarTimeshift
 
 from enigma import eTimer
 
-class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
-		InfoBarInstantRecord, InfoBarSeek, InfoBarTimeshift, \
-		InfoBarTimeshiftState, InfoBarExtensions, InfoBarSubtitleSupport, \
-		InfoBarAudioSelection, Screen):
+class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu,
+						  InfoBarInstantRecord, InfoBarSeek, InfoBarTimeshift,
+						  InfoBarTimeshiftState, InfoBarExtensions, InfoBarSubtitleSupport,
+						  InfoBarAudioSelection, Screen):
 
 	def __init__(self, session, subservices):
 		Screen.__init__(self, session)
-		for x in InfoBarBase, InfoBarShowHide, InfoBarMenu, \
-				InfoBarInstantRecord, InfoBarSeek, InfoBarTimeshift, \
-				InfoBarTimeshiftState, InfoBarSubtitleSupport, \
-				InfoBarExtensions, InfoBarAudioSelection:
+		for x in InfoBarBase, InfoBarShowHide, InfoBarMenu, InfoBarInstantRecord, InfoBarSeek, InfoBarTimeshift, InfoBarTimeshiftState, InfoBarSubtitleSupport, InfoBarExtensions, InfoBarAudioSelection:
 			x.__init__(self)
 
 		self.restoreService = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-		
+
 		self["CurrentSubserviceNumber"] = Label("")
 		self.currentSubserviceNumberLabel = self["CurrentSubserviceNumber"]
-		
+
 		self.updateSubservices()
 		self.currentlyPlayingSubservice = 0
 
@@ -34,7 +32,7 @@ class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
 		self.timer.callback.append(self.playSubservice)
 		self.onLayoutFinish.append(self.onLayoutFinished)
 
-		self["actions"] = NumberActionMap( [ "InfobarSubserviceQuickzapActions", "NumberActions", "DirectionActions", "ColorActions" ], 
+		self["actions"] = NumberActionMap( [ "InfobarSubserviceQuickzapActions", "NumberActions", "DirectionActions", "ColorActions" ],
 			{
 				"up": self.showSelection,
 				"down": self.showSelection,
@@ -53,7 +51,7 @@ class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
 				"9": self.keyNumberGlobal,
 				"0": self.keyNumberGlobal
 			}, 0)
-		
+
 		self.onClose.append(self.__onClose)
 
 	def __onClose(self):
@@ -66,7 +64,7 @@ class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
 		self.service = self.session.nav.getCurrentService()
 		self.subservices = self.service and self.service.subServices()
 		self.n = self.subservices and self.subservices.getNumberOfSubservices()
-	
+
 	def nextSubservice(self):
 		self.updateSubservices()
 		if self.n:
@@ -74,7 +72,7 @@ class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
 				self.playSubservice(0)
 			else:
 				self.playSubservice(self.currentlyPlayingSubservice + 1)
-	
+
 	def previousSubservice(self):
 		self.updateSubservices()
 		if self.n:
@@ -92,7 +90,7 @@ class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
 		for x in range(self.n):
 			if service == self.subservices.getSubservice(x):
 				return x
-	
+
 	def keyNumberGlobal(self, number):
 		print number, "pressed"
 		self.updateSubservices()
@@ -100,7 +98,7 @@ class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
 			self.playSubservice(self.lastservice)
 		elif self.n is not None and number <= self.n - 1:
 			self.playSubservice(number)
-	
+
 	def showSelection(self):
 		self.updateSubservices()
 		tlist = []
@@ -114,22 +112,22 @@ class SubservicesQuickzap(InfoBarBase, InfoBarShowHide, InfoBarMenu, \
 
 		keys = [ "", "1", "2", "3", "4", "5", "6", "7", "8", "9" ] + [""] * n
 		self.session.openWithCallback(self.subserviceSelected, ChoiceBox, title=_("Please select a subservice..."), list = tlist, selection = self.currentlyPlayingSubservice, keys = keys)
-	
+
 	def subserviceSelected(self, service):
 		print "playing subservice number", service
 		if service is not None:
 			self.playSubservice(service[1])
-	
+
 	def keyOK(self):
 		pass
-	
+
 	def quitQuestion(self):
 		self.session.openWithCallback(self.quit, MessageBox, _("Really exit the subservices quickzap?"))
-	
+
 	def quit(self, answer):
 		if answer:
 			self.close()
-		
+
 	def playSubservice(self, number = 0):
 		newservice = self.subservices.getSubservice(number)
 		if newservice.valid():

@@ -1,3 +1,5 @@
+from boxbranding import getBoxType
+
 class HardwareInfo:
 	device_name = None
 	device_version = None
@@ -12,6 +14,8 @@ class HardwareInfo:
 			file = open("/proc/stb/info/model", "r")
 			HardwareInfo.device_name = file.readline().strip()
 			file.close()
+			if getBoxType().startswith('tm') or getBoxType().startswith('iqon') or getBoxType().startswith('media') or getBoxType().startswith('opti'):
+				HardwareInfo.device_name = "dm800se"
 			try:
 				file = open("/proc/stb/info/version", "r")
 				HardwareInfo.device_version = file.readline().strip()
@@ -25,13 +29,13 @@ class HardwareInfo:
 			print "fallback to detect hardware via /proc/cpuinfo!!"
 			try:
 				rd = open("/proc/cpuinfo", "r").read()
-				if rd.find("Brcm4380 V4.2") != -1:
+				if "Brcm4380 V4.2" in rd:
 					HardwareInfo.device_name = "dm8000"
 					print "dm8000 detected!"
-				elif rd.find("Brcm7401 V0.0") != -1:
+				elif "Brcm7401 V0.0" in rd:
 					HardwareInfo.device_name = "dm800"
 					print "dm800 detected!"
-				elif rd.find("MIPS 4KEc V4.8") != -1:
+				elif "MIPS 4KEc V4.8" in rd:
 					HardwareInfo.device_name = "dm7025"
 					print "dm7025 detected!"
 			except:
@@ -44,4 +48,13 @@ class HardwareInfo:
 		return HardwareInfo.device_version
 
 	def has_hdmi(self):
-		return (HardwareInfo.device_name == 'dm7020hd' or HardwareInfo.device_name == 'dm800se' or HardwareInfo.device_name == 'dm500hd' or (HardwareInfo.device_name == 'dm8000' and HardwareInfo.device_version != None))
+		return not (HardwareInfo.device_name == 'dm800' or (HardwareInfo.device_name == 'dm8000' and HardwareInfo.device_version == None))
+
+	def linux_kernel(self):
+		try:
+			return open("/proc/version","r").read().split(' ', 4)[2].split('-',2)[0]
+		except:
+			return "unknown"
+
+	def has_deepstandby(self):
+		return getBoxType() != 'dm800'

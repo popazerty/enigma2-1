@@ -1,8 +1,5 @@
 from Screens.Screen import Screen
-from Screens.MessageBox import MessageBox
-from Screens.HelpMenu import HelpableScreen
-from Components.ActionMap import HelpableActionMap, ActionMap
-from Components.Sources.List import List
+from Components.ActionMap import ActionMap
 from Components.Sources.StaticText import StaticText
 from Components.Sources.Progress import Progress
 from Components.Task import Task, Job, job_manager, Condition
@@ -14,9 +11,9 @@ from Plugins.SystemPlugins.Hotplug.plugin import hotplugNotifier
 class DVDToolbox(Screen):
 	skin = """
 		<screen name="DVDToolbox" position="center,center"  size="560,445" title="DVD media toolbox" >
-		    <ePixmap pixmap="skin_default/buttons/red.png" position="0,0" size="140,40" alphatest="on" />
-		    <ePixmap pixmap="skin_default/buttons/green.png" position="140,0" size="140,40" alphatest="on" />
-		    <ePixmap pixmap="skin_default/buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
+		    <ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" alphatest="on" />
+		    <ePixmap pixmap="buttons/green.png" position="140,0" size="140,40" alphatest="on" />
+		    <ePixmap pixmap="buttons/yellow.png" position="280,0" size="140,40" alphatest="on" />
 		    <widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
 		    <widget source="key_green" render="Label" position="140,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" transparent="1" />
 		    <widget source="key_yellow" render="Label" position="280,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" transparent="1" />
@@ -28,14 +25,14 @@ class DVDToolbox(Screen):
 
 	def __init__(self, session):
 		Screen.__init__(self, session)
-		
+
 		self["key_red"] = StaticText(_("Exit"))
 		self["key_green"] = StaticText(_("Update"))
 		self["key_yellow"] = StaticText()
-		
+
 		self["space_label"] = StaticText()
 		self["space_bar"] = Progress()
-		
+
 		self.mediuminfo = [ ]
 		self.formattable = False
 		self["details"] = ScrollLabel()
@@ -77,7 +74,7 @@ class DVDToolbox(Screen):
 			job_manager.AddJob(job)
 			from Screens.TaskView import JobView
 			self.session.openWithCallback(self.formatCB, JobView, job)
-	
+
 	def formatCB(self, in_background):
 		self.update()
 
@@ -117,11 +114,11 @@ class DVDToolbox(Screen):
 					print "[dvd+rw-mediainfo] free blocks capacity=%d, used=%d" % (capacity, used)
 			elif line.find("Disc status:") > -1:
 				if line.find("blank") > -1:
-					print "[dvd+rw-mediainfo] Disc status blank capacity=%d, used=0" % (capacity)
+					print "[dvd+rw-mediainfo] Disc status blank capacity=%d, used=0" % capacity
 					capacity = used
 					used = 0
 				elif line.find("complete") > -1 and formatted_capacity == 0:
-					print "[dvd+rw-mediainfo] Disc status complete capacity=0, used=%d" % (capacity)
+					print "[dvd+rw-mediainfo] Disc status complete capacity=0, used=%d" % capacity
 					used = read_capacity
 					capacity = 1
 				else:
@@ -143,7 +140,7 @@ class DVDToolbox(Screen):
 			self["space_label"].text = "%d / %d MB" % (used, capacity) + " (%.2f%% " % percent + _("of a SINGLE layer medium used.") + ")"
 			self["space_bar"].value = int(percent)
 		elif capacity == 1 and used > 0:
-			self["space_label"].text = "%d MB " % (used) + _("on READ ONLY medium.")
+			self["space_label"].text = "%d MB " % used + _("on READ ONLY medium.")
 			self["space_bar"].value = int(percent)
 		else:
 			self["space_label"].text = _("Medium is not a writeable DVD!")
@@ -163,12 +160,15 @@ class DVDformatJob(Job):
 		Job.__init__(self, _("DVD media toolbox"))
 		self.toolbox = toolbox
 		DVDformatTask(self)
-		
+
 	def retry(self):
 		self.tasks[0].args += self.tasks[0].retryargs
 		Job.retry(self)
 
 class DVDformatTaskPostcondition(Condition):
+	def __init__(self):
+		pass
+
 	RECOVERABLE = True
 	def check(self, task):
 		return task.error is None
@@ -182,8 +182,9 @@ class DVDformatTaskPostcondition(Condition):
 
 class DVDformatTask(Task):
 	ERROR_ALREADYFORMATTED, ERROR_NOTWRITEABLE, ERROR_UNKNOWN = range(3)
-	def __init__(self, job, extra_args=[]):
-		Task.__init__(self, job, ("RW medium format"))
+	def __init__(self, job, extra_args=None):
+		if not extra_args: extra_args = []
+		Task.__init__(self, job, "RW medium format")
 		self.toolbox = job.toolbox
 		self.postconditions.append(DVDformatTaskPostcondition())
 		self.setTool("dvd+rw-format")

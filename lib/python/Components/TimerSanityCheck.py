@@ -1,8 +1,10 @@
-import NavigationInstance
 from time import localtime, mktime, gmtime
-from ServiceReference import ServiceReference
+
 from enigma import iServiceInformation, eServiceCenter, eServiceReference
+
+import NavigationInstance
 from timer import TimerEntry
+
 
 class TimerSanityCheck:
 	def __init__(self, timerlist, newtimer=None):
@@ -31,7 +33,7 @@ class TimerSanityCheck:
 		if self.newtimer is not None and self.newtimer.service_ref.ref.valid():
 			self.simultimer = [ self.newtimer ]
 			for timer in self.timerlist:
-				if (timer == self.newtimer):
+				if timer == self.newtimer:
 					return True
 				else:
 					if timer.begin == self.newtimer.begin:
@@ -45,7 +47,7 @@ class TimerSanityCheck:
 						getUnsignedDataRef2 = self.newtimer.service_ref.ref.getUnsignedData
 						for x in (1, 2, 3, 4):
 							if getUnsignedDataRef1(x) != getUnsignedDataRef2(x):
-								break;
+								break
 						else:
 							return True
 		return False
@@ -116,9 +118,9 @@ class TimerSanityCheck:
 			interval_end = max(self.nrep_eventlist)[0]
 			offset_0 = interval_begin - (interval_begin % 604800)
 			weeks = (interval_end - offset_0) / 604800
-			if ((interval_end - offset_0) % 604800):
+			if (interval_end - offset_0) % 604800:
 				weeks += 1
-			for cnt in range(weeks):
+			for cnt in range(int(weeks)):
 				for event in self.rep_eventlist:
 					if event[1] == -1: # -1 is the identifier of the changed timer
 						event_begin = self.newtimer.begin
@@ -194,7 +196,7 @@ class TimerSanityCheck:
 							for ref in serviceList.getContent("R"): # iterate over all group service references
 								type = getServiceType(ref)
 								if not type in tunerType: # just add single time
-									tunerType.append(type) 
+									tunerType.append(type)
 					else:
 						tunerType.append(getServiceType(ref))
 
