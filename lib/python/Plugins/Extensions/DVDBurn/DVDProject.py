@@ -1,15 +1,11 @@
-import xml.dom.minidom
-from boxbranding import getMachineBrand, getMachineName
-
 from Tools.Directories import fileExists
-from Components.config import ConfigSubsection, ConfigInteger, ConfigText, ConfigSelection, ConfigSequence, ConfigSubList
+from Components.config import config, ConfigSubsection, ConfigInteger, ConfigText, ConfigSelection, getConfigListEntry, ConfigSequence, ConfigSubList
 import DVDTitle
+import xml.dom.minidom
 from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_FONTS
 
-
 class ConfigColor(ConfigSequence):
-	def __init__(self, default=None):
-		if not default: default = [128, 128, 128]
+	def __init__(self, default = [128,128,128]):
 		ConfigSequence.__init__(self, seperator = "#", limits = [(0,255),(0,255),(0,255)], default = default)
 
 class ConfigFilename(ConfigText):
@@ -18,15 +14,15 @@ class ConfigFilename(ConfigText):
 
 	def getMulti(self, selected):
 		if self.text == "":
-			return "mtext"[1-selected:], "", 0
+			return ("mtext"[1-selected:], "", 0)
 		cut_len = min(len(self.text),40)
 		filename = (self.text.rstrip("/").rsplit("/",1))[1].encode("utf-8")[:cut_len] + " "
 		if self.allmarked:
 			mark = range(0, len(filename))
 		else:
 			mark = [filename]
-		return "mtext"[1-selected:], filename, mark
-
+		return ("mtext"[1-selected:], filename, mark)
+	
 class DVDProject:
 	MAX_SL = 4480
 	MAX_DL = 8150
@@ -35,11 +31,11 @@ class DVDProject:
 		self.target = None
 		self.settings = ConfigSubsection()
 		self.settings.name = ConfigText(fixed_size = False, visible_width = 40)
-		self.settings.authormode = ConfigSelection(choices = [("menu_linked", _("Linked titles with a DVD menu")), ("just_linked", _("Direct playback of linked titles without menu")), ("menu_seperate", _("Seperate titles with a main menu")), ("data_ts", _("%s %s format data DVD (HDTV compatible)") % (getMachineBrand(), getMachineName()))])
+		self.settings.authormode = ConfigSelection(choices = [("menu_linked", _("Linked titles with a DVD menu")), ("just_linked", _("Direct playback of linked titles without menu")), ("menu_seperate", _("Separate titles with a main menu")), ("data_ts", _("special format data DVD (HDTV compatible)"))])
 		self.settings.titlesetmode = ConfigSelection(choices = [("single", _("Simple titleset (compatibility for legacy players)")), ("multi", _("Complex (allows mixing audio tracks and aspects)"))], default="multi")
 		self.settings.output = ConfigSelection(choices = [("iso", _("Create DVD-ISO")), ("dvd", _("Burn DVD"))])
 		self.settings.isopath = ConfigText(fixed_size = False, visible_width = 40)
-		self.settings.dataformat = ConfigSelection(choices = [("iso9660_1", "ISO9660 Level 1"), ("iso9660_4", "ISO9660 version 2"), ("udf", "UDF")])
+		self.settings.dataformat = ConfigSelection(choices = [("iso9660_1", ("ISO9660 Level 1")), ("iso9660_4", ("ISO9660 version 2")), ("udf", ("UDF"))])
 		self.settings.menutemplate = ConfigFilename()
 		self.settings.vmgm = ConfigFilename()
 		self.filekeys = ["vmgm", "isopath", "menutemplate"]
@@ -55,9 +51,10 @@ class DVDProject:
 
 	def saveProject(self, path):
 		from Tools.XMLTools import stringToXML
-		list = ['<?xml version="1.0" encoding="utf-8" ?>\n',
-				'<DreamDVDBurnerProject>\n',
-				'\t<settings ']
+		list = []
+		list.append('<?xml version="1.0" encoding="utf-8" ?>\n')
+		list.append('<DreamDVDBurnerProject>\n')
+		list.append('\t<settings ')
 		for key, val in self.settings.dict().iteritems():
 			list.append( key + '="' + str(val.getValue()) + '" ' )
 		list.append('/>\n')
@@ -91,9 +88,9 @@ class DVDProject:
 		i = 0
 		filename = path + name + ".ddvdp.xml"
 		while fileExists(filename):
-			i += 1
+			i = i+1
 			filename = path + name + str(i).zfill(3) + ".ddvdp.xml"
-		try:
+		try:	
 			file = open(filename, "w")
 			for x in list:
 				file.write(x)
@@ -119,13 +116,13 @@ class DVDProject:
 			file.close()
 			projectfiledom = xml.dom.minidom.parseString(data)
 			for node in projectfiledom.childNodes[0].childNodes:
-				print "node:", node
-				if node.nodeType == xml.dom.minidom.Element.nodeType:
-					if node.tagName == 'settings':
-						self.xmlAttributesToConfig(node, self.settings)
-					elif node.tagName == 'titles':
-						self.xmlGetTitleNodeRecursive(node)
-
+			  print "node:", node
+			  if node.nodeType == xml.dom.minidom.Element.nodeType:
+			    if node.tagName == 'settings':
+				self.xmlAttributesToConfig(node, self.settings)
+			    elif node.tagName == 'titles':
+				self.xmlGetTitleNodeRecursive(node)
+				
 			for key in self.filekeys:
 				val = self.settings.dict()[key].getValue()
 				if not fileExists(val):
@@ -139,7 +136,7 @@ class DVDProject:
 							continue
 					self.error += "\n%s '%s' not found" % (key, val)
 		#except AttributeError:
-			#print "loadProject AttributeError", self.error
+		  	#print "loadProject AttributeError", self.error
 			#self.error += (" in project '%s'") % (filename)
 			#return False
 			return True
@@ -160,36 +157,36 @@ class DVDProject:
 				try:
 					print "config[%s].setValue(%s)" % (key, val)
 					config.dict()[key].setValue(val)
-				except KeyError:
-					self.error = "unknown attribute '%s'" % key
+				except (KeyError):
+					self.error = "unknown attribute '%s'" % (key)
 					print "KeyError", self.error
 					raise AttributeError
 				i += 1
 		except AttributeError:
-			self.error += " XML attribute error '%s'" % node.toxml()
+			self.error += (" XML attribute error '%s'") % node.toxml()
 			return False
 
 	def xmlGetTitleNodeRecursive(self, node, title_idx = -1):
 		print "[xmlGetTitleNodeRecursive]", title_idx, node
 		print node.childNodes
 		for subnode in node.childNodes:
-			print "xmlGetTitleNodeRecursive subnode:", subnode
-			if subnode.nodeType == xml.dom.minidom.Element.nodeType:
-				if subnode.tagName == 'title':
-					title_idx += 1
-					title = DVDTitle.DVDTitle(self)
-					self.titles.append(title)
-					self.xmlGetTitleNodeRecursive(subnode, title_idx)
-				if subnode.tagName == 'path':
-					print "path:", subnode.firstChild.data
-					filename = subnode.firstChild.data
-					self.titles[title_idx].addFile(filename.encode("utf-8"))
-				if subnode.tagName == 'properties':
-					self.xmlAttributesToConfig(node, self.titles[title_idx].properties)
-				if subnode.tagName == 'audiotracks':
-					self.xmlGetTitleNodeRecursive(subnode, title_idx)
-				if subnode.tagName == 'audiotrack':
-					print "audiotrack...", subnode.toxml()
+		  print "xmlGetTitleNodeRecursive subnode:", subnode
+		  if subnode.nodeType == xml.dom.minidom.Element.nodeType:
+		    if subnode.tagName == 'title':
+			title_idx += 1
+			title = DVDTitle.DVDTitle(self)
+			self.titles.append(title)
+			self.xmlGetTitleNodeRecursive(subnode, title_idx)
+		    if subnode.tagName == 'path':
+			print "path:", subnode.firstChild.data
+			filename = subnode.firstChild.data
+			self.titles[title_idx].addFile(filename.encode("utf-8"))
+		    if subnode.tagName == 'properties':
+			self.xmlAttributesToConfig(node, self.titles[title_idx].properties)
+		    if subnode.tagName == 'audiotracks':
+			self.xmlGetTitleNodeRecursive(subnode, title_idx)
+		    if subnode.tagName == 'audiotrack':
+			print "audiotrack...", subnode.toxml()
 
 	def getSize(self):
 		totalsize = 0

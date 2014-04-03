@@ -7,6 +7,13 @@ import os
 
 class Screensaver(Screen):
 	def __init__(self, session):
+
+		self.skin = """
+			<screen name="Screensaver" position="fill" flags="wfNoBorder">
+				<eLabel position="fill" backgroundColor="#54111112" zPosition="0"/>
+				<widget name="picture" pixmap="PLi-HD/logos/pli.png" position="0,0" size="120,34" alphatest="on" zPosition="1"/>
+			</screen>"""	
+
 		Screen.__init__(self, session)
 		
 		self.moveLogoTimer = eTimer()
@@ -48,11 +55,11 @@ class Screensaver(Screen):
 					self.hide()
 
 	def doMovePicture(self):
-		if self.posx > self.maxx or self.posx < 0:
-			self.movex = -self.movex
-		self.posx += self.movex
-		if self.posy > self.maxy or self.posy < 0:
-			self.movey = -self.movey
-		self.posy += self.movey		
-		self["picture"].instance.move(ePoint(self.posx, self.posy))
-		self.moveLogoTimer.start(90)
+			if self.posx > self.maxx or self.posx < 0:
+				self.movex = -self.movex
+			self.posx += self.movex
+			if self.posy > self.maxy or self.posy < 0:
+				self.movey = -self.movey
+			self.posy += self.movey		
+			self["picture"].instance.move(ePoint(self.posx, self.posy))
+			self.moveLogoTimer.start(50)

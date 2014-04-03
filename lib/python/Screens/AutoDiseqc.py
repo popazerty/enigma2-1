@@ -1,5 +1,5 @@
 from Screens.Screen import Screen
-from Components.ConfigList import ConfigListScreen
+from Components.ConfigList import ConfigListScreen, ConfigList
 from Components.ActionMap import ActionMap
 from Components.Sources.FrontendStatus import FrontendStatus
 from Components.Sources.StaticText import StaticText
@@ -10,6 +10,15 @@ from enigma import eDVBFrontendParametersSatellite, eDVBResourceManager, eTimer
 
 
 class AutoDiseqc(Screen, ConfigListScreen):
+	skin = """
+		<screen position="c-250,c-100" size="500,250" title=" ">
+			<widget source="statusbar" render="Label" position="10,5" zPosition="10" size="e-10,60" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
+			<widget source="tunerstatusbar" render="Label" position="10,60" zPosition="10" size="e-10,30" halign="center" valign="center" font="Regular;22" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
+			<widget name="config" position="10,100" size="e-10,100" scrollbarMode="showOnDemand" />
+			<ePixmap pixmap="skin_default/buttons/red.png" position="c-140,e-45" size="140,40" alphatest="on" />
+			<widget source="key_red" render="Label" position="c-140,e-45" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
+		</screen>"""
+
 	diseqc_ports = [
 		"A", "B", "C", "D"
 	]
@@ -63,6 +72,7 @@ class AutoDiseqc(Screen, ConfigListScreen):
 	SAT_TABLE_NAME = 12
 
 	def __init__(self, session, feid, nr_of_ports, simple_tone, simple_sat_change):
+		self.skin = AutoDiseqc.skin
 		Screen.__init__(self, session)
 
 		self["statusbar"] = StaticText(" ")
@@ -172,6 +182,7 @@ class AutoDiseqc(Screen, ConfigListScreen):
 			InitNimManager(nimmanager)
 
 			self.tuner = Tuner(self.frontend)
+			self.raw_channel.requestTsidOnid()
 			self.tuner.tune(self.sat_frequencies[self.index])
 
 			self["statusbar"].setText(_("Checking tuner %d\nDiSEqC port %s for %s") % (self.feid, self.diseqc_ports[self.port_index], self.sat_frequencies[self.index][self.SAT_TABLE_NAME]))
@@ -222,9 +233,6 @@ class AutoDiseqc(Screen, ConfigListScreen):
 		self.frontend.getFrontendStatus(dict)
 
 		self["tunerstatusbar"].setText(_("Tuner status %s") % (dict["tuner_state"]))
-
-		if dict["tuner_state"] == "LOCKED":
-			self.raw_channel.requestTsidOnid()
 
 		if dict["tuner_state"] == "LOSTLOCK" or dict["tuner_state"] == "FAILED":
 			self.tunerStopScan(False)

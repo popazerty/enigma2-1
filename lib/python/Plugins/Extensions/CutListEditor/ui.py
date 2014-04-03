@@ -1,19 +1,20 @@
-import bisect
-
-from enigma import getDesktop, iPlayableService
-
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Components.ServicePosition import ServicePositionGauge
 from Components.ActionMap import HelpableActionMap
+from Components.MultiContent import MultiContentEntryText
 from Components.ServiceEventTracker import ServiceEventTracker, InfoBarBase
 from Components.VideoWindow import VideoWindow
 from Components.Label import Label
 from Screens.InfoBarGenerics import InfoBarSeek, InfoBarCueSheetSupport
+from Components.GUIComponent import GUIComponent
+from enigma import eListboxPythonMultiContent, eListbox, getDesktop, gFont, iPlayableService, RT_HALIGN_RIGHT
 from Screens.FixedMenu import FixedMenu
 from Screens.HelpMenu import HelpableScreen
+from ServiceReference import ServiceReference
 from Components.Sources.List import List
 
+import bisect
 
 def CutListEntry(where, what):
 	w = where / 90
@@ -33,7 +34,7 @@ def CutListEntry(where, what):
 	elif what == 3:
 		type = "LAST"
 		type_col = 0x000000
-	return (where, what), "%dh:%02dm:%02ds:%03d" % (h, m, s, ms), type, type_col
+	return ((where, what), "%dh:%02dm:%02ds:%03d" % (h, m, s, ms), type, type_col)
 
 class CutListContextMenu(FixedMenu):
 	RET_STARTCUT = 0
@@ -54,18 +55,18 @@ class CutListContextMenu(FixedMenu):
 
 		if state == self.SHOW_STARTCUT:
 			menu.append((_("start cut here"), self.startCut))
-		#else:
-			#menu.append((_("start cut here"), ))
+		else:
+			menu.append((_("start cut here"), ))
 
 		if state == self.SHOW_ENDCUT:
 			menu.append((_("end cut here"), self.endCut))
-		#else:
-			#menu.append((_("end cut here"), ))
+		else:
+			menu.append((_("end cut here"), ))
 
 		if state == self.SHOW_DELETECUT:
 			menu.append((_("delete cut"), self.deleteCut))
-		#else:
-			#menu.append((_("delete cut"), ))
+		else:
+			menu.append((_("delete cut"), ))
 
 		menu.append((_("remove before this position"), self.removeBefore))
 		menu.append((_("remove after this position"), self.removeAfter))
@@ -107,7 +108,7 @@ class CutListContextMenu(FixedMenu):
 
 class CutListEditor(Screen, InfoBarBase, InfoBarSeek, InfoBarCueSheetSupport, HelpableScreen):
 	skin = """
-	<screen position="0,0" size="720,576" flags="wfNoBorder">
+	<screen position="0,0" size="720,576" title="Cutlist editor" flags="wfNoBorder">
 		<eLabel text="Cutlist editor" position="65,60" size="300,25" font="Regular;20" />
 		<widget source="global.CurrentTime" render="Label" position="268,60" size="394,20" font="Regular;20" halign="right">
 			<convert type="ClockToText">Format:%A %B %d, %H:%M</convert>
@@ -134,14 +135,13 @@ class CutListEditor(Screen, InfoBarBase, InfoBarSeek, InfoBarCueSheetSupport, He
 				}
 			</convert>
 		</widget>
-		<widget name="Timeline" position="50,485" size="615,20" backgroundColor="#505555" pointer="position_arrow.png:3,5" foregroundColor="black" />
-		<ePixmap pixmap="icons/mp_buttons.png" position="305,515" size="109,13" alphatest="on" />
+		<widget name="Timeline" position="50,485" size="615,20" backgroundColor="#505555" pointer="skin_default/position_arrow.png:3,5" foregroundColor="black" />
+		<ePixmap pixmap="skin_default/icons/mp_buttons.png" position="305,515" size="109,13" alphatest="on" />
 	</screen>"""
 
 	def __init__(self, session, service):
 		self.skin = CutListEditor.skin
 		Screen.__init__(self, session)
-		Screen.setTitle(self, _("Cutlist editor"))
 		InfoBarSeek.__init__(self, actionmap = "CutlistSeekActions")
 		InfoBarCueSheetSupport.__init__(self)
 		InfoBarBase.__init__(self, steal_current_service = True)

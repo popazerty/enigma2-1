@@ -1,4 +1,3 @@
-<!--suppress XmlUnboundNsPrefix -->
 <keymap>
 	<map context="ModemActions">
 		<key id="KEY_ENTER" mapto="ok" flags="m" />

@@ -32,11 +32,9 @@ static unsigned char *simple_resize_24(unsigned char *orgin, int ox, int oy, int
 		eDebug("[Picload] Error malloc");
 		return orgin;
 	}
-	const int stride = 3 * dx;
-	#pragma omp parallel for
+	unsigned char* k = cr;
 	for (int j = 0; j < dy; ++j)
 	{
-		unsigned char* k = cr + (j * stride);
 		const unsigned char* p = orgin + (j * oy / dy * ox) * 3;
 		for (int i = 0; i < dx; i++)
 		{
@@ -58,11 +56,9 @@ static unsigned char *simple_resize_8(unsigned char *orgin, int ox, int oy, int 
 		eDebug("[Picload] Error malloc");
 		return(orgin);
 	}
-	const int stride = dx;
-	#pragma omp parallel for
+	unsigned char* k = cr;
 	for (int j = 0; j < dy; ++j)
 	{
-		unsigned char* k = cr + (j * stride);
 		const unsigned char* p = orgin + (j * oy / dy * ox);
 		for (int i = 0; i < dx; i++)
 		{
@@ -81,11 +77,9 @@ static unsigned char *color_resize(unsigned char * orgin, int ox, int oy, int dx
 		eDebug("[Picload] Error malloc");
 		return orgin;
 	}
-	const int stride = 3 * dx;
-	#pragma omp parallel for
+	unsigned char* p = cr;
 	for (int j = 0; j < dy; j++)
 	{
-		unsigned char* p = cr + (j * stride);
 		int ya = j * oy / dy;
 		int yb = (j + 1) * oy / dy;
 		if (yb >= oy)

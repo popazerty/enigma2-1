@@ -91,7 +91,7 @@ class Job(object):
 			if cb_idx in self.resident_tasks:
 				print "resident task finished:", task
 				self.resident_tasks.remove(cb_idx)
-		if not res:
+		if res == []:
 			self.state_changed()
 			self.current_task += 1
 			self.runNext()
@@ -197,10 +197,10 @@ class Task(object):
 
 	def cleanup(self, failed):
 		pass
-
+	
 	def processStdout(self, data):
 		self.processOutput(data)
-
+		
 	def processStderr(self, data):
 		self.processOutput(data)
 
@@ -258,8 +258,8 @@ class Task(object):
 
 	progress = property(getProgress, setProgress)
 
-	def __str__(self):
-		return "Components.Task.Task name=%s" % self.name
+	def __str__(self):	
+		return "Components.Task.Task name=%s" % (self.name)
 
 class LoggingTask(Task):
 	def __init__(self, job, name):
@@ -368,7 +368,7 @@ class JobManager:
 			Notifications.AddNotificationWithCallback(self.errorCB, MessageBox, _("Error: %s\nRetry?") % (problems[0].getErrorMessage(task)))
 			return True
 		else:
-			Notifications.AddNotification(MessageBox, job.name + "\n" + _("Error") + ': %s' % (problems[0].getErrorMessage(task)), type = MessageBox.TYPE_ERROR )
+			Notifications.AddNotification(MessageBox, job.name + "\n" + _("Error") + (': %s') % (problems[0].getErrorMessage(task)), type = MessageBox.TYPE_ERROR )
 			return False
 
 	def jobDone(self, job, task, problems):
@@ -443,18 +443,12 @@ class JobManager:
 #		self.args.append(device + "part%d" % partition)
 
 class Condition:
-	def __init__(self):
-		pass
-
 	RECOVERABLE = False
 
 	def getErrorMessage(self, task):
 		return _("An unknown error occurred!") + " (%s @ task %s)" % (self.__class__.__name__, task.__class__.__name__)
 
 class WorkspaceExistsPrecondition(Condition):
-	def __init__(self):
-		pass
-
 	def check(self, task):
 		return os.access(task.job.workspace, os.W_OK)
 
@@ -476,14 +470,11 @@ class DiskspacePrecondition(Condition):
 		return _("Not enough disk space. Please free up some disk space and try again. (%d MB required, %d MB available)") % (self.diskspace_required / 1024 / 1024, self.diskspace_available / 1024 / 1024)
 
 class ToolExistsPrecondition(Condition):
-	def __init__(self):
-		pass
-
 	def check(self, task):
 		import os
 		if task.cmd[0]=='/':
 			self.realpath = task.cmd
-			print "[Task.py][ToolExistsPrecondition] WARNING: usage of absolute paths for tasks should be avoided!"
+			print "[Task.py][ToolExistsPrecondition] WARNING: usage of absolute paths for tasks should be avoided!" 
 			return os.access(self.realpath, os.X_OK)
 		else:
 			self.realpath = task.cmd
@@ -493,25 +484,18 @@ class ToolExistsPrecondition(Condition):
 			if absolutes:
 				self.realpath = absolutes[0]
 				return True
-		return False
+		return False 
 
 	def getErrorMessage(self, task):
-		return _("A required tool (%s) was not found.") % self.realpath
+		return _("A required tool (%s) was not found.") % (self.realpath)
 
 class AbortedPostcondition(Condition):
-	def __init__(self):
-		pass
-
 	def getErrorMessage(self, task):
 		return "Cancelled upon user request"
 
 class ReturncodePostcondition(Condition):
-	def __init__(self):
-		pass
-
 	def check(self, task):
 		return task.returncode == 0
-
 	def getErrorMessage(self, task):
 		if hasattr(task, 'log') and task.log:
 			log = ''.join(task.log).strip()
@@ -535,7 +519,7 @@ class FailedPostcondition(Condition):
 				return _("Error code") + " %s" % self.exception
 		return str(self.exception)
 	def check(self, task):
-		return (self.exception is None) or (self.exception == 0)
+		return (self.exception is None) or (self.exception == 0) 
 
 #class HDDInitJob(Job):
 #	def __init__(self, device):

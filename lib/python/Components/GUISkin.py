@@ -42,7 +42,7 @@ class GUISkin:
 
 		for f in self.onLayoutFinish:
 			if type(f) is not type(self.close): # is this the best way to do this?
-				exec f in globals(), locals()
+				exec(f) in globals(), locals()
 			else:
 				f()
 
@@ -64,13 +64,11 @@ class GUISkin:
 		self.summaries.remove(summary)
 
 	def setTitle(self, title):
-		try:
-			if self.instance:
-				self.instance.setTitle(title)
-			self["Title"].text = title
-			self.summaries.setTitle(title)
-		except:
-			pass
+		if self.instance:
+			self.instance.setTitle(title)
+		self["Title"].text = title
+		self.summaries.setTitle(title)
+
 	def getTitle(self):
 		return self["Title"].text
 

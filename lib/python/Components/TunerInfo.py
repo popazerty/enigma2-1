@@ -6,10 +6,11 @@ from math import log
 
 class TunerInfo(GUIComponent):
 	SNR = 0
-	SNR_DB = 1
-	AGC = 2
-	BER = 3
+	AGC = 1
+	BER = 2
+	LOCK = 3
 	SNR_PERCENTAGE = 0
+	SNR_DB = 1
 	AGC_PERCENTAGE = 2
 	BER_VALUE = 3
 	SNR_BAR = 4
@@ -17,7 +18,6 @@ class TunerInfo(GUIComponent):
 	BER_BAR = 6
 	LOCK_STATE = 7
 	SYNC_STATE = 8
-	LOCK = 9
 
 	def __init__(self, type, servicefkt = None, frontendfkt = None, statusDict = None):
 		GUIComponent.__init__(self)
@@ -38,13 +38,13 @@ class TunerInfo(GUIComponent):
 	def setValue(self, value):
 		self.value = value
 		if self.instance:
-			self.instance.setValue(self.value)
+			self.instance.setValue(self.value)		
 
 	def calc(self,val):
 		if not val:
 			return 0
 		if val < 2500:
-			return long(log(val)/log(2))
+			return (long)(log(val)/log(2))
 		return val*100/65535
 
 	def update(self):
@@ -65,9 +65,9 @@ class TunerInfo(GUIComponent):
 			else:
 				self.setText("")
 		elif self.type == self.SNR_PERCENTAGE or self.type == self.AGC_PERCENTAGE:
-			self.setText("%d%%" % value)
+			self.setText("%d%%" % (value))
 		elif self.type == self.BER_VALUE:
-			self.setText("%d" % value)
+			self.setText("%d" % (value))
 		elif self.type == self.SNR_BAR or self.type == self.AGC_BAR:
 			self.setValue(value)
 		elif self.type == self.BER_BAR:
@@ -129,8 +129,6 @@ class TunerInfo(GUIComponent):
 			return self.g
 
 	def postWidgetCreate(self, instance):
-		if instance is None:
-			return
 		if self.message is not None:
 			instance.setText(self.message)
 		elif self.value is not None:

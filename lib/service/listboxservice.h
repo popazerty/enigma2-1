@@ -37,7 +37,7 @@ public:
 	int markedQueryNext(eServiceReference &ref);
 
 	int lookupService(const eServiceReference &ref);
-	bool setCurrent(const eServiceReference &ref);
+	void setCurrent(const eServiceReference &ref);
 
 	enum {
 		visModeSimple,
@@ -80,6 +80,7 @@ public:
 
 	int getItemHeight() { return m_itemheight; }
 	void setItemHeight(int height);
+	void setHideNumberMarker(bool doHide);
 	void setServiceTypeIconMode(int mode);
 	static void setGetPiconNameFunc(SWIG_PYOBJECT(ePyObject) func);
 
@@ -107,7 +108,7 @@ protected:
 	int cursorMove(int count=1);
 	int cursorValid();
 	int cursorSet(int n);
-	int cursorResolve(int cursor_position);
+	int cursorResolve(int);
 	int cursorGet();
 	int currentCursorSelectable();
 
@@ -154,6 +155,7 @@ private:
 	eServiceReference m_is_playable_ignore;
 
 	int m_itemheight;
+	bool m_hide_number_marker;
 	int m_servicetype_icon_mode;
 };
 

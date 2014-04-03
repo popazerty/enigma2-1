@@ -13,22 +13,27 @@ from Screens.Console import Console
 from Screens.HelpMenu import HelpableScreen
 from Screens.TaskView import JobView
 from Tools.Downloader import downloadWithProgress
+from enigma import getBoxType
 import urllib2
 import os
 import shutil
-import math
-from boxbranding import getBoxType,  getImageDistro, getMachineName, getMachineBrand
-distro =  getImageDistro()
+from boxbranding import getImageDistro, getMachineBrand, getMachineName
+distro = getImageDistro()
 
 #############################################################################################################
-image = 0 # 0=openATV / 1=openMips
+image = 0 # 0=openATV / 1=openMips / 2=OpenXTA / 3=opendroid
 if distro.lower() == "openmips":
 	image = 1
 elif distro.lower() == "openatv":
 	image = 0
-feedurl_atv = 'http://images.mynonpublic.com/openatv/4.0'
-feedurl_atv2= 'http://images.mynonpublic.com/openatv/3.0'
-feedurl_om = 'http://image.openmips.com/4.0'
+elif distro.lower() == "openxta":
+	image = 2
+elif distro.lower() == "opendroid":
+        image = 3
+feedurl_atv = 'http://images.mynonpublic.com/openatv/nightly'
+feedurl_om = 'http://image.openmips.com/2.0'
+feedurl_openxta = 'http://image.openxta.com'
+feedurl_opendroid = 'http://droidsat.org/image'
 imagePath = '/hdd/images'
 flashPath = '/hdd/images/flash'
 flashTmp = '/hdd/images/tmp'
@@ -41,11 +46,23 @@ def Freespace(dev):
 	print "[Flash Online] Free space on %s = %i kilobytes" %(dev, space)
 	return space
 
-def ReadNewfeed():
-	f = open('/etc/enigma2/newfeed', 'r')
-	newfeed = f.readlines()
-	f.close()
-	return newfeed
+def check_hdd(session):
+	if not os.path.exists("/media/hdd"):
+		session.open(MessageBox, _("No /hdd found !!\nPlease make sure you have a HDD mounted.\n\nExit plugin."), type = MessageBox.TYPE_ERROR)
+		return False
+	if Freespace('/media/hdd') < 300000:
+		session.open(MessageBox, _("Not enough free space on /hdd !!\nYou need at least 300Mb free space.\n\nExit plugin."), type = MessageBox.TYPE_ERROR)
+		return False
+	if not os.path.exists(ofgwritePath):
+		session.open(MessageBox, _('ofgwrite not found !!\nPlease make sure you have ofgwrite installed in /usr/bin/ofgwrite.\n\nExit plugin.'), type = MessageBox.TYPE_ERROR)
+		return False
+
+	if not os.path.exists(imagePath):
+		os.mkdir(imagePath)
+	if os.path.exists(flashPath):
+		os.system('rm -rf ' + flashPath)
+	os.mkdir(flashPath)
+	return True
 
 class FlashOnline(Screen):
 	skin = """
@@ -61,7 +78,7 @@ class FlashOnline(Screen):
 		<widget name="info-online" position="10,30" zPosition="1" size="450,100" font="Regular;20" halign="left" valign="top" transparent="1" />
 		<widget name="info-local" position="10,150" zPosition="1" size="450,200" font="Regular;20" halign="left" valign="top" transparent="1" />
 	</screen>"""
-		
+
 	def __init__(self, session):
 		Screen.__init__(self, session)
 		self.session = session
@@ -71,9 +88,9 @@ class FlashOnline(Screen):
 		self["key_green"] = Button("Online")
 		self["key_red"] = Button(_("Exit"))
 		self["key_blue"] = Button("")
-		self["info-local"] = Label(_("Local = Flash a image from local path /hdd/images"))
-		self["info-online"] = Label(_("Online = Download a image and flash it"))
-		
+		self["info-local"] = Label(_("Local = Flash an image from local path /hdd/images"))
+		self["info-online"] = Label(_("Online = Download an image and flash it"))
+
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"], 
 		{
 			"blue": self.blue,
@@ -83,55 +100,27 @@ class FlashOnline(Screen):
 			"cancel": self.quit,
 		}, -2)
 
-	def check_hdd(self):
-		if not os.path.exists("/media/hdd"):
-			self.session.open(MessageBox, _("No /hdd found !!\nPlease make sure you have a HDD mounted.\n\nExit plugin."), type = MessageBox.TYPE_ERROR)
-			return False
-		if Freespace('/media/hdd') < 300000:
-			self.session.open(MessageBox, _("Not enough free space on /hdd !!\nYou need at least 300Mb free space.\n\nExit plugin."), type = MessageBox.TYPE_ERROR)
-			return False
-		if not os.path.exists(ofgwritePath):
-			self.session.open(MessageBox, _('ofgwrite not found !!\nPlease make sure you have ofgwrite installed in /usr/bin/ofgwrite.\n\nExit plugin.'), type = MessageBox.TYPE_ERROR)
-			return False
-
-		if not os.path.exists(imagePath):
-			try:
-				os.mkdir(imagePath)
-			except:
-				pass
-		
-		if os.path.exists(flashPath):
-			try:
-				os.system('rm -rf ' + flashPath)
-			except:
-				pass
-		try:
-			os.mkdir(flashPath)
-		except:
-			pass
-		return True
-
 	def quit(self):
 		self.close()	
-		
+
 	def blue(self):
 		pass
 
 	def green(self):
-		if self.check_hdd():
+		if check_hdd(self.session):
 			self.session.open(doFlashImage, online = True)
 		else:
 			self.close()
 
 	def yellow(self):
-		if self.check_hdd():
+		if check_hdd(self.session):
 			self.session.open(doFlashImage, online = False)
 		else:
 			self.close()
 
 class doFlashImage(Screen):
 	skin = """
-	<screen position="center,center" size="560,500" title="Flash On the fly (select a image)">
+	<screen position="center,center" size="560,500" title="Flash On the fly (select an image)">
 		<ePixmap position="0,460"   zPosition="1" size="140,40" pixmap="skin_default/buttons/red.png" transparent="1" alphatest="on" />
 		<ePixmap position="140,460" zPosition="1" size="140,40" pixmap="skin_default/buttons/green.png" transparent="1" alphatest="on" />
 		<ePixmap position="280,460" zPosition="1" size="140,40" pixmap="skin_default/buttons/yellow.png" transparent="1" alphatest="on" />
@@ -140,14 +129,14 @@ class doFlashImage(Screen):
 		<widget name="key_green" position="140,460" zPosition="2" size="140,40" valign="center" halign="center" font="Regular;21" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
 		<widget name="key_yellow" position="280,460" zPosition="2" size="140,40" valign="center" halign="center" font="Regular;21" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
 		<widget name="key_blue" position="420,460" zPosition="2" size="140,40" valign="center" halign="center" font="Regular;21" transparent="1" shadowColor="black" shadowOffset="-1,-1" />
-		<widget name="imageList" position="10,10" zPosition="1" size="450,450" font="Regular;20" scrollbarMode="showOnDemand" transparent="1" />
+		<widget name="imageList" position="10,10" zPosition="1" size="520,450" font="Regular;20" scrollbarMode="showOnDemand" transparent="1" />
 	</screen>"""
-		
+
 	def __init__(self, session, online ):
 		Screen.__init__(self, session)
 		self.session = session
 
-		Screen.setTitle(self, _("Flash On the fly (select a image)"))
+		Screen.setTitle(self, _("Flash On the fly (select an image)"))
 		self["key_green"] = Button(_("Flash"))
 		self["key_red"] = Button(_("Exit"))
 		self["key_blue"] = Button("")
@@ -160,8 +149,12 @@ class doFlashImage(Screen):
 		self.feedurl = feedurl_atv
 		if image == 0:
 			self.feed = "atv"
-		else:
+		elif image == 1:
 			self.feed = "om"
+		elif image == 2:
+			self.feed = "openxta"
+                elif image == 3:
+			self.feed = "opendroid"
 		self["imageList"] = MenuList(self.imagelist)
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"], 
 		{
@@ -172,14 +165,11 @@ class doFlashImage(Screen):
 			"cancel": self.quit,
 		}, -2)
 		self.onLayoutFinish.append(self.layoutFinished)
-		self.newfeed = None
-		if os.path.exists('/etc/enigma2/newfeed'):
-			self.newfeed = ReadNewfeed()
 
-		
+
 	def quit(self):
 		self.close()	
-		
+
 	def blue(self):
 		if self.Online:
 			if image == 1:
@@ -187,9 +177,14 @@ class doFlashImage(Screen):
 					self.feed = "om"
 				else:
 					self.feed = "atv"
-			else:
+			if image == 2:
 				if self.feed == "atv":
-					self.feed = "atv2"
+					self.feed = "openxta"
+				else:
+					self.feed = "atv"
+                        if image == 3:
+				if self.feed == "atv":
+					self.feed = "opendroid"
 				else:
 					self.feed = "atv"
 			self.layoutFinished()
@@ -207,30 +202,21 @@ class doFlashImage(Screen):
 				os.remove(self.imagePath + "/" + self.filename)
 			self.imagelist.remove(self.filename)
 			self["imageList"].l.setList(self.imagelist)
-		
+
 	def box(self):
 		box = getBoxType()
-		machinename = getMachineName()
-		if box in ('uniboxhd1', 'uniboxhd2', 'uniboxhd3'):
-			box = "ventonhdx"
-		elif box == 'odinm6':
-			box = getMachineName().lower()
-		elif box == "inihde" and machinename.lower() == "xpeedlx":
-			box = "xpeedlx"
-		elif box in ('xpeedlx1', 'xpeedlx2'):
-			box = "xpeedlx"
-		elif box == "inihde" and machinename.lower() == "hd-1000":
-			box = "sezam-1000hd"
-		elif box == "ventonhdx" and machinename.lower() == "hd-5000":
-			box = "sezam-5000hd"
-		elif box == "ventonhdx" and machinename.lower() == "premium twin":
-			box = "miraclebox-twin"
-		elif box == "xp1000" and machinename.lower() == "sf8 hd":
-			box = "sf8"
-		elif box.startswith('et') and not box in ('et8000', 'et10000'):
-			box = box[0:3] + 'x00'
-		elif box == 'odinm9' and self.feed == "atv":
-			box = 'maram9'
+		if image != 2:
+			machinename = getMachineName()
+			if box == 'odinm6':
+				box = getMachineName().lower()
+			elif box == "inihde" and machinename.lower() == "xpeedlx":
+				box = "xpeedlx"
+			elif box == "inihde" and machinename.lower() == "hd-1000":
+				box = "sezam-1000hd"
+			elif box == "ventonhdx" and machinename.lower() == "hd-5000":
+				box = "sezam-5000hd"
+			elif box == "ventonhdx" and machinename.lower() == "premium twin":
+				box = "miraclebox-twin"
 		return box
 
 	def green(self):
@@ -244,38 +230,16 @@ class doFlashImage(Screen):
 		self.hide()
 		if self.Online:
 			url = self.feedurl + "/" + box + "/" + sel
-			if self.newfeed:
-				self.feedurl = self.newfeed[0][:-1]
-				url = self.feedurl + "/" + box + "/" + sel
-				authinfo = urllib2.HTTPPasswordMgrWithDefaultRealm()
-				authinfo.add_password(None, self.feedurl, self.newfeed[1][:-1], self.newfeed[2][:-1])
-				handler = urllib2.HTTPBasicAuthHandler(authinfo)
-				myopener = urllib2.build_opener(handler)
-				opened = urllib2.install_opener(myopener)
-				u = urllib2.urlopen(url)
-				total_size = int(u.info().getheaders("Content-Length")[0])
-				downloaded = 0
-				CHUNK = 256 * 1024
-				with open(file_name, 'wb') as fp:
-					while True:
-						chunk = u.read(CHUNK)
-						downloaded += len(chunk)
-						print "Downloading: %s Bytes of %s" % (downloaded, total_size)
-						if not chunk: break
-						fp.write(chunk)
-				self.ImageDownloadCB(False)
-			else:
-				u = urllib2.urlopen(url)
-				f = open(file_name, 'wb')
-				f.close()
-				#meta = u.info()
-				#file_size = int(meta.getheaders("Content-Length")[0])
-				#print "Downloading: %s Bytes: %s" % (sel, file_size)
-				job = ImageDownloadJob(url, file_name, sel)
-				job.afterEvent = "close"
-				job_manager.AddJob(job)
-				job_manager.failed_jobs = []
-				self.session.openWithCallback(self.ImageDownloadCB, JobView, job, backgroundable = False, afterEventChangeable = False)
+			u = urllib2.urlopen(url)
+			f = open(file_name, 'wb')
+			meta = u.info()
+			file_size = int(meta.getheaders("Content-Length")[0])
+			print "Downloading: %s Bytes: %s" % (sel, file_size)
+			job = ImageDownloadJob(url, file_name, sel)
+			job.afterEvent = "close"
+			job_manager.AddJob(job)
+			job_manager.failed_jobs = []
+			self.session.openWithCallback(self.ImageDownloadCB, JobView, job, backgroundable = False, afterEventChangeable = False)
 		else:
 			if sel == str(flashTmp):
 				self.Start_Flashing()
@@ -302,7 +266,7 @@ class doFlashImage(Screen):
 
 	def unzip_image(self, filename, path):
 		print "Unzip %s to %s" %(filename,path)
-		self.session.openWithCallback(self.cmdFinished, Console, title = _("Unzipping files, Please wait ..."), cmdlist = ['unzip ' + filename + ' -o -d ' + path, "sleep 3"], closeOnSuccess = True)
+		self.session.openWithCallback(self.cmdFinished, Console, title = _("Unzipping files, Please wait ..."), cmdlist = ['unzip ' + filename + ' -d ' + path, "sleep 3"], closeOnSuccess = True)
 
 	def cmdFinished(self):
 		self.prepair_flashtmp(flashPath)
@@ -327,21 +291,16 @@ class doFlashImage(Screen):
 				message += _('Your STB will freeze during the flashing process.\n')
 				message += _('Please: DO NOT reboot your STB and turn off the power.\n')
 				message += _('The image or kernel will be flashing and auto booted in few minutes.\n')
-				if self.box() == 'gb800solo':
-					message += _('GB800SOLO takes about 20 mins !!\n')
 				message += "'"
 			self.session.open(Console, text,[message, cmd])
 
 	def prepair_flashtmp(self, tmpPath):
 		if os.path.exists(flashTmp):
-			flashTmpold = flashTmp + 'old'
-			os.system('mv %s %s' %(flashTmp, flashTmpold))
-			os.system('rm -rf %s' %flashTmpold)
-		if not os.path.exists(flashTmp):
-			os.mkdir(flashTmp)
+			os.system('rm -rf ' + flashTmp)
+		os.mkdir(flashTmp)
 		kernel = True
 		rootfs = True
-		
+
 		for path, subdirs, files in os.walk(tmpPath):
 			for name in files:
 				if name.find('kernel') > -1 and name.endswith('.bin') and kernel:
@@ -354,7 +313,7 @@ class doFlashImage(Screen):
 					dest = flashTmp + '/rootfs.bin'
 					shutil.copyfile(binfile, dest)
 					rootfs = False
-					
+
 	def yellow(self):
 		if not self.Online:
 			self.session.openWithCallback(self.DeviceBrowserClosed, DeviceBrowser, None, matchingPattern="^.*\.(zip|bin|jffs2)", showDirectories=True, showMountpoints=True, inhibitMounts=["/autofs/sr0/"])
@@ -379,7 +338,7 @@ class doFlashImage(Screen):
 				self.unzip_image(strPath + '/' + filename, flashPath)
 			else:
 				self.layoutFinished()
-	
+
 		else:
 			self.imagePath = imagePath
 
@@ -395,27 +354,27 @@ class doFlashImage(Screen):
 				else:
 					self.feedurl = feedurl_om
 					self["key_blue"].setText("openATV")
-			else:
-				if self.feed == "atv":
-					self.feedurl = feedurl_atv
-					self["key_blue"].setText("ATV 3.0")
+			elif image == 2:
+				if self.feed == "openxta":
+					self.feedurl = feedurl_openxta
+					self["key_blue"].setText("openATV")
 				else:
-					self.feedurl = feedurl_atv2
-					self["key_blue"].setText("ATV 4.0")
+					self.feedurl = feedurl_atv
+					self["key_blue"].setText("OpenXTA")
+                        elif image == 3:
+				if self.feed == "opendroid":
+					self.feedurl = feedurl_opendroid
+					self["key_blue"].setText("openATV")
+				else:
+					self.feedurl = feedurl_atv
+					self["key_blue"].setText("opendroid")
+			else:
+				self.feedurl = feedurl_atv
+				self["key_blue"].setText("")
 			url = '%s/index.php?open=%s' % (self.feedurl,box)
 			req = urllib2.Request(url)
 			try:
-				if self.newfeed:
-					self.feedurl = self.newfeed[0][:-1]
-					url = '%s/index.php?open=%s' % (self.feedurl,box)
-					authinfo = urllib2.HTTPPasswordMgrWithDefaultRealm()
-					authinfo.add_password(None, self.feedurl, self.newfeed[1][:-1], self.newfeed[2][:-1])
-					handler = urllib2.HTTPBasicAuthHandler(authinfo)
-					myopener = urllib2.build_opener(handler)
-					opened = urllib2.install_opener(myopener)
-					response = urllib2.urlopen(url)
-				else:
-					response = urllib2.urlopen(req)
+				response = urllib2.urlopen(req)
 			except urllib2.URLError as e:
 				print "URL ERROR: %s" % e
 				return
@@ -432,7 +391,7 @@ class doFlashImage(Screen):
 			for line in lines:
 				if line.find("<a href='%s/" % box) > -1:
 					t = line.find("<a href='%s/" % box)
-					if self.feed == "atv" or self.feed == "atv2":
+					if self.feed == "atv" or self.feed == "openxta"or self.feed == "opendroid":
 						self.imagelist.append(line[t+tt+10:t+tt+tt+39])
 					else:
 						self.imagelist.append(line[t+tt+10:t+tt+tt+40])

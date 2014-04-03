@@ -1,4 +1,4 @@
-from Components.config import ConfigSubsection, ConfigSubList, ConfigInteger, ConfigText, ConfigSelection
+from Components.config import config, ConfigSubsection, ConfigSubList, ConfigInteger, ConfigText, ConfigSelection, getConfigListEntry, ConfigSequence, ConfigYesNo
 import TitleCutter
 
 class ConfigFixedText(ConfigText):
@@ -35,8 +35,7 @@ class DVDTitle:
 		from os import path
 		from enigma import eServiceCenter, iServiceInformation
 		from ServiceReference import ServiceReference
-		from time import localtime
-
+		from time import localtime, time
 		self.source = service
 		serviceHandler = eServiceCenter.getInstance()
 		info = serviceHandler.info(service)
@@ -53,13 +52,13 @@ class DVDTitle:
 		self.filesize = path.getsize(self.inputfile)
 		self.estimatedDiskspace = self.filesize
 		self.length = info.getLength(service)
-
+						
 	def addFile(self, filename):
 		from enigma import eServiceReference
 		ref = eServiceReference(1, 0, filename)
 		self.addService(ref)
 		self.project.session.openWithCallback(self.titleEditDone, TitleCutter.CutlistReader, self)
-
+	
 	def titleEditDone(self, cutlist):
 		self.initDVDmenuText(len(self.project.titles))
 		self.cuesheet = cutlist
@@ -77,7 +76,7 @@ class DVDTitle:
 		template = template.replace("$c", str(len(self.chaptermarks)+1))
 		template = template.replace("$f", self.inputfile)
 		template = template.replace("$C", self.DVBchannel)
-
+		
 		#if template.find("$A") >= 0:
 		from TitleProperties import languageChoices
 		audiolist = [ ]
@@ -122,7 +121,7 @@ class DVDTitle:
 		# our demuxer expects *strictly* IN,OUT lists.
 		currently_in = not any(type == CUT_TYPE_IN for pts, type in self.cuesheet)
 		if currently_in:
-			self.cutlist.append(0) # emulate "in" at first
+			self.cutlist.append(0) # emulate "in" at first		
 
 		for (pts, type) in self.cuesheet:
 			#print "pts=", pts, "type=", type, "accumulated_in=", accumulated_in, "accumulated_at=", accumulated_at, "last_in=", last_in
@@ -135,7 +134,7 @@ class DVDTitle:
 				self.cutlist.append(pts)
 
 				# accumulate the segment
-				accumulated_in += pts - last_in
+				accumulated_in += pts - last_in 
 				accumulated_at = pts
 				currently_in = False
 
@@ -144,7 +143,7 @@ class DVDTitle:
 				# as the in/out points are not.
 				reloc_pts = pts - last_in + accumulated_in
 				self.chaptermarks.append(reloc_pts)
-
+				
 		if len(self.cutlist) > 1:
 			part = accumulated_in / (self.length*90000.0)
 			usedsize = int ( part * self.filesize )
