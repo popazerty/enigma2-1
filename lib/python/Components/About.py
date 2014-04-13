@@ -1,9 +1,10 @@
 import sys
 import os
 import time
+from Tools.HardwareInfo import HardwareInfo
 
 def getVersionString():
-	return getEnigmaVersionString()
+	return getImageVersionString()
 
 def getImageVersionString():
 	try:
@@ -31,61 +32,8 @@ def getKernelVersionString():
 	except:
 		return _("unknown")
 
-def getChipSetString():
-	try:
-		f = open('/proc/stb/info/chipset', 'r')
-		chipset = f.read()
-		f.close()
-		return chipset
-	except IOError:
-		return "unavailable"
-
-def getCPUString():
-	try:
-		file = open('/proc/cpuinfo', 'r')
-		lines = file.readlines()
-		for x in lines:
-			splitted = x.split(': ')
-			if len(splitted) > 1:
-				splitted[1] = splitted[1].replace('\n','')
-				if splitted[0].startswith("system type"):
-					system = splitted[1].split(' ')[0]
-				elif splitted[0].startswith("Processor"):
-					system = splitted[1].split(' ')[0]
-		file.close()
-		return system
-	except IOError:
-		return "unavailable"
-
-def getCpuCoresString():
-	try:
-		file = open('/proc/cpuinfo', 'r')
-		lines = file.readlines()
-		for x in lines:
-			splitted = x.split(': ')
-			if len(splitted) > 1:
-				splitted[1] = splitted[1].replace('\n','')
-				if splitted[0].startswith("processor"):
-					if int(splitted[1]) > 0:
-						cores = 2
-					else:
-						cores = 1
-		file.close()
-		return cores
-	except IOError:
-		return "unavailable"
-
 def getHardwareTypeString():
-	try:
-		if os.path.isfile("/proc/stb/info/boxtype"):
-			return open("/proc/stb/info/boxtype").read().strip().upper() + " (" + open("/proc/stb/info/board_revision").read().strip() + "-" + open("/proc/stb/info/version").read().strip() + ")"
-		if os.path.isfile("/proc/stb/info/vumodel"):
-			return "VU+" + open("/proc/stb/info/vumodel").read().strip().upper() + "(" + open("/proc/stb/info/version").read().strip().upper() + ")" 
-		if os.path.isfile("/proc/stb/info/model"):
-			return open("/proc/stb/info/model").read().strip().upper()
-	except:
-		pass
-	return _("unavailable")
+	return HardwareInfo().get_device_string()
 
 def getImageTypeString():
 	try:

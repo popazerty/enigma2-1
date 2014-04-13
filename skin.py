@@ -4,15 +4,15 @@ import xml.etree.cElementTree
 import os
 
 profile("LOAD:enigma_skin")
-from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, \
-	addFont, gRGB, eWindowStyleSkinned, getDesktop
-from Components.config import ConfigSubsection, ConfigText, config
+from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, addFont, gRGB, eWindowStyleSkinned, getDesktop
+from Components.config import ConfigSubsection, ConfigText, config, ConfigNothing
 from Components.Converter.Converter import Converter
 from Components.Sources.Source import Source, ObsoleteSource
 from Tools.Directories import resolveFilename, SCOPE_SKIN, SCOPE_SKIN_IMAGE, SCOPE_FONTS, SCOPE_CURRENT_SKIN, SCOPE_CONFIG, fileExists
 from Tools.Import import my_import
 from Tools.LoadPixmap import LoadPixmap
 from Components.RcModel import rc_model
+from boxbranding import getBoxType
 
 colorNames = {}
 # Predefined fonts, typically used in built-in screens and for components like
@@ -68,11 +68,11 @@ def skin_user_skinname():
 
 # example: loadSkin("nemesis_greenline/skin.xml")
 config.skin = ConfigSubsection()
-DEFAULT_SKIN = "mega32/skin.xml"
+DEFAULT_SKIN = "MetrixHD/skin.xml"
 # on SD hardware, PLi-HD will not be available
 if not fileExists(resolveFilename(SCOPE_SKIN, DEFAULT_SKIN)):
 	# in that case, fallback to Magic (which is an SD skin)
-	DEFAULT_SKIN = "skin.xml"
+	DEFAULT_SKIN = "PLi-HD/skin.xml"
 config.skin.primary_skin = ConfigText(default=DEFAULT_SKIN)
 
 profile("LoadSkin")
@@ -89,8 +89,20 @@ except (SkinError, IOError, AssertionError), err:
 addSkin('skin_box.xml')
 # add optional discrete second infobar
 addSkin('skin_second_infobar.xml')
+
 # Only one of these is present, compliments of AM_CONDITIONAL
+if getBoxType() == 'gbquad' or getBoxType() == 'gbquadplus' or getBoxType() == 'gb800ue' or getBoxType() == 'gb800ueplus':
+	config.skin.lcdskin = ConfigText(default = "skin_lcd_default.xml")
+else:	
+	config.skin.lcdskin = ConfigNothing()	
+
 display_skin_id = 1
+if fileExists('/usr/share/enigma2/lcd_skin/skin_lcd_default.xml'):
+	if fileExists(resolveFilename(SCOPE_CONFIG, config.skin.lcdskin.value)):
+		addSkin(config.skin.lcdskin.value, SCOPE_CONFIG)
+	else:
+		addSkin('lcd_skin/' + config.skin.lcdskin.value)
+		
 addSkin('skin_display.xml')
 if addSkin('skin_display96.xml'):
 	# Color OLED
@@ -139,8 +151,8 @@ def parseCoordinate(s, e, size=0, font=None):
 			        val += fonts[font][2] * int(s[:-1]);
 			else:
 				val += int(s)
-	if val < 0:
-		val = 0
+	#if val < 0:     # Label shadowsOffset
+	#	val = 0  # can have a negative value
 	return val
 	        
 
@@ -482,8 +494,8 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 			addFont(resolved_font, name, scale, is_replacement, render)
 			#print "Font: ", resolved_font, name, scale, is_replacement
 		for alias in c.findall("alias"):
-		        get = alias.attrib.get
-		        try:
+			get = alias.attrib.get
+			try:
 				name = get("name")
 				font = get("font")
 				size = int(get("size"))
@@ -656,7 +668,7 @@ class SizeTuple(tuple):
 
 class SkinContext:
 	def __init__(self, parent=None, pos=None, size=None, font=None):
-	        if parent is not None:
+		if parent is not None:
 			if pos is not None:
 				pos, size = parent.parse(pos, size, font)
 				self.x, self.y = pos
@@ -667,26 +679,26 @@ class SkinContext:
 				self.w = None
 				self.h = None
 	def __str__(self):
-	        return "Context (%s,%s)+(%s,%s) " % (self.x, self.y, self.w, self.h)
+		return "Context (%s,%s)+(%s,%s) " % (self.x, self.y, self.w, self.h)
 	def parse(self, pos, size, font):
-	        if pos == "fill":
-	                pos = (self.x, self.y)
-	                size = (self.w, self.h)
-	                self.w = 0
-	                self.h = 0
+		if pos == "fill":
+			pos = (self.x, self.y)
+			size = (self.w, self.h)
+			self.w = 0
+			self.h = 0
 		else:
 			w,h = size.split(',')
 			w = parseCoordinate(w, self.w, 0, font)
 			h = parseCoordinate(h, self.h, 0, font)
 			if pos == "bottom":
-			        pos = (self.x, self.y + self.h - h)
-			        size = (self.w, h)
-			        self.h -= h
+				pos = (self.x, self.y + self.h - h)
+				size = (self.w, h)
+				self.h -= h
 			elif pos == "top":
-			        pos = (self.x, self.y)
-			        size = (self.w, h)
-			        self.h -= h
-			        self.y += h
+				pos = (self.x, self.y)
+				size = (self.w, h)
+				self.h -= h
+				self.y += h
 			elif pos == "left":
 				pos = (self.x, self.y)
 				size = (w, self.h)
@@ -705,19 +717,19 @@ class SkinContext:
 class SkinContextStack(SkinContext):
 	# A context that stacks things instead of aligning them
 	def parse(self, pos, size, font):
-	        if pos == "fill":
-	                pos = (self.x, self.y)
-	                size = (self.w, self.h)
+		if pos == "fill":
+			pos = (self.x, self.y)
+			size = (self.w, self.h)
 		else:
 			w,h = size.split(',')
 			w = parseCoordinate(w, self.w, 0, font)
 			h = parseCoordinate(h, self.h, 0, font)
 			if pos == "bottom":
-			        pos = (self.x, self.y + self.h - h)
-			        size = (self.w, h)
+				pos = (self.x, self.y + self.h - h)
+				size = (self.w, h)
 			elif pos == "top":
-			        pos = (self.x, self.y)
-			        size = (self.w, h)
+				pos = (self.x, self.y)
+				size = (self.w, h)
 			elif pos == "left":
 				pos = (self.x, self.y)
 				size = (w, self.h)
@@ -922,7 +934,7 @@ def readSkin(screen, skin, names, desktop):
 		if layout == 'stack':
 			cc = SkinContextStack
 		else:
-		        cc = SkinContext
+			cc = SkinContext
 		try:
 			c = cc(context, widget.attrib.get('position'), widget.attrib.get('size'), widget.attrib.get('font'))
 		except Exception, ex:
@@ -930,12 +942,12 @@ def readSkin(screen, skin, names, desktop):
 		process_screen(widget, c)
 
 	processors = {
-	        None: process_none,
-	        "widget": process_widget,
-	        "applet": process_applet,
-	        "eLabel": process_elabel,
-	        "ePixmap": process_epixmap,
-	        "panel": process_panel
+			None: process_none,
+			"widget": process_widget,
+			"applet": process_applet,
+			"eLabel": process_elabel,
+			"ePixmap": process_epixmap,
+			"panel": process_panel
 	}
 
 	try:

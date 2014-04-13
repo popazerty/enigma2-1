@@ -1575,11 +1575,9 @@ msgstr "Nastavuje zeměpisnou délku Vašeho místa. "
 msgid "Configure the minimum amount of disk space to be available for recordings. When the amount of space drops below this value, deleted items will be removed from the trash can."
 msgstr "Nastavuje minimální množství volného místa na disku využitelné pro nahrávání. Jestliže volné místo klesne pod tuto hodnotu, smazané položky budou odstraněny z koše. "
 
-#
 msgid "Configure the nameserver (DNS)."
 msgstr "Nastavuje nameserver (DNS)."
 
-#
 msgid "Configure the netmask."
 msgstr "Nastavuje síťovou masku."
 
@@ -1592,7 +1590,6 @@ msgstr "Nastavuje počet dnů, po které jsou staré časovače uchovávány v s
 msgid "Configure the offline decoding delay in milliseconds. The configured delay is observed at each control word parity change."
 msgstr "Nastavuje offline zpoždění dekódování v milisekundách. Nastavené zpoždění je dodrženo při každé změně control word parity. "
 
-#
 msgid "Configure the possible fast forward speeds."
 msgstr "Nastavuje použitelné rychlosti pro přetáčení dopředu."
 
