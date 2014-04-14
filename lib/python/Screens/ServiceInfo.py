@@ -1,6 +1,6 @@
 from Components.HTMLComponent import HTMLComponent
 from Components.GUIComponent import GUIComponent
-from Screen import Screen
+from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from ServiceReference import ServiceReference
@@ -34,7 +34,7 @@ def ServiceInfoListEntry(a, b, valueType=TYPE_TEXT, param=4):
 			if b > 1800:
 				b = 3600 - b
 				direction = 'W'
-			b = ("%d.%d%s") % (b // 10, b % 10, direction)
+			b = "%d.%d%s" % (b // 10, b % 10, direction)
 		else:
 			b = str(b)
 
@@ -65,6 +65,7 @@ TYPE_TRANSPONDER_INFO = 2
 class ServiceInfo(Screen):
 	def __init__(self, session, serviceref=None):
 		Screen.__init__(self, session)
+		Screen.setTitle(self, _("Service Information"))
 
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
 		{

@@ -1,107 +1,102 @@
-from Screens.InfoBar import InfoBar
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
-from Components.ActionMap import ActionMap
-from Components.ConfigList import ConfigListScreen
+from Components.ActionMap import NumberActionMap
+from Components.Button import Button
 from Components.Label import Label
-from Components.Sources.StaticText import StaticText
 from Components.config import config, getConfigListEntry
+from Components.ConfigList import ConfigListScreen
+from Tools.Notifications import AddPopup
 from enigma import eEPGCache
 from time import time
 
 class SleepTimerEdit(ConfigListScreen, Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
-		self.skinName = ["SleepTimerSetup", "Setup"]
-		self.setup_title = _("SleepTimer Configuration")
 
-		self["key_red"] = StaticText(_("Cancel"))
-		self["key_green"] = StaticText(_("Save"))
-		self["description"] = Label("")
+		self["current_status"] = Label()
+		self.is_active = self.session.nav.SleepTimer.isActive()
+		if self.is_active:
+			config.SleepTimer.defaulttime.setValue(self.session.nav.SleepTimer.getCurrentSleepTime())
+		else:
+			config.SleepTimer.enabled.setValue(False)
 
+		self.onChangedEntry = [ ]
 		self.list = []
-		ConfigListScreen.__init__(self, self.list, session = session)
+		ConfigListScreen.__init__(self, self.list, session = self.session, on_change = self.changedEntry)
 		self.createSetup()
-		
-		self["setupActions"] = ActionMap(["SetupActions", "ColorActions"],
+
+		self["actions"] = NumberActionMap(["SetupActions", "MenuActions"],
 		{
-		    "green": self.ok,
-		    "red": self.cancel,
-		    "cancel": self.cancel,
-		    "ok": self.ok,
+		  "cancel": self.keyCancel,
+		  "save": self.keySave,
+		  "menu": self.keyCancel,
 		}, -2)
+		self["key_red"] = Button(_("Cancel"))
+		self["key_green"] = Button(_("OK"))
+		if not self.selectionChanged in self["config"].onSelectionChanged:
+			self["config"].onSelectionChanged.append(self.selectionChanged)
+		self.selectionChanged()
 
-		self.onLayoutFinish.append(self.layoutFinished)
+	def selectionChanged(self):
+		self.is_active = self.session.nav.SleepTimer.isActive()
+		if self.is_active:
+			self["current_status"].setText(_("Timer status:") + " " + _("Enabled"))
+		else:
+			self["current_status"].setText(_("Timer status:") + " " + _("Disabled"))
 
-	def layoutFinished(self):
-		self.setTitle(self.setup_title)
+	# for summary:
+	def changedEntry(self):
+		self.is_active = self.session.nav.SleepTimer.isActive()
+		if self["config"].getCurrent()[0] == _("Enable timer"):
+			self.createSetup()
+		elif self["config"].getCurrent()[0] == _("Use time of currently running service"):
+			if config.SleepTimer.servicetime.getValue():
+				self.useServiceTime()
+			else:
+				if self.is_active:
+					config.SleepTimer.defaulttime.setValue(self.session.nav.SleepTimer.getCurrentSleepTime())
+			self.createSetup()
+		for x in self.onChangedEntry:
+			x()
+		self.selectionChanged()
+
+	def getCurrentEntry(self):
+		return self["config"].getCurrent()[0]
+
+	def getCurrentValue(self):
+		return str(self["config"].getCurrent()[1].getText())
 
 	def createSetup(self):
 		self.list = []
-		self.list.append(getConfigListEntry(_("Sleeptimer"),
-			config.usage.sleep_timer,
-			_("Configure the duration in minutes and action, which could be shut down or standby, for the sleeptimer. Select this entry and click OK or green to start/stop the sleeptimer")))
-		self.list.append(getConfigListEntry(_("Inactivity Sleeptimer"),
-			config.usage.inactivity_timer,
-			_("Configure the duration in hours and action, which could be shut down or standby, when the receiver is not controlled.")))
-		if int(config.usage.inactivity_timer.value):
-			self.list.append(getConfigListEntry(_("Specify timeframe to ignore inactivity sleeptimer"),
-				config.usage.inactivity_timer_blocktime,
-				_("When enabled you can specify a timeframe were the inactivity sleeptimer is ignored. Not the detection is disabled during this timeframe but the inactivity timeout is disabled")))
-			if config.usage.inactivity_timer_blocktime.value:
-				self.list.append(getConfigListEntry(_("Start time to ignore inactivity sleeptimer"),
-					config.usage.inactivity_timer_blocktime_begin,
-					_("Specify the start time when the inactivity sleeptimer should be ignored")))
-				self.list.append(getConfigListEntry(_("End time to ignore inactivity sleeptimer"),
-					config.usage.inactivity_timer_blocktime_end,
-					_("Specify the end time until the inactivity sleeptimer should be ignored")))
-		self.list.append(getConfigListEntry(_("Shutdown when in Standby"),
-			config.usage.standby_to_shutdown_timer,
-			_("Configure the duration when the receiver should go to shut down in case the receiver is in standby mode.")))
+		self.list.append(getConfigListEntry(_("Enable timer"), config.SleepTimer.enabled))
+		if config.SleepTimer.enabled.getValue():
+			self.list.append(getConfigListEntry(_("Use time of currently running service"), config.SleepTimer.servicetime))
+			self.list.append(getConfigListEntry(_("Shutdown in (mins)"), config.SleepTimer.defaulttime))
+			self.list.append(getConfigListEntry(_("Action"), config.SleepTimer.action))
+			self.list.append(getConfigListEntry(_("Ask before shutdown"), config.SleepTimer.ask))
 
 		self["config"].list = self.list
-		self["config"].l.setList(self.list)
+		self["config"].setList(self.list)
 
-	def ok(self):
-		config.usage.sleep_timer.save()
-		config.usage.inactivity_timer.save()
-		config.usage.inactivity_timer_blocktime.save()
-		config.usage.inactivity_timer_blocktime_begin.save()
-		config.usage.inactivity_timer_blocktime_end.save()
-		config.usage.standby_to_shutdown_timer.save()
-		if self.getCurrentEntry() == _("Sleeptimer"):
-			sleepTimer = config.usage.sleep_timer.value
-			if sleepTimer == "event_shutdown":
-				sleepTimer = -self.currentEventTime()
-			elif sleepTimer == "event_standby":
-				sleepTimer = self.currentEventTime()
-			else:
-				sleepTimer = int(sleepTimer)
-			InfoBar.instance.setSleepTimer(sleepTimer)
-			self.close(True)
+	def keyCancel(self):
+		for x in self["config"].list:
+			x[1].cancel()
 		self.close()
 
-	def cancel(self, answer = None):
-		if answer is None:
-			if self["config"].isChanged():
-				self.session.openWithCallback(self.cancel, MessageBox, _("Really close without saving settings?"))
-			else:
-				self.close()
-		elif answer:
+	def keySave(self):
+		if config.SleepTimer.enabled.getValue():
 			for x in self["config"].list:
-				x[1].cancel()
-			self.close()
+				x[1].save()
+			self.session.nav.SleepTimer.setSleepTime(config.SleepTimer.defaulttime.getValue())
+			AddPopup(_("The sleep timer has been activated."), type = MessageBox.TYPE_INFO, timeout = 3)
+			self.close(True)
+		else:
+			self.session.nav.SleepTimer.clear()
+			AddPopup(_("The sleep timer has been disabled."), type = MessageBox.TYPE_INFO, timeout = 3)
+			self.close(True)
 
-	def keyLeft(self):
-		ConfigListScreen.keyLeft(self)
-		self.createSetup()
-
-	def keyRight(self):
-		ConfigListScreen.keyRight(self)
-		self.createSetup()
-
-	def currentEventTime(self):
-		remaining = 0
+	def useServiceTime(self):
+		remaining = None
 		ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
 		if ref:
 			path = ref.getPath()
@@ -124,4 +119,5 @@ class SleepTimerEdit(ConfigListScreen, Screen):
 					duration = event.getDuration()
 					end = start + duration
 					remaining = end - now
-		return remaining + config.recording.margin_after.value * 60
+		if remaining:
+			config.SleepTimer.defaulttime.setValue((remaining / 60) + 2)

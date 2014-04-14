@@ -28,6 +28,10 @@
 #include <byteswap.h>
 #include <netinet/in.h>
 
+#include <iostream>
+#include <fstream>
+using namespace std;
+
 #ifndef BYTE_ORDER
 #error no byte order defined!
 #endif
@@ -1714,9 +1718,9 @@ RESULT eDVBServicePlay::timeshift(ePtr<iTimeshiftService> &ptr)
 				return -2;
 			}
 
-			if (((off_t)fs.f_bavail) * ((off_t)fs.f_bsize) < 200*1024*1024LL)
+			if (((off_t)fs.f_bavail) * ((off_t)fs.f_bsize) < 1024*1024*1024LL)
 			{
-				eDebug("not enough diskspace for timeshift! (less than 200MB)");
+				eDebug("not enough diskspace for timeshift! (less than 1GB)");
 				return -3;
 			}
 		}
@@ -2390,6 +2394,14 @@ RESULT eDVBServicePlay::startTimeshift()
 	m_timeshift_fd = mkstemp(templ);
 	m_timeshift_file = std::string(templ);
 	eDebug("recording to %s", templ);
+
+	ofstream fileout;
+	fileout.open("/proc/stb/lcd/symbol_timeshift");
+	if(fileout.is_open())
+	{
+		fileout << "1";
+	}
+
 	delete [] templ;
 
 	if (m_timeshift_fd < 0)
@@ -2426,6 +2438,13 @@ RESULT eDVBServicePlay::stopTimeshift(bool swToLive)
 	{
 		close(m_timeshift_fd);
 		m_timeshift_fd = -1;
+	}
+
+	ofstream fileout;
+	fileout.open("/proc/stb/lcd/symbol_timeshift");
+	if(fileout.is_open())
+	{
+		fileout << "0";
 	}
 
 	if (!m_save_timeshift)
@@ -3261,9 +3280,11 @@ void eDVBServicePlay::newSubtitlePage(const eDVBTeletextSubtitlePage &page)
 	if (m_subtitle_widget)
 	{
 		int subtitledelay = 0;
-		if (!page.m_have_pts && (m_is_pvr || m_timeshift_enabled))
+		pts_t pts;
+		m_decoder->getPTS(0, pts);
+		if (m_is_pvr || m_timeshift_enabled)
 		{
-			eDebug("Subtitle without PTS and recording");
+			eDebug("Subtitle in recording/timeshift");
 			subtitledelay = eConfigManager::getConfigIntValue("config.subtitles.subtitle_noPTSrecordingdelay", 315000);
 		}
 		else
@@ -3272,23 +3293,16 @@ void eDVBServicePlay::newSubtitlePage(const eDVBTeletextSubtitlePage &page)
 			subtitledelay = eConfigManager::getConfigIntValue("config.subtitles.subtitle_bad_timing_delay", 0);
 		}
 
-		if (!page.m_have_pts || subtitledelay)
-		{
-			/* we need to modify the page timing */
-			eDVBTeletextSubtitlePage tmppage = page;
-			if (!page.m_have_pts && m_decoder)
-			{
-				m_decoder->getPTS(0, tmppage.m_pts);
-				tmppage.m_have_pts = true;
-			}
-			tmppage.m_pts += subtitledelay;
-			m_subtitle_pages.push_back(tmppage);
-		}
-		else
-		{
-			/* use the unmodified page */
-			m_subtitle_pages.push_back(page);
-		}
+		// eDebug("Subtitle get  TTX have_pts=%d pvr=%d timeshift=%d page.pts=%lld pts=%lld delay=%d", page.m_have_pts, m_is_pvr, m_timeshift_enabled, page.m_pts, pts, subtitledelay);
+		eDVBTeletextSubtitlePage tmppage = page;
+		tmppage.m_have_pts = true;
+
+		if (abs(tmppage.m_pts - pts) > 20*90000)
+			tmppage.m_pts = pts; // fix abnormal pts diffs
+
+		tmppage.m_pts += subtitledelay;
+		m_subtitle_pages.push_back(tmppage);
+
 		checkSubtitleTiming();
 	}
 }
@@ -3329,10 +3343,10 @@ void eDVBServicePlay::checkSubtitleTiming()
 		else
 			return;
 
-//		eDebug("%lld %lld", pos, show_time);
 		int diff = show_time - pos;
+//		eDebug("Subtitle show %d page.pts=%lld pts=%lld diff=%d", type, show_time, pos, diff);
 
-		if ((diff / 90) < 20 || diff > 1800000)
+		if (diff < 20*90 || diff > 1800000)
 		{
 			if (type == TELETEXT)
 			{

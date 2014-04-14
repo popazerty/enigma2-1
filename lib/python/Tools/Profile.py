@@ -1,4 +1,5 @@
 # the implementation here is a bit crappy.
+from boxbranding import getBoxType
 import time
 from Directories import resolveFilename, SCOPE_CONFIG
 
@@ -12,7 +13,9 @@ total_time = 1
 profile_file = None
 
 try:
-	profile_old = open(resolveFilename(SCOPE_CONFIG, "profile"), "r").readlines()
+	f = open(resolveFilename(SCOPE_CONFIG, "profile"), "r")
+	profile_old = f.readlines()
+	f.close()
 
 	t = None
 	for line in profile_old:
@@ -40,7 +43,22 @@ def profile(id):
 			else:
 				perc = PERCENTAGE_START
 			try:
-				open("/proc/progress", "w").write("%d \n" % perc)
+				if getBoxType() in ("odinm7", "odinm6", "xp1000s"):
+					f = open("/dev/dbox/oled0", "w")
+					f.write("%d" % perc)
+				elif getBoxType() in ("gb800se", "gb800solo"):
+					f = open("/dev/dbox/oled0", "w")
+					f.write("%d  \n" % perc)
+				elif getBoxType() == "gb800seplus":
+					f = open("/dev/mcu", "w")
+					f.write("%d  \n" % perc)
+				elif getBoxType() == "ebox5000":
+					f = open("/proc/progress", "w")
+					f.write("%d" % perc)
+				else:
+					f = open("/proc/progress", "w")
+					f.write("%d \n" % perc)
+				f.close()
 			except IOError:
 				pass
 

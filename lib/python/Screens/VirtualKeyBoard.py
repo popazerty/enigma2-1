@@ -1,15 +1,14 @@
 # -*- coding: UTF-8 -*-
 from enigma import eListboxPythonMultiContent, gFont, RT_HALIGN_CENTER, RT_VALIGN_CENTER, getPrevAsciiCode
-from Screen import Screen
+from Screens.Screen import Screen
 from Components.Language import language
 from Components.ActionMap import NumberActionMap
 from Components.Sources.StaticText import StaticText
 from Components.Input import Input
 from Components.Label import Label
-from Components.Pixmap import Pixmap
 from Components.MenuList import MenuList
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
-from Tools.Directories import resolveFilename, SCOPE_CURRENT_SKIN
+from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
 from Tools.LoadPixmap import LoadPixmap
 from Tools.NumericalTextInput import NumericalTextInput
 
@@ -20,12 +19,13 @@ class VirtualKeyBoardList(MenuList):
 		self.l.setItemHeight(45)
 
 class VirtualKeyBoardEntryComponent:
-	pass
+	def __init__(self):
+		pass
 
 class VirtualKeyBoard(Screen):
-
 	def __init__(self, session, title="", **kwargs):
 		Screen.__init__(self, session)
+		self.setTitle(_(title))
 		self.keys_list = []
 		self.shiftkeys_list = []
 		self.lang = language.getLanguage()
@@ -35,18 +35,18 @@ class VirtualKeyBoard(Screen):
 		self.smsChar = None
 		self.sms = NumericalTextInput(self.smsOK)
 		
-		self.key_bg = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_bg.png"))
-		self.key_sel = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_sel.png"))
-		self.key_backspace = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_backspace.png"))
-		self.key_all = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_all.png"))
-		self.key_clr = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_clr.png"))
-		self.key_esc = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_esc.png"))
-		self.key_ok = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_ok.png"))
-		self.key_shift = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_shift.png"))
-		self.key_shift_sel = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_shift_sel.png"))
-		self.key_space = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_space.png"))
-		self.key_left = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_left.png"))
-		self.key_right = LoadPixmap(path=resolveFilename(SCOPE_CURRENT_SKIN, "skin_default/vkey_right.png"))
+		self.key_bg = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_bg.png"))
+		self.key_sel = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_sel.png"))
+		self.key_backspace = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_backspace.png"))
+		self.key_all = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_all.png"))
+		self.key_clr = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_clr.png"))
+		self.key_esc = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_esc.png"))
+		self.key_ok = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_ok.png"))
+		self.key_shift = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_shift.png"))
+		self.key_shift_sel = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_shift_sel.png"))
+		self.key_space = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_space.png"))
+		self.key_left = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_left.png"))
+		self.key_right = LoadPixmap(path=resolveFilename(SCOPE_ACTIVE_SKIN, "buttons/vkey_right.png"))
 
 		self.keyImages =  {
 				"BACKSPACE": self.key_backspace,
@@ -70,14 +70,15 @@ class VirtualKeyBoard(Screen):
 			}
 
 		self["country"] = StaticText("")
-		self["header"] = Label(title)
+		self["header"] = Label()
 		self["text"] = Input(currPos=len(kwargs.get("text", "").decode("utf-8",'ignore')), allMarked=False, **kwargs)
 		self["list"] = VirtualKeyBoardList([])
-		
+
 		self["actions"] = NumberActionMap(["OkCancelActions", "WizardActions", "ColorActions", "KeyboardInputActions", "InputBoxActions", "InputAsciiActions"],
 			{
 				"gotAsciiCode": self.keyGotAscii,
 				"ok": self.okClicked,
+				"OKLong": self.okLongClicked,
 				"cancel": self.exit,
 				"left": self.left,
 				"right": self.right,
@@ -262,7 +263,7 @@ class VirtualKeyBoard(Screen):
 	def virtualKeyBoardEntryComponent(self, keys):
 		key_bg_width = self.key_bg and self.key_bg.size().width() or 45
 		key_images = self.shiftMode and self.keyImagesShift or self.keyImages
-		res = [(keys)]
+		res = [keys]
 		text = []
 		x = 0
 		for key in keys:
@@ -339,6 +340,14 @@ class VirtualKeyBoard(Screen):
 		else:
 			self["text"].char(text)
 
+	def okLongClicked(self):
+		self.smsChar = None
+		text = (self.shiftMode and self.shiftkeys_list or self.keys_list)[self.selectedKey / 12][self.selectedKey % 12].encode("UTF-8")
+
+		if text == "BACKSPACE":
+			self["text"].deleteAllChars()
+			self["text"].update()
+
 	def ok(self):
 		self.close(self["text"].getText().encode("UTF-8"))
 
@@ -378,7 +387,7 @@ class VirtualKeyBoard(Screen):
 		self.smsChar = None
 		self.selectedKey += 12
 		if self.selectedKey > self.max_key:
-			self.selectedKey = self.selectedKey % 12
+			self.selectedKey %= 12
 		self.markSelectedKey()
 
 	def keyNumberGlobal(self, number):

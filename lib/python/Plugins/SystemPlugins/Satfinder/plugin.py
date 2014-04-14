@@ -85,7 +85,7 @@ class Satfinder(ScanSetup, ServiceScan):
 
 		nim = nimmanager.nim_slots[self.feid]
 
-		if self.tuning_type.value == "manual_transponder":
+		if self.tuning_type.getValue() == "manual_transponder":
 			if nim.isCompatible("DVB-S2"):
 				self.systemEntry = getConfigListEntry(_('System'), self.scan_sat.system)
 				self.list.append(self.systemEntry)
@@ -96,15 +96,15 @@ class Satfinder(ScanSetup, ServiceScan):
 			self.list.append(getConfigListEntry(_('Polarization'), self.scan_sat.polarization))
 			self.list.append(getConfigListEntry(_('Symbol rate'), self.scan_sat.symbolrate))
 			self.list.append(getConfigListEntry(_('Inversion'), self.scan_sat.inversion))
-			if self.scan_sat.system.value == eDVBFrontendParametersSatellite.System_DVB_S:
+			if self.scan_sat.system.getValue() == eDVBFrontendParametersSatellite.System_DVB_S:
 				self.list.append(getConfigListEntry(_("FEC"), self.scan_sat.fec))
-			elif self.scan_sat.system.value == eDVBFrontendParametersSatellite.System_DVB_S2:
+			elif self.scan_sat.system.getValue() == eDVBFrontendParametersSatellite.System_DVB_S2:
 				self.list.append(getConfigListEntry(_("FEC"), self.scan_sat.fec_s2))
 				self.modulationEntry = getConfigListEntry(_('Modulation'), self.scan_sat.modulation)
 				self.list.append(self.modulationEntry)
 				self.list.append(getConfigListEntry(_('Roll-off'), self.scan_sat.rolloff))
 				self.list.append(getConfigListEntry(_('Pilot'), self.scan_sat.pilot))
-		elif self.preDefTransponders and self.tuning_type.value == "predefined_transponder":
+		elif self.preDefTransponders and self.tuning_type.getValue() == "predefined_transponder":
 			self.list.append(getConfigListEntry(_("Transponder"), self.preDefTransponders))
 		self["config"].list = self.list
 		self["config"].l.setList(self.list)
@@ -125,25 +125,25 @@ class Satfinder(ScanSetup, ServiceScan):
 		returnvalue = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 		if not self.tuning_sat.value:
 			return
-		satpos = int(self.tuning_sat.value)
-		if self.tuning_type.value == "manual_transponder":
-			if self.scan_sat.system.value == eDVBFrontendParametersSatellite.System_DVB_S2:
-				fec = self.scan_sat.fec_s2.value
+		satpos = int(self.tuning_sat.getValue())
+		if self.tuning_type.getValue() == "manual_transponder":
+			if self.scan_sat.system.getValue() == eDVBFrontendParametersSatellite.System_DVB_S2:
+				fec = self.scan_sat.fec_s2.getValue()
 			else:
-				fec = self.scan_sat.fec.value
+				fec = self.scan_sat.fec.getValue()
 			returnvalue = (
-				self.scan_sat.frequency.value,
-				self.scan_sat.symbolrate.value,
-				self.scan_sat.polarization.value,
+				self.scan_sat.frequency.getValue(),
+				self.scan_sat.symbolrate.getValue(),
+				self.scan_sat.polarization.getValue(),
 				fec,
-				self.scan_sat.inversion.value,
+				self.scan_sat.inversion.getValue(),
 				satpos,
-				self.scan_sat.system.value,
-				self.scan_sat.modulation.value,
-				self.scan_sat.rolloff.value,
-				self.scan_sat.pilot.value)
+				self.scan_sat.system.getValue(),
+				self.scan_sat.modulation.getValue(),
+				self.scan_sat.rolloff.getValue(),
+				self.scan_sat.pilot.getValue())
 			self.tune(returnvalue)
-		elif self.tuning_type.value == "predefined_transponder":
+		elif self.tuning_type.getValue() == "predefined_transponder":
 			tps = nimmanager.getTransponders(satpos)
 			l = len(tps)
 			if l > self.preDefTransponders.index:
@@ -192,11 +192,11 @@ class Satfinder(ScanSetup, ServiceScan):
 		index    = 0
 		none_cnt = 0
 		for n in self.satList:
-			if self.satList[index] == None:
-				none_cnt = none_cnt + 1
+			if self.satList[index] is None:
+				none_cnt += 1
 			if index == int(v):
-				return (index-none_cnt)
-			index = index + 1
+				return index-none_cnt
+			index += 1
 		return -1
 
 	def updatePreDefTransponders(self):
@@ -227,7 +227,7 @@ class Satfinder(ScanSetup, ServiceScan):
 		networkid = 0
 		self.session.openWithCallback(self.startScanCallback, ServiceScan, [{"transponders": tlist, "feid": feid, "flags": flags, "networkid": networkid}])
 
-	def startScanCallback(self, answer):
+	def startScanCallback(self, answer=None):
 		if answer:
 			self.doCloseRecursive()
 
@@ -270,12 +270,12 @@ def SatfinderMain(session, close=None, **kwargs):
 
 def SatfinderStart(menuid, **kwargs):
 	if menuid == "scan":
-		return [(_("Satfinder"), SatfinderMain, "satfinder", None)]
+		return [(_("Satfinder"), SatfinderMain, "satfinder", 35, True)]
 	else:
 		return []
 
 def Plugins(**kwargs):
-	if (nimmanager.hasNimType("DVB-S")):
+	if nimmanager.hasNimType("DVB-S"):
 		return PluginDescriptor(name=_("Satfinder"), description=_("Helps setting up your dish"), where = PluginDescriptor.WHERE_MENU, needsRestart = False, fnc=SatfinderStart)
 	else:
 		return []

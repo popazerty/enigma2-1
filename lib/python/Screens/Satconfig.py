@@ -1,12 +1,11 @@
 from enigma import eDVBDB
-from Screen import Screen
+from Screens.Screen import Screen
 from Components.SystemInfo import SystemInfo
 from Components.ActionMap import ActionMap
 from Components.ConfigList import ConfigListScreen
-from Components.MenuList import MenuList
 from Components.NimManager import nimmanager
-from Components.config import getConfigListEntry, config, ConfigNothing, ConfigSelection, updateConfigElement,\
-	ConfigSatlist
+from Components.config import getConfigListEntry, config, ConfigNothing, ConfigSatlist
+from Components.Sources.StaticText import StaticText
 from Components.Sources.List import List
 from Screens.MessageBox import MessageBox
 from Screens.ChoiceBox import ChoiceBox
@@ -15,6 +14,7 @@ from Screens.AutoDiseqc import AutoDiseqc
 
 from time import mktime, localtime
 from datetime import datetime
+from os import path
 
 class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 	def createSimpleSetup(self, list, mode):
@@ -152,7 +152,7 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 					currSat = self.nimConfig.advanced.sat[cur_orb_pos]
 					self.fillListWithAdvancedSatEntrys(currSat)
 				self.have_advanced = True
-			if self.nim.description == "Alps BSBE2" and config.usage.setup_level.index >= 2: # expert
+			if path.exists("/proc/stb/frontend/%d/tone_amplitude" % self.nim.slot) and config.usage.setup_level.index >= 2: # expert
 				self.list.append(getConfigListEntry(_("Tone amplitude"), self.nimConfig.toneAmplitude))
 		elif self.nim.isCompatible("DVB-C"):
 			self.configMode = getConfigListEntry(_("Configuration mode"), self.nimConfig.configMode)
@@ -166,28 +166,28 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 				else:
 					if self.nimConfig.cable.scan_type.value == "bands":
 						# TRANSLATORS: option name, indicating which type of (DVB-C) band should be scanned. The name of the band is printed in '%s'. E.g.: 'Scan EU MID band'
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("EU VHF I"), self.nimConfig.cable.scan_band_EU_VHF_I))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("EU MID"), self.nimConfig.cable.scan_band_EU_MID))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("EU VHF III"), self.nimConfig.cable.scan_band_EU_VHF_III))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("EU UHF IV"), self.nimConfig.cable.scan_band_EU_UHF_IV))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("EU UHF V"), self.nimConfig.cable.scan_band_EU_UHF_V))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("EU SUPER"), self.nimConfig.cable.scan_band_EU_SUPER))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("EU HYPER"), self.nimConfig.cable.scan_band_EU_HYPER))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("US LOW"), self.nimConfig.cable.scan_band_US_LOW))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("US MID"), self.nimConfig.cable.scan_band_US_MID))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("US HIGH"), self.nimConfig.cable.scan_band_US_HIGH))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("US SUPER"), self.nimConfig.cable.scan_band_US_SUPER))
-						self.list.append(getConfigListEntry(_("Scan %s band") % ("US HYPER"), self.nimConfig.cable.scan_band_US_HYPER))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "EU VHF I", self.nimConfig.cable.scan_band_EU_VHF_I))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "EU MID", self.nimConfig.cable.scan_band_EU_MID))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "EU VHF III", self.nimConfig.cable.scan_band_EU_VHF_III))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "EU UHF IV", self.nimConfig.cable.scan_band_EU_UHF_IV))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "EU UHF V", self.nimConfig.cable.scan_band_EU_UHF_V))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "EU SUPER", self.nimConfig.cable.scan_band_EU_SUPER))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "EU HYPER", self.nimConfig.cable.scan_band_EU_HYPER))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "US LOW", self.nimConfig.cable.scan_band_US_LOW))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "US MID", self.nimConfig.cable.scan_band_US_MID))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "US HIGH", self.nimConfig.cable.scan_band_US_HIGH))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "US SUPER", self.nimConfig.cable.scan_band_US_SUPER))
+						self.list.append(getConfigListEntry(_("Scan %s band") % "US HYPER", self.nimConfig.cable.scan_band_US_HYPER))
 					elif self.nimConfig.cable.scan_type.value == "steps":
 						self.list.append(getConfigListEntry(_("Frequency scan step size(khz)"), self.nimConfig.cable.scan_frequency_steps))
 					# TRANSLATORS: option name, indicating which type of (DVB-C) modulation should be scanned. The modulation type is printed in '%s'. E.g.: 'Scan QAM16'
-					self.list.append(getConfigListEntry(_("Scan %s") % ("QAM16"), self.nimConfig.cable.scan_mod_qam16))
-					self.list.append(getConfigListEntry(_("Scan %s") % ("QAM32"), self.nimConfig.cable.scan_mod_qam32))
-					self.list.append(getConfigListEntry(_("Scan %s") % ("QAM64"), self.nimConfig.cable.scan_mod_qam64))
-					self.list.append(getConfigListEntry(_("Scan %s") % ("QAM128"), self.nimConfig.cable.scan_mod_qam128))
-					self.list.append(getConfigListEntry(_("Scan %s") % ("QAM256"), self.nimConfig.cable.scan_mod_qam256))
-					self.list.append(getConfigListEntry(_("Scan %s") % ("SR6900"), self.nimConfig.cable.scan_sr_6900))
-					self.list.append(getConfigListEntry(_("Scan %s") % ("SR6875"), self.nimConfig.cable.scan_sr_6875))
+					self.list.append(getConfigListEntry(_("Scan %s") % "QAM16", self.nimConfig.cable.scan_mod_qam16))
+					self.list.append(getConfigListEntry(_("Scan %s") % "QAM32", self.nimConfig.cable.scan_mod_qam32))
+					self.list.append(getConfigListEntry(_("Scan %s") % "QAM64", self.nimConfig.cable.scan_mod_qam64))
+					self.list.append(getConfigListEntry(_("Scan %s") % "QAM128", self.nimConfig.cable.scan_mod_qam128))
+					self.list.append(getConfigListEntry(_("Scan %s") % "QAM256", self.nimConfig.cable.scan_mod_qam256))
+					self.list.append(getConfigListEntry(_("Scan %s") % "SR6900", self.nimConfig.cable.scan_sr_6900))
+					self.list.append(getConfigListEntry(_("Scan %s") % "SR6875", self.nimConfig.cable.scan_sr_6875))
 					self.list.append(getConfigListEntry(_("Scan additional SR"), self.nimConfig.cable.scan_sr_ext1))
 					self.list.append(getConfigListEntry(_("Scan additional SR"), self.nimConfig.cable.scan_sr_ext2))
 			self.have_advanced = False
@@ -204,11 +204,11 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 		self["config"].l.setList(self.list)
 
 	def newConfig(self):
-		checkList = (self.configMode, self.diseqcModeEntry, self.advancedSatsEntry, \
-			self.advancedLnbsEntry, self.advancedDiseqcMode, self.advancedUsalsEntry, \
-			self.advancedLof, self.advancedPowerMeasurement, self.turningSpeed, \
-			self.advancedType, self.advancedSCR, self.advancedManufacturer, self.advancedUnicable, self.advancedConnected, \
-			self.uncommittedDiseqcCommand, self.cableScanType, self.multiType)
+		checkList = (self.configMode, self.diseqcModeEntry, self.advancedSatsEntry,
+					 self.advancedLnbsEntry, self.advancedDiseqcMode, self.advancedUsalsEntry,
+					 self.advancedLof, self.advancedPowerMeasurement, self.turningSpeed,
+					 self.advancedType, self.advancedSCR, self.advancedManufacturer, self.advancedUnicable, self.advancedConnected,
+					 self.uncommittedDiseqcCommand, self.cableScanType, self.multiType)
 		if self["config"].getCurrent() == self.multiType:
 			from Components.NimManager import InitNimManager
 			InitNimManager(nimmanager)
@@ -319,7 +319,7 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 				if len(choices):
 					self.advancedConnected = getConfigListEntry(_("connected"), self.nimConfig.advanced.unicableconnected)
 					self.list.append(self.advancedConnected)
-					if self.nimConfig.advanced.unicableconnected.value == True:
+					if self.nimConfig.advanced.unicableconnected.value:
 						self.nimConfig.advanced.unicableconnectedTo.setChoices(choices)
 						self.list.append(getConfigListEntry(_("Connected to"),self.nimConfig.advanced.unicableconnectedTo))
 
@@ -394,7 +394,40 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 			self.fillListWithAdvancedSatEntrys(Sat)
 		self["config"].list = self.list
 
+	def checkLoopthrough(self):
+		if self.nimConfig.configMode.value == "loopthrough":
+			loopthrough_count = 0
+			dvbs_slots = nimmanager.getNimListOfType('DVB-S')
+			dvbs_slots_len = len(dvbs_slots)
+
+			for x in dvbs_slots:
+				try:
+					nim_slot = nimmanager.nim_slots[x]
+					if nim_slot == self.nimConfig:
+						self_idx = x
+					if nim_slot.config.configMode.value == "loopthrough":
+						loopthrough_count += 1
+				except: pass
+			if loopthrough_count >= dvbs_slots_len:
+				return False
+
+		self.slot_dest_list = []
+		def checkRecursiveConnect(slot_id):
+			if slot_id in self.slot_dest_list:
+				return False
+			self.slot_dest_list.append(slot_id)
+			slot_config = nimmanager.nim_slots[slot_id].config
+			if slot_config.configMode.value == "loopthrough":
+				return checkRecursiveConnect(int(slot_config.connectedTo.value))
+			return True
+
+		return checkRecursiveConnect(self.slotid)
+
 	def keySave(self):
+		if not self.checkLoopthrough():
+			self.session.open(MessageBox, _("The loopthrough setting is wrong."),MessageBox.TYPE_ERROR,timeout=10)
+			return
+
 		old_configured_sats = nimmanager.getConfiguredSats()
 		if not self.run():
 			return
@@ -430,7 +463,7 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 
 			if confirmed[1] == "yes" or confirmed[1] == "no":
 				# TRANSLATORS: The satellite with name '%s' is no longer used after a configuration change. The user is asked whether or not the satellite should be deleted.
-				self.session.openWithCallback(self.deleteConfirmed, ChoiceBox, _("%s is no longer used. Should it be deleted?") %(sat_name), [(_("Yes"), "yes"), (_("No"), "no"), (_("Yes to all"), "yestoall"), (_("No to all"), "notoall")])
+				self.session.openWithCallback(self.deleteConfirmed, ChoiceBox, _("%s is no longer used. Should it be deleted?") % sat_name, [(_("Yes"), "yes"), (_("No"), "no"), (_("Yes to all"), "yestoall"), (_("No to all"), "notoall")])
 			if confirmed[1] == "yestoall" or confirmed[1] == "notoall":
 				self.deleteConfirmed(confirmed)
 			break
@@ -439,6 +472,7 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 
 	def __init__(self, session, slotid):
 		Screen.__init__(self, session)
+		Screen.setTitle(self, _("Tuner settings"))
 		self.list = [ ]
 
 		ServiceStopScreen.__init__(self)
@@ -446,12 +480,17 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 
 		ConfigListScreen.__init__(self, self.list)
 
-		self["actions"] = ActionMap(["SetupActions", "SatlistShortcutAction"],
+		self["key_red"] = StaticText(_("Close"))
+		self["key_green"] = StaticText(_("Save"))
+
+		self["actions"] = ActionMap(["SetupActions", "SatlistShortcutAction", "ColorActions"],
 		{
 			"ok": self.keySave,
 			"save": self.keySave,
 			"cancel": self.keyCancel,
-			"nothingconnected": self.nothingConnectedShortcut
+			"nothingconnected": self.nothingConnectedShortcut,
+			"red": self.keyCancel,
+			"green": self.keySave,
 		}, -2)
 
 		self.slotid = slotid
@@ -474,7 +513,7 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 
 	def keyCancel(self):
 		if self["config"].isChanged():
-			self.session.openWithCallback(self.cancelConfirm, MessageBox, _("Really close without saving settings?"))
+			self.session.openWithCallback(self.cancelConfirm, MessageBox, _("Really close without saving settings?"), default = False)
 		else:
 			self.restoreService(_("Zap back to service before tuner setup?"))
 
@@ -507,6 +546,7 @@ class NimSetup(Screen, ConfigListScreen, ServiceStopScreen):
 class NimSelection(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
+		Screen.setTitle(self, _("Tuner configuration"))
 
 		self.list = [None] * nimmanager.getSlotCount()
 		self["nimlist"] = List(self.list)
@@ -514,10 +554,15 @@ class NimSelection(Screen):
 
 		self.setResultClass()
 
-		self["actions"] = ActionMap(["OkCancelActions"],
+		self["key_red"] = StaticText(_("Close"))
+		self["key_green"] = StaticText(_("Select"))
+
+		self["actions"] = ActionMap(["SetupActions", "ColorActions"],
 		{
-			"ok": self.okbuttonClick ,
-			"cancel": self.close
+			"ok": self.okbuttonClick,
+			"cancel": self.close,
+			"red": self.close,
+			"green": self.okbuttonClick,
 		}, -2)
 
 	def setResultClass(self):

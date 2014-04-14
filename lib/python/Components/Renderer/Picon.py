@@ -1,9 +1,11 @@
 import os
 from Renderer import Renderer
-from enigma import ePixmap
+from enigma import ePixmap, ePicLoad
 from Tools.Alternatives import GetWithAlternative
-from Tools.Directories import pathExists, SCOPE_SKIN_IMAGE, SCOPE_CURRENT_SKIN, resolveFilename
+from Tools.Directories import pathExists, SCOPE_SKIN_IMAGE, SCOPE_ACTIVE_SKIN, resolveFilename
 from Components.Harddisk import harddiskmanager
+from Components.config import config, ConfigBoolean
+from boxbranding import getBoxType
 
 searchPaths = []
 lastPiconPath = None
@@ -14,7 +16,9 @@ def initPiconPaths():
 	for mp in ('/usr/share/enigma2/', '/'):
 		onMountpointAdded(mp)
 	for part in harddiskmanager.getMountedPartitions():
+		mp = path = os.path.join(part.mountpoint, 'usr/share/enigma2')
 		onMountpointAdded(part.mountpoint)
+		onMountpointAdded(mp)
 
 def onMountpointAdded(mountpoint):
 	global searchPaths
@@ -50,14 +54,26 @@ def findPicon(serviceName):
 		pngname = lastPiconPath + serviceName + ".png"
 		if pathExists(pngname):
 			return pngname
-	global searchPaths
-	for path in searchPaths:
-		if pathExists(path):
-			pngname = path + serviceName + ".png"
-			if pathExists(pngname):
-				lastPiconPath = path
-				return pngname
-	return ""
+		else:
+			return ""
+	else:
+		global searchPaths
+		pngname = ""
+		for path in searchPaths:
+			if pathExists(path) and not path.startswith('/media/net'):
+				pngname = path + serviceName + ".png"
+				if pathExists(pngname):
+					lastPiconPath = path
+					break
+			elif pathExists(path):
+				pngname = path + serviceName + ".png"
+				if pathExists(pngname):
+					lastPiconPath = path
+					break
+		if pathExists(pngname):
+			return pngname
+		else:
+			return ""
 
 def getPiconName(serviceName):
 	#remove the path and name fields, and replace ':' by '_'
@@ -65,27 +81,33 @@ def getPiconName(serviceName):
 	pngname = findPicon(sname)
 	if not pngname:
 		fields = sname.split('_', 3)
-		if len(fields) > 2 and fields[2] != '2':
-			#fallback to 1 for tv services with nonstandard servicetypes
+		if len(fields) > 2 and fields[2] != '2': #fallback to 1 for tv services with nonstandard servicetypes
 			fields[2] = '1'
-			pngname = findPicon('_'.join(fields))
+		if len(fields) > 0 and fields[0] == '4097':	#fallback to 1 for IPTV streams
+			fields[0] = '1'
+		pngname = findPicon('_'.join(fields))
 	return pngname
 
 class Picon(Renderer):
 	def __init__(self):
 		Renderer.__init__(self)
+		self.PicLoad = ePicLoad()
+		self.PicLoad.PictureData.get().append(self.updatePicon)
+		self.piconsize = (0,0)
 		self.pngname = ""
 		self.lastPath = None
 		pngname = findPicon("picon_default")
 		self.defaultpngname = None
 		if not pngname:
-			tmp = resolveFilename(SCOPE_CURRENT_SKIN, "picon_default.png")
+			tmp = resolveFilename(SCOPE_ACTIVE_SKIN, "picon_default.png")
 			if pathExists(tmp):
 				pngname = tmp
 			else:
 				pngname = resolveFilename(SCOPE_SKIN_IMAGE, "skin_default/picon_default.png")
+		self.nopicon = resolveFilename(SCOPE_SKIN_IMAGE, "skin_default/picon_default.png")
 		if os.path.getsize(pngname):
 			self.defaultpngname = pngname
+			self.nopicon = pngname
 
 	def addPath(self, value):
 		if pathExists(value):
@@ -101,23 +123,39 @@ class Picon(Renderer):
 			if attrib == "path":
 				self.addPath(value)
 				attribs.remove((attrib,value))
+			elif attrib == "size":
+				self.piconsize = value
 		self.skinAttributes = attribs
 		return Renderer.applySkin(self, desktop, parent)
 
 	GUI_WIDGET = ePixmap
 
+	def postWidgetCreate(self, instance):
+		self.changed((self.CHANGED_DEFAULT,))
+
+	def updatePicon(self, picInfo=None):
+		ptr = self.PicLoad.getData()
+		if ptr is not None:
+			self.instance.setPixmap(ptr.__deref__())
+			self.instance.show()
 	def changed(self, what):
 		if self.instance:
 			pngname = ""
-			if what[0] != self.CHANGED_CLEAR:
+			if what[0] != self.CHANGED_CLEAR and len(what) > 1:
 				pngname = getPiconName(self.source.text)
 			if not pngname: # no picon for service found
 				pngname = self.defaultpngname
+			if not config.usage.showpicon.getValue():
+				pngname = self.nopicon
 			if self.pngname != pngname:
 				if pngname:
-					self.instance.setScale(1)
+					if not getBoxType().startswith("venton"):
+						self.instance.setScale(1)
 					self.instance.setPixmapFromFile(pngname)
 					self.instance.show()
+					#else:	
+					#	self.PicLoad.setPara((self.piconsize[0], self.piconsize[1], 0, 0, 1, 1, "#FF000000"))
+					#	self.PicLoad.startDecode(pngname)
 				else:
 					self.instance.hide()
 				self.pngname = pngname

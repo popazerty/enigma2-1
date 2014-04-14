@@ -18,7 +18,7 @@
 
 /************************************************/
 
-#define CRASH_EMAILADDR "forum at www.openpli.org"
+#define CRASH_EMAILADDR ""
 #define INFOFILE "/maintainer.info"
 
 #define RINGBUFFER_SIZE 16384
@@ -117,10 +117,10 @@ void bsodFatal(const char *component)
 	bsodhandled = true;
 
 	std::string lines = getLogBuffer();
-	
+
 		/* find python-tracebacks, and extract "  File "-strings */
 	size_t start = 0;
-	
+
 	std::string crash_emailaddr = CRASH_EMAILADDR;
 	std::string crash_component = "enigma2";
 
@@ -155,19 +155,20 @@ void bsodFatal(const char *component)
 	FILE *f;
 	const char* crashlog_name;
 	std::ostringstream os;
-	os << "/media/hdd/enigma2_crash_";
+	os << getConfigString("config.crash.debug_path", "/home/root/logs/");
+	os << "enigma2_crash_";
 	os << time(0);
 	os << ".log";
 	crashlog_name = os.str().c_str();
 	f = fopen(crashlog_name, "wb");
-	
+
 	if (f == NULL)
 	{
 		/* No hardisk. If there is a crash log in /home/root, leave it
 		 * alone because we may be in a crash loop and writing this file
 		 * all night long may damage the flash. Also, usually the first
 		 * crash log is the most interesting one. */
-		crashlog_name = "/home/root/enigma2_crash.log";
+		crashlog_name = "/home/root/logs/enigma2_crash.log";
 		if ((access(crashlog_name, F_OK) == 0) ||
 		    ((f = fopen(crashlog_name, "wb")) == NULL))
 		{
@@ -192,7 +193,7 @@ void bsodFatal(const char *component)
 
 		XmlGenerator xml(f);
 
-		xml.open("openpli");
+		xml.open("OpenHDF");
 
 		xml.open("enigma2");
 		xml.string("crashdate", tm_str);
@@ -202,8 +203,6 @@ void bsodFatal(const char *component)
 
 		xml.string("skin", getConfigString("config.skin.primary_skin", "Default Skin"));
 		xml.string("sourcedate", enigma2_date);
-		xml.string("branch", enigma2_branch);
-		xml.string("rev", enigma2_rev);
 		xml.string("version", PACKAGE_VERSION);
 		xml.close();
 
@@ -220,17 +219,6 @@ void bsodFatal(const char *component)
 		xml.cDataFromCmd("kernelversion", "uname -a");
 		xml.stringFromFile("kernelcmdline", "/proc/cmdline");
 		xml.stringFromFile("nimsockets", "/proc/bus/nim_sockets");
-		if (!getConfigBool("config.plugins.crashlogautosubmit.sendAnonCrashlog", true)) {
-			xml.cDataFromFile("stbca", "/proc/stb/info/ca");
-			xml.cDataFromFile("enigma2settings", eEnv::resolve("${sysconfdir}/enigma2/settings"), ".password=");
-		}
-		if (getConfigBool("config.plugins.crashlogautosubmit.addNetwork", false)) {
-			xml.cDataFromFile("networkinterfaces", "/etc/network/interfaces");
-			xml.cDataFromFile("dns", "/etc/resolv.conf");
-			xml.cDataFromFile("defaultgateway", "/etc/default_gw");
-		}
-		if (getConfigBool("config.plugins.crashlogautosubmit.addWlan", false))
-			xml.cDataFromFile("wpasupplicant", "/etc/wpa_supplicant.conf");
 		xml.cDataFromFile("imageversion", "/etc/image-version");
 		xml.cDataFromFile("imageissue", "/etc/issue.net");
 		xml.close();
@@ -240,13 +228,37 @@ void bsodFatal(const char *component)
 			xml.open("software");
 			xml.cDataFromCmd("enigma2software", "opkg list-installed 'enigma2*'");
 			if(access("/proc/stb/info/boxtype", F_OK) != -1) {
-				xml.cDataFromCmd("xtrendsoftware", "opkg list-installed 'et-*'");
+				xml.cDataFromCmd("xtrendsoftware", "opkg list-installed 'et*'");
 			}
 			else if (access("/proc/stb/info/vumodel", F_OK) != -1) {
 				xml.cDataFromCmd("vuplussoftware", "opkg list-installed 'vuplus*'");
 			}
 			else if (access("/proc/stb/info/model", F_OK) != -1) {
 				xml.cDataFromCmd("dreamboxsoftware", "opkg list-installed 'dream*'");
+			}
+			else if (access("/proc/stb/info/azmodel", F_OK) != -1) {
+				xml.cDataFromCmd("azboxboxsoftware", "opkg list-installed 'az*'");
+			}
+			else if (access("/proc/stb/info/gbmodel", F_OK) != -1) {
+				xml.cDataFromCmd("gigabluesoftware", "opkg list-installed 'gb*'");
+			}
+			else if (access("/proc/stb/info/hwmodel", F_OK) != -1) {
+				xml.cDataFromCmd("technomatesoftware", "opkg list-installed 'tm*'");
+			}
+			else if (access("/proc/stb/info/boxtype", F_OK) != -1) {
+				xml.cDataFromCmd("ventonsoftware", "opkg list-installed 'ini*'");
+			}
+			else if (access("/proc/stb/info/boxtype", F_OK) != -1) {
+				xml.cDataFromCmd("maxdigitalsoftware", "opkg list-installed 'xp*'");
+			}
+			else if (access("/proc/stb/info/boxtype", F_OK) != -1) {
+				xml.cDataFromCmd("odinsoftware", "opkg list-installed 'odin*'");
+			}
+			else if (access("/proc/stb/info/boxtype", F_OK) != -1) {
+				xml.cDataFromCmd("eboxsoftware", "opkg list-installed 'ebox*'");
+			}
+			else if (access("/proc/stb/info/boxtype", F_OK) != -1) {
+				xml.cDataFromCmd("medialinksoftware", "opkg list-installed 'ixuss*'");
 			}
 			xml.cDataFromCmd("gstreamersoftware", "opkg list-installed 'gst*'");
 			xml.close();
@@ -263,11 +275,11 @@ void bsodFatal(const char *component)
 
 	ePtr<gMainDC> my_dc;
 	gMainDC::getInstance(my_dc);
-	
+
 	gPainter p(my_dc);
 	p.resetOffset();
 	p.resetClip(eRect(ePoint(0, 0), my_dc->size()));
-	p.setBackgroundColor(gRGB(0x008000));
+	p.setBackgroundColor(gRGB(0x010000));
 	p.setForegroundColor(gRGB(0xFFFFFF));
 
 	ePtr<gFont> font = new gFont("Regular", 20);
@@ -275,13 +287,14 @@ void bsodFatal(const char *component)
 	p.clear();
 
 	eRect usable_area = eRect(100, 70, my_dc->size().width() - 150, 100);
-	
+
 	os.str("");
 	os.clear();
-	os << "We are really sorry. Your STB encountered "
-		"a software problem, and needs to be restarted.\n"
-		"Please send the logfile " << crashlog_name << " to " << crash_emailaddr << ".\n"
-		"Your STB restarts in 10 seconds!\n"
+	os << "We are really sorry. Your receiver encountered "
+		"a software problem, and needs to be restarted. "
+		"Please ask for support in www.hdfreaks.cc forum\n"
+		"The logfiles are created in /home/root/logs/.\n"
+		"Your receiver restarts in 10 seconds!\n"
 		"Component: " << crash_component;
 
 	p.renderText(usable_area, os.str().c_str(), gPainter::RT_WRAP|gPainter::RT_HALIGN_LEFT);
@@ -304,7 +317,7 @@ void bsodFatal(const char *component)
 	font = new gFont("Regular", 14);
 	p.setFont(font);
 
-	p.renderText(usable_area, 
+	p.renderText(usable_area,
 		lines.substr(start), gPainter::RT_HALIGN_LEFT);
 	sleep(10);
 
@@ -352,7 +365,7 @@ void bsodCatchSignals()
 	act.sa_flags = SA_RESTART | SA_SIGINFO;
 	if (sigemptyset(&act.sa_mask) == -1)
 		perror("sigemptyset");
-	
+
 		/* start handling segfaults etc. */
 	sigaction(SIGSEGV, &act, 0);
 	sigaction(SIGILL, &act, 0);

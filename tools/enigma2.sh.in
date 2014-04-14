@@ -5,13 +5,28 @@ exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
 
 if [ -x @bindir@/showiframe ]; then
-	if [ -f @sysconfdir@/enigma2/backdrop.mvi ]; then
-		@bindir@/showiframe @sysconfdir@/enigma2/backdrop.mvi
-	elif [ -f @sysconfdir@/enigma2/bootlogo.mvi ]; then
+	if [ -f @sysconfdir@/enigma2/bootlogo.mvi ]; then
+		echo found @sysconfdir@/enigma2/bootlogo.mvi
 		@bindir@/showiframe @sysconfdir@/enigma2/bootlogo.mvi
 	elif [ -f @datadir@/bootlogo.mvi ]; then
+		echo found @datadir@/bootlogo.mvi
 		@bindir@/showiframe @datadir@/bootlogo.mvi
 	fi
+fi
+
+# update NTP time if NTP Time Enabled
+if [ "$(grep config.misc.SyncTimeUsing /etc/enigma2/settings)" == "config.misc.SyncTimeUsing=1" ]; then
+	/usr/bin/ntpdate -s -u pool.ntp.org &
+fi
+
+# check multiquickbutton keymap
+FILE=/usr/lib/enigma2/python/Plugins/Extensions/MultiQuickButton/keymap.xml
+if test -s $FILE; then 
+	echo "$FILE looks good"
+	else 
+	rm -f /usr/lib/enigma2/python/Plugins/Extensions/MultiQuickButton/keymap.xml
+	cp /usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/scripts/mqb_keymap.xml $FILE
+	echo "$FILE restored from backup"
 fi
 
 # hook to execute scripts always before enigma2 start
@@ -19,14 +34,59 @@ if [ -x @bindir@/enigma2_pre_start.sh ]; then
 	@bindir@/enigma2_pre_start.sh
 fi
 
+if [ -f /usr/lib/libssl.so.0.9.8 ]; then
+	echo "libssl symlink found"
+else
+	ln -s /usr/lib/libssl.so.1.0.0 /usr/lib/libssl.so.0.9.8
+fi
+	
+if [ -f /lib/libcrypto.so.0.9.8 ]; then
+	echo "libcrypto symlink found"
+else
+	ln -s /lib/libcrypto.so.1.0.0 /lib/libcrypto.so.0.9.8
+fi
+
 if [ -d /home/root ]; then
 	cd /home/root
 fi
 
-LIBS=@libdir@/libopen.so.0.0.0
+# check if media/net directory exists
+if [ -d /media/net ]; then
+	echo "/media/net found"
+else
+	mkdir /media/net
+fi
+
+# check for settings files
+if [ -f @sysconfdir@/enigma2/settings ]; then
+	echo "@sysconfdir@/enigma2/settings found"
+else
+	cp @datadir@/enigma2/defaults/* @sysconfdir@/enigma2/
+fi
+
+# check for sundtek tuner helper lib
+if [ -e /opt/lib/libmediaclient.so ]; then
+	LIBS="/opt/lib/libmediaclient.so /usr/lib/libopen.so.0.0.0"
+else
+	LIBS="/usr/lib/libopen.so.0.0.0"
+fi
 
 sync
-LD_PRELOAD=$LIBS @bindir@/enigma2
+
+if [ "$(grep config.crash.enabledebug /etc/enigma2/settings)" == "config.crash.enabledebug=true" ]; then
+	RANDOMIZE1970=''
+	time=`date +%Y` ;
+	if [ "$time" = 1970 ]; then
+		RANDOMIZE1970="$(strings /dev/urandom | grep -o '[[:alnum:]]' | head -n 5 | tr -d '\n')"
+	fi
+	if [ "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" != "" -a -d "$(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')" ]; then
+		LD_PRELOAD=$LIBS @bindir@/enigma2 &> $(grep config.crash.debug_path= /etc/enigma2/settings | sed 's/config.crash.debug_path=//g')Enigma2-debug-$(date +%Y%m%d_%H-%M-%S)$RANDOMIZE1970.log
+	else
+		LD_PRELOAD=$LIBS @bindir@/enigma2 &> /home/root/logs/Enigma2-debug-$(date +%Y%m%d_%H-%M-%S)$RANDOMIZE1970.log
+	fi
+else
+	LD_PRELOAD=$LIBS @bindir@/enigma2
+fi
 
 # enigma2 exit codes:
 #
@@ -46,6 +106,7 @@ case $ret in
 		;;
 	3)
 		rm -fR /home/root/.gstreamer-0.10
+		rm -f /tmp/.listen.camd.socket.ignore
 		;;
 	4)
 		/sbin/rmmod lcd
@@ -56,11 +117,16 @@ case $ret in
 		/sbin/reboot
 		;;
 	42)
-		# bind the console (when available)
-		[ -f /sys/class/vtconsole/vtcon1/bind ] && echo 1 > /sys/class/vtconsole/vtcon1/bind
-		opkg upgrade 2>&1 | tee /home/root/ipkgupgrade.log
-		/sbin/reboot
+		python /usr/lib/enigma2/python/upgrade.pyo
+		;;
+	43)
+		init 1
+		;;
+	45)
+		echo "    " > /dev/lcd0
+		/usr/bin/gigablue_wol
 		;;
 	*)
+		rm -f /tmp/.listen.camd.socket.ignore
 		;;
 esac

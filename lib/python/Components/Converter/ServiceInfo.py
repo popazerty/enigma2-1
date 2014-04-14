@@ -77,7 +77,7 @@ class ServiceInfo(Converter, object):
 		info = service and service.info()
 		if not info:
 			return False
-		
+
 		if self.type == self.HAS_TELETEXT:
 			tpid = info.getInfo(iServiceInformation.sTXTPID)
 			return tpid != -1
@@ -89,7 +89,7 @@ class ServiceInfo(Converter, object):
 				idx = 0
 				while idx < n:
 					i = audio.getTrackInfo(idx)
-					description = i.getDescription();
+					description = i.getDescription()
 					if "AC3" in description or "AC-3" in description or "DTS" in description:
 						return True
 					idx += 1
@@ -127,7 +127,7 @@ class ServiceInfo(Converter, object):
 		return False
 
 	boolean = property(getBoolean)
-	
+
 	@cached
 	def getText(self):
 		service = self.source.service
@@ -136,9 +136,15 @@ class ServiceInfo(Converter, object):
 			return ""
 
 		if self.type == self.XRES:
-			return self.getServiceInfoString(info, iServiceInformation.sVideoWidth)
+			ret = self.getServiceInfoString(info, iServiceInformation.sVideoWidth)
+			if ret != "65535":
+				return ret
+			return ""	
 		elif self.type == self.YRES:
-			return self.getServiceInfoString(info, iServiceInformation.sVideoHeight)
+			ret = self.getServiceInfoString(info, iServiceInformation.sVideoHeight)
+			if ret != "65535":
+				return ret
+			return ""
 		elif self.type == self.APID:
 			return self.getServiceInfoString(info, iServiceInformation.sAudioPID)
 		elif self.type == self.VPID:

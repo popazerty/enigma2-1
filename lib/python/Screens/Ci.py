@@ -13,7 +13,7 @@ from enigma import eTimer, eDVBCI_UI, eDVBCIInterfaces
 MAX_NUM_CI = 4
 
 def setCIBitrate(configElement):
-	if configElement.value == "no":
+	if configElement.getValue() == "no":
 		eDVBCI_UI.getInstance().setClockRate(configElement.slotid, eDVBCI_UI.rateNormal)
 	else:
 		eDVBCI_UI.getInstance().setClockRate(configElement.slotid, eDVBCI_UI.rateHigh)
@@ -116,7 +116,7 @@ class MMIDialog(Screen):
 			self.showWait()
 		elif self.tag == "ENQ":
 			cur = self["entries"].getCurrent()
-			answer = str(cur[1].value)
+			answer = str(cur[1].getValue())
 			length = len(answer)
 			while length < cur[1].getLength():
 				answer = '0'+answer
@@ -178,8 +178,7 @@ class MMIDialog(Screen):
 		self["title"].setText("")
 		self["subtitle"].setText("")
 		self["bottom"].setText("")
-		list = [ ]
-		list.append( (self.wait_text, ConfigNothing()) )
+		list = [(self.wait_text, ConfigNothing())]
 		self.updateList(list)
 
 	def showScreen(self):
@@ -258,7 +257,7 @@ class CiMessageHandler:
 			if slot in self.dlgs:
 				self.dlgs[slot].ciStateChanged()
 			elif eDVBCI_UI.getInstance().availableMMI(slot) == 1:
-				if self.session and not config.usage.hide_ci_messages.value:
+				if self.session and not config.usage.hide_ci_messages.getValue():
 					self.dlgs[slot] = self.session.openWithCallback(self.dlgClosed, MMIDialog, slot, 3)
 
 	def dlgClosed(self, slot):
@@ -278,6 +277,7 @@ CiHandler = CiMessageHandler()
 class CiSelection(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
+		self.setTitle(_("Common Interface"))
 		self["actions"] = ActionMap(["OkCancelActions", "CiSelectionActions"],
 			{
 				"left": self.keyLeft,
@@ -301,7 +301,7 @@ class CiSelection(Screen):
 		menuList.l.setList(self.list)
 		self["entries"] = menuList
 		self["entries"].onSelectionChanged.append(self.selectionChanged)
-		self["text"] = Label(_("Slot %d")%(1))
+		self["text"] = Label(_("Slot %d")% 1)
 
 	def selectionChanged(self):
 		cur_idx = self["entries"].getCurrentIndex()

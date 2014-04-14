@@ -1,6 +1,4 @@
-from enigma import eTimer, eDVBSatelliteEquipmentControl, eDVBResourceManager, \
-	eDVBDiseqcCommand, eDVBFrontendParametersSatellite, eDVBFrontendParameters,\
-	iDVBFrontend
+from enigma import eTimer, eDVBResourceManager, eDVBDiseqcCommand, eDVBFrontendParametersSatellite, iDVBFrontend
 
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
@@ -38,7 +36,7 @@ class PositionerSetup(Screen):
 			orientation = "west"
 		else:
 			orientation = "east"
-		return (position, orientation)
+		return position, orientation
 
 	@staticmethod
 	def orbital2metric(position, orientation):
@@ -95,18 +93,17 @@ class PositionerSetup(Screen):
 					service = self.session.pip.pipservice
 					feInfo = service and service.frontendInfo()
 					if feInfo:
-						cur = feInfo.getTransponderData(True)
+						cur = feInfo.getTransponderData()
 					del feInfo
 					del service
 					if hasattr(session, 'infobar'):
-						if session.infobar.servicelist and session.infobar.servicelist.dopipzap:
+						if session.infobar.servicelist.dopipzap:
 							session.infobar.servicelist.togglePipzap()
 					if hasattr(session, 'pip'):
 						del session.pip
 					session.pipshown = False
-				if not self.openFrontend():
-					self.frontend = None # in normal case this should not happen
-					if hasattr(self, 'raw_channel'):
+					if not self.openFrontend():
+						self.frontend = None # in normal case this should not happen
 						del self.raw_channel
 
 		self.frontendStatus = { }
@@ -198,7 +195,7 @@ class PositionerSetup(Screen):
 
 	def __onClose(self):
 		self.statusTimer.stop()
-		log.close();
+		log.close()
 		self.session.nav.playService(self.oldref)
 
 	def restartPrevService(self, yesno):
@@ -248,7 +245,7 @@ class PositionerSetup(Screen):
 			self.sitelat = 50.767
 			self.latitudeOrientation = 'north'
 			self.tuningstepsize = 0.36
-			self.rotorPositions = 99
+			self.rotorPositions = 49
 			self.turningspeedH = 2.3
 			self.turningspeedV = 1.7
 		self.sitelat = PositionerSetup.orbital2metric(self.sitelat, self.latitudeOrientation)
@@ -486,7 +483,7 @@ class PositionerSetup(Screen):
 		elif entry == "goto":
 			self.printMsg(_("Move to position X"))
 			satlon = self.orbitalposition.float
-			position = ("%5.1f %s") % (satlon, self.orientation.value)
+			position = "%5.1f %s" % (satlon, self.orientation.value)
 			print>>log, (_("Satellite longitude:") + " %s") % position
 			satlon = PositionerSetup.orbital2metric(satlon, self.orientation.value)
 			self.statusMsg((_("Moving to position") + " %s") % position, timeout = self.STATUS_MSG_TIMEOUT)
@@ -519,7 +516,7 @@ class PositionerSetup(Screen):
 		elif entry == "storage":
 			if self.advanced:
 				self.printMsg(_("Allocate unused memory index"))
-				while(True):
+				while True:
 					if not len(self.allocatedIndices):
 						for sat in self.availablesats:
 							self.allocatedIndices.append(int(self.advancedsats[sat].rotorposition.value))
@@ -644,30 +641,10 @@ class PositionerSetup(Screen):
 		self.polarisation = tp[2]
 		self.MAX_LOW_RATE_ADAPTER_COUNT = setLowRateAdapterCount(self.symbolrate)
 		transponderdata = ConvertToHumanReadable(self.tuner.getTransponderData(), "DVB-S")
-		frequency = transponderdata.get("frequency")
-		if frequency:
-			frequency_text = str(frequency / 1000)
-		else:
-			frequency_text = ""
-		self["frequency_value"].setText(frequency_text)
-		symbolrate = transponderdata.get("symbol_rate")
-		if symbolrate:
-			symbolrate_text = str(symbolrate / 1000)
-		else:
-			symbolrate_text = ""
-		self["symbolrate_value"].setText(symbolrate_text)
-		fec_inner = transponderdata.get("fec_inner")
-		if fec_inner:
-			fec_text = str(fec_inner)
-		else:
-			fec_text = ""
-		self["fec_value"].setText(fec_text)
-		polarisation = transponderdata.get("polarization")
-		if polarisation:
-			polarisation_text = str(polarisation)
-		else:
-			polarisation_text = ""
-		self["polarisation"].setText(polarisation_text)
+		self["frequency_value"].setText(str(transponderdata.get("frequency")))
+		self["symbolrate_value"].setText(str(transponderdata.get("symbol_rate")))
+		self["fec_value"].setText(str(transponderdata.get("fec_inner")))
+		self["polarisation"].setText(str(transponderdata.get("polarization")))
 	
 	@staticmethod
 	def rotorCmd2Step(rotorCmd, stepsize):
@@ -761,7 +738,7 @@ class PositionerSetup(Screen):
 			yi = map(lambda (x, y) : x, readings.values())
 			x0 = sum(map(mul, xi, yi)) / sum(yi)
 			xm = xi[yi.index(max(yi))]
-			return (x0, xm)
+			return x0, xm
 
 		def toGeopos(x):
 			if x < 0:
@@ -896,7 +873,7 @@ class PositionerSetup(Screen):
 			yi = map(lambda (x, y) : x, readings.values())
 			x0 = int(round(sum(map(mul, xi, yi)) / sum(yi)))
 			xm = xi[yi.index(max(yi))]
-			return (x0, xm)
+			return x0, xm
 
 		def toGeoposEx(x):
 			if x < 0:
@@ -1016,17 +993,17 @@ class Diseqc:
 class PositionerSetupLog(Screen):
 	skin = """
 <screen position="center,center" size="560,400" title="Positioner Setup Log" >
-	<ePixmap name="red"    position="0,0"   zPosition="2" size="140,40" pixmap="skin_default/buttons/red.png" transparent="1" alphatest="on" />
-	<ePixmap name="green"  position="140,0" zPosition="2" size="140,40" pixmap="skin_default/buttons/green.png" transparent="1" alphatest="on" />
-	<ePixmap name="yellow" position="280,0" zPosition="2" size="140,40" pixmap="skin_default/buttons/yellow.png" transparent="1" alphatest="on" />
-	<ePixmap name="blue"   position="420,0" zPosition="2" size="140,40" pixmap="skin_default/buttons/blue.png" transparent="1" alphatest="on" />
+	<ePixmap name="red"    position="0,0"   zPosition="2" size="140,40" pixmap="buttons/red.png" transparent="1" alphatest="on" />
+	<ePixmap name="green"  position="140,0" zPosition="2" size="140,40" pixmap="buttons/green.png" transparent="1" alphatest="on" />
+	<ePixmap name="yellow" position="280,0" zPosition="2" size="140,40" pixmap="buttons/yellow.png" transparent="1" alphatest="on" />
+	<ePixmap name="blue"   position="420,0" zPosition="2" size="140,40" pixmap="buttons/blue.png" transparent="1" alphatest="on" />
 
 	<widget name="key_red" position="0,0" size="140,40" valign="center" halign="center" zPosition="4"  foregroundColor="white" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2" />
 	<widget name="key_green" position="140,0" size="140,40" valign="center" halign="center" zPosition="4"  foregroundColor="white" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2" />
 	<widget name="key_yellow" position="280,0" size="140,40" valign="center" halign="center" zPosition="4"  foregroundColor="white" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2" />
 	<widget name="key_blue" position="420,0" size="140,40" valign="center" halign="center" zPosition="4"  foregroundColor="white" font="Regular;20" transparent="1" shadowColor="background" shadowOffset="-2,-2" />
 
-	<ePixmap alphatest="on" pixmap="skin_default/icons/clock.png" position="480,383" size="14,14" zPosition="3"/>
+	<ePixmap alphatest="on" pixmap="icons/clock.png" position="480,383" size="14,14" zPosition="3"/>
 	<widget font="Regular;18" halign="left" position="505,380" render="Label" size="55,20" source="global.CurrentTime" transparent="1" valign="center" zPosition="3">
 		<convert type="ClockToText">Default</convert>
 	</widget>
@@ -1345,7 +1322,7 @@ def PositionerSetupStart(menuid, **kwargs):
 		return []
 
 def Plugins(**kwargs):
-	if (nimmanager.hasNimType("DVB-S")):
+	if nimmanager.hasNimType("DVB-S"):
 		return PluginDescriptor(name=_("Positioner setup"), description = _("Setup your positioner"), where = PluginDescriptor.WHERE_MENU, needsRestart = False, fnc = PositionerSetupStart)
 	else:
 		return []
