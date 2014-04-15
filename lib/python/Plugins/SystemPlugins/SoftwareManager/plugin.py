@@ -122,7 +122,7 @@ class UpdatePluginMenu(Screen):
 	skin = """
 		<screen name="UpdatePluginMenu" position="center,center" size="710,540" >
 			<ePixmap pixmap="buttons/red.png" position="0,0" size="140,40" alphatest="on" />
-			<widget name="hdfStatusPic" position="150,410" size="100,118" backgroundColor="#9f1313" transparent="1" alphatest="on" />
+			<widget name="opdStatusPic" position="150,410" size="100,118" backgroundColor="#9f1313" transparent="1" alphatest="on" />
 			<widget name="Arrow2" pixmap="icons/ico_mp_rewind.png" position="270,432" size="16,16" transparent="1" alphatest="on" />
 			<widget name="Arrow1" render="Label" position="300,427" size="990,45" font="Regular;22" valign="right" transparent="1" />
 			<widget source="key_red" render="Label" position="0,0" zPosition="1" size="140,40" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" transparent="1" />
@@ -156,7 +156,7 @@ class UpdatePluginMenu(Screen):
 		self.skin_path = plugin_path
 		self.menu = args
 		self.list = []
-		self["hdfStatusPic"] = Pixmap()
+		self["opdStatusPic"] = Pixmap()
 		self["Arrow1"] = Label(_("--- Feed Status"))
 		self["Arrow2"] = Pixmap()
 		self.oktext = _("\nPress OK on your remote control to continue.")
@@ -243,35 +243,35 @@ class UpdatePluginMenu(Screen):
 		self["menu"].onSelectionChanged.append(self.selectionChanged)
 
 	def checkFeedStatus(self):
-	##check hdfreaks feed status
+	##check opendroid feed status
 		try:
 			from urllib import urlopen
-			hdfonlinestatus = urlopen("http://status.hdfreaks.cc/index.php")
-			hdfstatus = hdfonlinestatus.read()
-			if 'rot.png' in hdfstatus:
-				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_red.png"
+			opdonlinestatus = urlopen("http://droidsat.org/index.php")
+			opdstatus = opdonlinestatus.read()
+			if 'rot.png' in opdstatus:
+				opdbutton = "/usr/share/enigma2/skin_default/opd_status_red.png"
 				self["Arrow1"].setPosition("300","427")
 				self["Arrow2"].setPosition("270","432")
 				print "[status] red"
-			elif 'gelb.png' in hdfstatus:
-				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_yellow.png"
+			elif 'gelb.png' in opdstatus:
+				opdbutton = "/usr/share/enigma2/skin_default/opd_status_yellow.png"
 				self["Arrow1"].setPosition("300","460")
 				self["Arrow2"].setPosition("270","465")
 				print "[status] yellow"
-			elif 'gruen.png' in hdfstatus:
-				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_green.png"
+			elif 'gruen.png' in opdstatus:
+				opdbutton = "/usr/share/enigma2/skin_default/opd_status_green.png"
 				self["Arrow1"].setPosition("300","500")
 				self["Arrow2"].setPosition("270","505")
 				print "[status] green"
-			hdfonlinestatus.close()
+			opdonlinestatus.close()
 		except:
-			hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_red.png"
+			opdbutton = "/usr/share/enigma2/skin_default/opd_status_red.png"
 			self["Arrow1"].setPosition("300","427")
 			self["Arrow2"].setPosition("270","432")
 			print "[status] red"
 			#pass
 		##check end
-		self["hdfStatusPic"].instance.setPixmapFromFile(hdfbutton)
+		self["opdStatusPic"].instance.setPixmapFromFile(opdbutton)
 
 	def createSummary(self):
 		from Screens.PluginBrowser import PluginBrowserSummary
@@ -1562,11 +1562,11 @@ class UpdatePlugin(Screen):
 		# TODO: Use Twisted's URL fetcher, urlopen is evil. And it can
 		# run in parallel to the package update.
 		try:
-			urlopenSTATUS = "http://status.hdfreaks.cc/index.php"
+			urlopenSTATUS = "http://droidsat.org/index.php"
 			d = urlopen(urlopenSTATUS)
 			tmpStatus = d.read()
 			if config.softwareupdate.updatebeta.getValue() and 'gelb.png' in tmpStatus:
-				message = _("Caution update not tested yet !!") + "\n" + _("Update at your own risk") + "\n\n" + _("For more information see http://www.hdfreaks.cc") + "\n\n"# + _("Last Status Date") + ": "  + statusDate + "\n\n"
+				message = _("Caution update not tested yet !!") + "\n" + _("Update at your own risk") + "\n\n" + _("For more information see http://www.droidsat.org") + "\n\n"# + _("Last Status Date") + ": "  + statusDate + "\n\n"
 				picon = MessageBox.TYPE_ERROR
 				default = False
 			elif 'rot.png' in tmpStatus:
@@ -1575,12 +1575,12 @@ class UpdatePlugin(Screen):
 					picon = MessageBox.TYPE_ERROR
 					default = False
 				else:
-					message = _("Update is reported as faulty !!") + "\n" + _("Aborting updateprogress") + "\n\n" + _("For more information see http://www.hdfreaks.cc")# + "\n\n" + _("Last Status Date") + ": " + statusDate
+					message = _("Update is reported as faulty !!") + "\n" + _("Aborting updateprogress") + "\n\n" + _("For more information see http://www.droidsat.org")# + "\n\n" + _("Last Status Date") + ": " + statusDate
 					picon = MessageBox.TYPE_ERROR
 					default = False
 					doUpdate = False
 		except:
-			message = _("The status of the current update could not be checked because http://www.hdfreaks.cc could not be reached for some reason") + "\n"
+			message = _("The status of the current update could not be checked because http://www.droidsat.org could not be reached for some reason") + "\n"
 			picon = MessageBox.TYPE_ERROR
 			default = False
 		socket.setdefaulttimeout(currentTimeoutDefault)

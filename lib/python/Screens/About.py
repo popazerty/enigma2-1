@@ -37,12 +37,12 @@ class About(Screen):
 			})
 
 	def populate(self):
-		self["lab1"] = StaticText(_("OpenHDF"))
-		self["lab2"] = StaticText(_("By HDF Image Team"))
-		self["lab3"] = StaticText(_("Support at") + " www.HDFreaks.cc")
+		self["lab1"] = StaticText(_("Opendroid"))
+		self["lab2"] = StaticText(_("By Opendroid Image Team"))
+		self["lab3"] = StaticText(_("Support at") + " www.droidsat.org")
 		model = None
 		AboutText = ""
-		self["lab3"] = StaticText(_("Support at") + " www.hdfreaks.cc")
+		self["lab3"] = StaticText(_("Support at") + " www.droidsat.org")
 		AboutText += _("Model:\t%s %s\n") % (getMachineBrand(), getMachineName())
 
 		if path.exists('/proc/stb/info/chipset'):
@@ -51,8 +51,8 @@ class About(Screen):
 		AboutText += _("CPU:\t%s") % about.getCPUString() + "\n"
 		AboutText += _("Cores:\t%s") % about.getCpuCoresString() + "\n"
 
-		AboutText += _("HDF Version:\t%s") % getImageVersion() + "\n"
-		AboutText += _("HDF Build:\t%s") % getImageBuild() + "\n"
+		AboutText += _("Opendroid Version:\t%s") % getImageVersion() + "\n"
+		AboutText += _("Opendroid Build:\t%s") % getImageBuild() + "\n"
 		AboutText += _("Kernel:\t%s") % about.getKernelVersionString() + "\n"
 
 		string = getDriverDate()
@@ -216,8 +216,8 @@ class SystemMemoryInfo(Screen):
 		Screen.__init__(self, session)
 		Screen.setTitle(self, _("Memory Information"))
 		self.skinName = ["SystemMemoryInfo", "About"]
-		self["lab1"] = StaticText(_("OpenHDF"))
-		self["lab2"] = StaticText(_("By HDF Image Team"))
+		self["lab1"] = StaticText(_("Opendroid"))
+		self["lab2"] = StaticText(_("By Opendroid Image Team"))
 		self["AboutScrollLabel"] = ScrollLabel()
 
 		self["actions"] = ActionMap(["SetupActions", "ColorActions"],
@@ -484,7 +484,7 @@ class SystemNetworkInfo(Screen):
 class AboutSummary(Screen):
 	def __init__(self, session, parent):
 		Screen.__init__(self, session, parent = parent)
-		self["selected"] = StaticText("HDF:" + getImageVersion())
+		self["selected"] = StaticText("Opendroid:" + getImageVersion())
 
 		AboutText = _("Model: %s %s\n") % (getMachineBrand(), getMachineName())
 
@@ -526,7 +526,7 @@ class ViewGitLog(Screen):
 		self['text_summary'] = StaticText()
 		self["key_red"] = Button(_("Close"))
 		self["key_green"] = Button(_("OK"))
-		self["key_yellow"] = Button(_("Show OpenHDF Log"))
+		self["key_yellow"] = Button(_("Show Opendroid Log"))
 		self["myactions"] = ActionMap(['ColorActions', 'OkCancelActions', 'DirectionActions'],
 		{
 			'cancel': self.closeRecursive,
@@ -543,14 +543,14 @@ class ViewGitLog(Screen):
 	def changelogtype(self):
 		if self.logtype == 'oe':
 			self["key_yellow"].setText(_("Show Last Updates"))
-			self.setTitle(_("OpenHDF E2 Changes"))
+			self.setTitle(_("Opendroid E2 Changes"))
 			self.logtype = 'e2'
 		elif self.logtype == 'e2':
 			self["key_yellow"].setText(_("Show OE-A Log"))
 			self.setTitle(_("Last Image Updates"))
 			self.logtype = 'last-upgrades'
 		elif self.logtype == 'last-upgrades':
-			self["key_yellow"].setText(_("Show OpenHDF Log"))
+			self["key_yellow"].setText(_("Show Opendroid Log"))
 			self.setTitle(_("OE-A Changes"))
 			self.logtype = 'oe'
 		self.getlog()

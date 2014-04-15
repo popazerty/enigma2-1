@@ -365,7 +365,7 @@
 	<setup key="pluginbrowsersetup" title="PluginBrowser filter settings...">
 		<item level="2" text="Show translation packages" description="If set to 'yes' it will show the 'PO' packages in browser.">config.pluginfilter.po</item>
 		<item level="2" text="Show source packages" description="If set to 'yes' it will show the 'SRC' packages in browser.">config.pluginfilter.src</item>
-		<item level="2" text="Show HDFreaks module packages" description="If set to 'yes' it will show the 'HDFreaks' packages in browser.">config.pluginfilter.hdf</item>
+		<item level="2" text="Show opendroid module packages" description="If set to 'yes' it will show the 'opendroid' packages in browser.">config.pluginfilter.opd</item>
 		<item level="2" text="Show drivers packages" description="If set to 'yes' it will show the 'DRIVER' packages in browser.">config.pluginfilter.drivers</item>
 		<item level="2" text="Show extensions packages" description="If set to 'yes' it will show the 'EXTENSIONS' packages in browser.">config.pluginfilter.extensions</item>
 		<item level="2" text="Show systemplugins packages" description="If set to 'yes' it will show the 'SYSTEMPLUGINS' packages in browser.">config.pluginfilter.systemplugins</item>
