@@ -31,7 +31,7 @@ elif distro.lower() == "opendroid":
 	image = 2
 feedurl_atv = 'http://images.mynonpublic.com/openatv/nightly'
 feedurl_om = 'http://image.openmips.com/2.0'
-feedurl_opendroid = 'http://www.droidsat.org/image'
+feedurl_opendroid = 'http://droidsat.org/image'
 imagePath = '/hdd/images'
 flashPath = '/hdd/images/flash'
 flashTmp = '/hdd/images/tmp'
