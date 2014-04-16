@@ -1,5 +1,5 @@
 <keymap>
-	<!-- "HDF Xpeed Keymap 23.02.2014" -->
+	<!-- "OPD Xpeed Keymap 23.02.2014" -->
 	<map context="ListboxActions">
 		<device name="keyboard">
 			<key id="a" mapto="up" flags="mr" />

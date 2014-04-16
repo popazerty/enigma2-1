@@ -27,7 +27,7 @@ from time import time
 import os
 
 config.pluginfilter = ConfigSubsection()
-config.pluginfilter.hdf = ConfigYesNo(default = True)
+config.pluginfilter.opendroid = ConfigYesNo(default = True)
 config.pluginfilter.po = ConfigYesNo(default = False)
 config.pluginfilter.src = ConfigYesNo(default = False)
 config.pluginfilter.kernel = ConfigYesNo(default = False)
@@ -249,8 +249,8 @@ class PluginDownloadBrowser(Screen):
 	def createPluginFilter(self):
 		#Create Plugin Filter
 		self.PLUGIN_PREFIX2 = []
-		if config.pluginfilter.hdf.getValue():
-			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'hdf')
+		if config.pluginfilter.opendroid.getValue():
+			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'opendroid')
 		if config.pluginfilter.po.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'po')
 		if config.pluginfilter.src.getValue():
@@ -630,7 +630,7 @@ class PluginFilter(ConfigListScreen, Screen):
 	def createSetup(self):
 		self.editListEntry = None
 		self.list = []
-		self.list.append(getConfigListEntry(_("HDFreaks"), config.pluginfilter.hdf, _("This allows you to show HDFreaks modules in downloads")))
+		self.list.append(getConfigListEntry(_("opendroid"), config.pluginfilter.opendroid, _("This allows you to show opendroid modules in downloads")))
 		self.list.append(getConfigListEntry(_("PO"), config.pluginfilter.po, _("If set to 'yes' it will show the 'PO' packages in browser.")))
 		self.list.append(getConfigListEntry(_("Src"), config.pluginfilter.src, _("If set to 'yes' it will show the 'SRC' packages in browser.")))
 		self.list.append(getConfigListEntry(_("Drivers"), config.pluginfilter.drivers, _("This allows you to show drivers modules in downloads")))

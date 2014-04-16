@@ -35,7 +35,7 @@ class SoftwareUpdateChanges(Screen):
 		self['text_summary'] = StaticText()
 		self["key_red"] = Button(_("Close"))
 		self["key_green"] = Button(_("Update"))
-		self["key_yellow"] = Button(_("Show OpenHDF Log"))
+		self["key_yellow"] = Button(_("Show Opendroid Log"))
 		self["myactions"] = ActionMap(['ColorActions', 'OkCancelActions', 'DirectionActions'],
 		{
 			'cancel': self.closeRecursive,
@@ -249,7 +249,7 @@ class UpdatePlugin(Screen):
 				currentTimeoutDefault = socket.getdefaulttimeout()
 				socket.setdefaulttimeout(3)
 				try:
-					config.softwareupdate.updateisunstable.setValue(urlopen("http://www.status.hdfreaks.cc/status").read())
+					config.softwareupdate.updateisunstable.setValue(urlopen("http://www.droidsat.org/status").read())
 				except:
 					config.softwareupdate.updateisunstable.setValue('1')
 				socket.setdefaulttimeout(currentTimeoutDefault)
