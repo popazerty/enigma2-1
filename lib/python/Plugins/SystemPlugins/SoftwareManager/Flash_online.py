@@ -22,17 +22,20 @@ from boxbranding import getBoxType,  getImageDistro, getMachineName, getMachineB
 distro =  getImageDistro()
 
 #############################################################################################################
-image = 0 # 0=openATV / 1=openMips 2=openhdf
+image = 0 # 0=openATV / 1=openMips 2=openhdf 3=opendroid
 if distro.lower() == "openmips":
 	image = 1
 elif distro.lower() == "openatv":
 	image = 0
 elif distro.lower() == "openhdf":
 	image = 2
+elif distro.lower() == "opendroid":
+	image = 3
 feedurl_atv = 'http://images.mynonpublic.com/openatv/nightly'
 feedurl_om = 'http://image.openmips.com/2.0'
 feedurl_hdf = 'http://v4.hdfreaks.cc'
 feedurl_team = 'http://v4.hdfreaks.cc/team'
+feedurl_opendroid = 'http://droidsat.org/image'
 imagePath = '/hdd/images'
 flashPath = '/hdd/images/flash'
 flashTmp = '/hdd/images/tmp'
@@ -155,11 +158,11 @@ class doFlashImage(Screen):
 		self.simulate = False
 		self.Online = online
 		self.imagePath = imagePath
-		self.feedurl = feedurl_hdf
+		self.feedurl = feedurl_opendroid
 		if image == 0:
 			self.feed = "atv"
 		else:
-			self.feed = "hdf"
+			self.feed = "opendroid"
 		self["imageList"] = MenuList(self.imagelist)
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
 		{
@@ -180,7 +183,7 @@ class doFlashImage(Screen):
 		if self.Online:
 			if image == 2:
 				if self.feed == "team":
-					self.feed = "hdf"
+					self.feed = "opendroid"
 				else:
 					self.feed = "team"
 				self.layoutFinished()
@@ -220,7 +223,7 @@ class doFlashImage(Screen):
 			box = "sf8"
 		elif box.startswith('et') and not box == "et10000":
 			box = box[0:3] + 'x00'
-		elif box == 'odinm9' and self.feed == "hdf":
+		elif box == 'odinm9' and self.feed == "opendroid":
 			box = 'maram9'
 		return box
 
@@ -361,13 +364,13 @@ class doFlashImage(Screen):
 		self.imagelist = []
 		if self.Online:
 			self["key_yellow"].setText("")
-			if image == 2:
-				if self.feed == "hdf":
-					self.feedurl = feedurl_hdf
+			if image == 3:
+				if self.feed == "opendroid":
+					self.feedurl = feedurl_opendroid
 					self["key_blue"].setText("Teamimages")
 				else:
 					self.feedurl = feedurl_team
-					self["key_blue"].setText("Nightly V4")
+					self["key_blue"].setText("image")
 			else:
 				self.feedurl = feedurl_atv
 				self["key_blue"].setText("")
