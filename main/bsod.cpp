@@ -193,7 +193,7 @@ void bsodFatal(const char *component)
 
 		XmlGenerator xml(f);
 
-		xml.open("OpenHDF");
+		xml.open("Opendroid");
 
 		xml.open("enigma2");
 		xml.string("crashdate", tm_str);
@@ -292,7 +292,7 @@ void bsodFatal(const char *component)
 	os.clear();
 	os << "We are really sorry. Your receiver encountered "
 		"a software problem, and needs to be restarted. "
-		"Please ask for support in www.hdfreaks.cc forum\n"
+		"Please ask for support in www.droidsat.org forum\n"
 		"The logfiles are created in /home/root/logs/.\n"
 		"Your receiver restarts in 10 seconds!\n"
 		"Component: " << crash_component;
