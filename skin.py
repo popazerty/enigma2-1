@@ -80,7 +80,7 @@ def skin_user_skinname():
 
 # example: loadSkin("nemesis_greenline/skin.xml")
 config.skin = ConfigSubsection()
-DEFAULT_SKIN = "mega32/skin.xml"
+DEFAULT_SKIN = "Merdas-ORANGE-Skin-V7/skin.xml"
 if not fileExists(resolveFilename(SCOPE_SKIN, DEFAULT_SKIN)):
 	DEFAULT_SKIN = "skin.xml"
 config.skin.primary_skin = ConfigText(default=DEFAULT_SKIN)
