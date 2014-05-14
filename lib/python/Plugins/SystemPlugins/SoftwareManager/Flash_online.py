@@ -367,7 +367,7 @@ class doFlashImage(Screen):
 			if image == 3:
 				if self.feed == "opendroid":
 					self.feedurl = feedurl_opendroid
-					self["key_blue"].setText("Teamimages")
+					self["key_blue"].setText("Opendroid")
 				else:
 					self.feedurl = feedurl_team
 					self["key_blue"].setText("image")
