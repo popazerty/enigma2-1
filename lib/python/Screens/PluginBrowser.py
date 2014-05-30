@@ -27,22 +27,22 @@ from time import time
 import os
 
 config.pluginfilter = ConfigSubsection()
-config.pluginfilter.opendroid = ConfigYesNo(default = True)
+config.pluginfilter.opendroid = ConfigYesNo(default = False)
 config.pluginfilter.po = ConfigYesNo(default = False)
 config.pluginfilter.src = ConfigYesNo(default = False)
 config.pluginfilter.kernel = ConfigYesNo(default = False)
-config.pluginfilter.drivers = ConfigYesNo(default = True)
+config.pluginfilter.drivers = ConfigYesNo(default = False)
 config.pluginfilter.extensions = ConfigYesNo(default = True)
 config.pluginfilter.gigabluesupportnet = ConfigYesNo(default = False)
-config.pluginfilter.picons = ConfigYesNo(default = True)
+config.pluginfilter.addons = ConfigYesNo(default = True)
 config.pluginfilter.pli = ConfigYesNo(default = False)
-config.pluginfilter.security = ConfigYesNo(default = True)
+config.pluginfilter.security = ConfigYesNo(default = False)
 config.pluginfilter.settings = ConfigYesNo(default = True)
-config.pluginfilter.skins = ConfigYesNo(default = True)
+config.pluginfilter.skins = ConfigYesNo(default = False)
 config.pluginfilter.softcams = ConfigYesNo(default = True)
 config.pluginfilter.systemplugins = ConfigYesNo(default = True)
 config.pluginfilter.vix = ConfigYesNo(default = False)
-config.pluginfilter.weblinks = ConfigYesNo(default = True)
+config.pluginfilter.weblinks = ConfigYesNo(default = False)
 config.pluginfilter.userfeed = ConfigText(default = 'http://', fixed_size=False)
 
 ## command to find ipk with status hold
@@ -261,8 +261,8 @@ class PluginDownloadBrowser(Screen):
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'extensions')
 		if config.pluginfilter.gigabluesupportnet.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'gigabluesupportnet')
-		if config.pluginfilter.picons.getValue():
-			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'picons')
+		if config.pluginfilter.addons.getValue():
+			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'addons')
 		if config.pluginfilter.pli.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'pli')
 		if config.pluginfilter.security.getValue():
@@ -638,7 +638,7 @@ class PluginFilter(ConfigListScreen, Screen):
 		self.list.append(getConfigListEntry(_("Systemplugins"), config.pluginfilter.systemplugins, _("This allows you to show systemplugins modules in downloads")))
 		self.list.append(getConfigListEntry(_("Softcams"), config.pluginfilter.softcams, _("This allows you to show softcams modules in downloads")))
 		self.list.append(getConfigListEntry(_("Skins"), config.pluginfilter.skins, _("This allows you to show skins modules in downloads")))
-		self.list.append(getConfigListEntry(_("Picons"), config.pluginfilter.picons, _("This allows you to show picons modules in downloads")))
+		self.list.append(getConfigListEntry(_("Addons"), config.pluginfilter.addons, _("This allows you to show addons modules in downloads")))
 		self.list.append(getConfigListEntry(_("Settings"), config.pluginfilter.settings, _("This allows you to show settings modules in downloads")))
 		self.list.append(getConfigListEntry(_("Weblinks"), config.pluginfilter.weblinks, _("This allows you to show weblinks modules in downloads")))
 		self.list.append(getConfigListEntry(_("PLi"), config.pluginfilter.pli, _("This allows you to show pli modules in downloads")))
