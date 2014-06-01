@@ -756,7 +756,7 @@ msgid "Activate the configured network settings."
 msgstr ""
 
 msgid "Active"
-msgstr ""
+msgstr "Attiva"
 
 msgid "Active clients"
 msgstr ""
@@ -1445,10 +1445,10 @@ msgid "Bypass HDMI EDID Check"
 msgstr ""
 
 msgid "Bytes received:"
-msgstr ""
+msgstr "byte ricevuti"
 
 msgid "Bytes sent:"
-msgstr ""
+msgstr "byte inviati"
 
 #
 msgid "C-Band"
@@ -2377,10 +2377,10 @@ msgid "Current CEC address"
 msgstr ""
 
 msgid "Current Event:"
-msgstr ""
+msgstr "Evento Corrente"
 
 msgid "Current Status:"
-msgstr ""
+msgstr "Stato Corrente"
 
 msgid "Current device: "
 msgstr "Dispositivo corrente: "
@@ -2644,14 +2644,14 @@ msgid "Details for plugin: "
 msgstr "Dettagli per il plugin: "
 
 msgid "Detected Devices:"
-msgstr ""
+msgstr "Dispositivo Rilevato"
 
 #
 msgid "Detected NIMs:"
 msgstr "Tuner rilevati:"
 
 msgid "Device Information"
-msgstr ""
+msgstr "Informazioni Dispositivo"
 
 msgid "Device mounts"
 msgstr ""
@@ -2663,7 +2663,7 @@ msgid "Devicename:"
 msgstr ""
 
 msgid "Devices"
-msgstr ""
+msgstr "Dispositivo"
 
 #
 msgid "DiSEqC"
@@ -3520,25 +3520,25 @@ msgid "Frame size in full view"
 msgstr "Dimensione frame in visualizzazione piena"
 
 msgid "Free Memory:"
-msgstr ""
+msgstr "Memoria Libera"
 
 msgid "Free Swap:"
-msgstr ""
+msgstr "Swap Libero"
 
 msgid "Free To Air"
 msgstr ""
 
 msgid "Free memory"
-msgstr ""
+msgstr "Memoria Libera"
 
 msgid "Free memory:"
-msgstr ""
+msgstr "Memoria Libera"
 
 msgid "Free:"
-msgstr ""
+msgstr "Libera"
 
 msgid "Free: "
-msgstr ""
+msgstr "Libera"
 
 #
 msgid "French"
@@ -3953,7 +3953,7 @@ msgstr ""
 "Quando il risultato appare soddisfacente, premere OK."
 
 msgid "Image Information"
-msgstr ""
+msgstr "Informazioni Immagine"
 
 msgid "Image Manager"
 msgstr ""
@@ -4005,7 +4005,7 @@ msgstr ""
 
 #
 msgid "Info"
-msgstr "Info"
+msgstr "Informazioni"
 
 msgid "Info button (long)"
 msgstr ""
@@ -4663,10 +4663,10 @@ msgid "Medium is not empty!"
 msgstr "Il supporto non è vuoto!"
 
 msgid "Memory"
-msgstr ""
+msgstr "Memoria"
 
 msgid "Memory Information"
-msgstr ""
+msgstr "Informazione Memoria"
 
 msgid "Memory index"
 msgstr ""
@@ -4961,7 +4961,7 @@ msgid "Network ID"
 msgstr ""
 
 msgid "Network Information"
-msgstr ""
+msgstr "Informazioni di Rete"
 
 #
 #, fuzzy
@@ -4969,7 +4969,7 @@ msgid "Network MAC settings"
 msgstr "Attivare configurazione di rete"
 
 msgid "Network Servers:"
-msgstr ""
+msgstr "Server di Rete"
 
 #
 msgid "Network Setup"
@@ -5722,7 +5722,7 @@ msgstr ""
 "Quando pronti, premere OK per continuare."
 
 msgid "Please connect your receiver to the internet"
-msgstr ""
+msgstr "Collegare il ricevitore a internet"
 
 #
 msgid "Please do not change any values unless you know what you are doing!"
@@ -5772,7 +5772,7 @@ msgid "Please press OK to continue."
 msgstr "Premere OK per proseguire."
 
 msgid "Please select a default EPG type..."
-msgstr ""
+msgstr "Selezionare un tipo di EPG predefinito..."
 
 msgid "Please select a playlist to delete..."
 msgstr "Selezionare la playlist da rimuovere..."
@@ -5835,7 +5835,7 @@ msgstr ""
 "Premere OK per continuare."
 
 msgid "Please set up tuner A"
-msgstr ""
+msgstr "Configurare il Tuner A"
 
 #
 msgid "Please set up tuner B"
@@ -5873,10 +5873,10 @@ msgid "Please use the UP and DOWN keys to select your language. Afterwards press
 msgstr "Selezionare la propria lingua utilizzando i tasti Sù/Giù. Premere OK per confermare."
 
 msgid "Please wait (downloading channel list)"
-msgstr ""
+msgstr "Attendere (lista canali in caricamento)"
 
 msgid "Please wait (updating packages)"
-msgstr ""
+msgstr "Attendere (Opendroid in caricamento)"
 
 #
 msgid "Please wait for activation of your network configuration..."
@@ -5908,7 +5908,7 @@ msgid "Please wait while your network is restarting..."
 msgstr "Riavvio della rete in corso. Attendere..."
 
 msgid "Please wait whilst feeds state is checked."
-msgstr ""
+msgstr "Si prega di attendere mentre lo stato dei feed viene controllato."
 
 #
 msgid "Please wait..."
@@ -5921,8 +5921,11 @@ msgstr "Elenco in caricamento. Attendere..."
 msgid "Plugin Browser"
 msgstr ""
 
+msgid "Downloadable plugins"
+msgstr "Scarica Plugins"
+
 msgid "Plugin details"
-msgstr ""
+msgstr "Dettaglio Plugin"
 
 #
 msgid "Plugin manager activity information"
@@ -7124,7 +7127,7 @@ msgid "Service"
 msgstr "Canale"
 
 msgid "Service Information"
-msgstr ""
+msgstr "Servizio informazioni"
 
 msgid "Service Name"
 msgstr ""
@@ -8910,7 +8913,7 @@ msgid "Timer type"
 msgstr "Tipo timer"
 
 msgid "Timers"
-msgstr ""
+msgstr "Timer"
 
 #
 msgid "Timeshift"
@@ -9007,13 +9010,13 @@ msgid "Top and bottom"
 msgstr ""
 
 msgid "Total"
-msgstr ""
+msgstr "Totale"
 
 msgid "Total Memory:"
-msgstr ""
+msgstr "Memoria Totale"
 
 msgid "Total Swap:"
-msgstr ""
+msgstr "Swap Totale"
 
 msgid "Total cards:"
 msgstr ""
