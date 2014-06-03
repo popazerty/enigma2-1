@@ -1742,7 +1742,7 @@ msgid "Checking for Updates..."
 msgstr ""
 
 msgid "Checking the internet connection"
-msgstr ""
+msgstr "Verifica della connessione internet"
 
 #, python-format
 msgid ""
@@ -1948,7 +1948,7 @@ msgid "Configfile %s saved."
 msgstr ""
 
 msgid "Configuration mode"
-msgstr ""
+msgstr "Modo di Configurazione"
 
 #
 #, fuzzy, python-format
@@ -4714,11 +4714,11 @@ msgstr ""
 
 msgctxt "Satellite configuration mode"
 msgid "Mode"
-msgstr ""
+msgstr "Modo"
 
 msgctxt "Video output mode"
 msgid "Mode"
-msgstr ""
+msgstr "Modo"
 
 #
 #, fuzzy, python-format
@@ -5849,8 +5849,6 @@ msgstr "Configurare il Tuner C."
 msgid "Please set up tuner D"
 msgstr "Configurare il Tuner D."
 
-#
-#, fuzzy
 msgid ""
 "Please setup your user interface by adjusting the values till the edges of the blue box are touching the edges of your TV.\n"
 "When you are ready press OK to continue."
@@ -7738,13 +7736,13 @@ msgid "Site longitude"
 msgstr "Longitudine"
 
 msgid "Size: "
-msgstr ""
+msgstr "Dimensione"
 
 msgid "Skin Setting"
-msgstr ""
+msgstr "Impostazione Skin"
 
 msgid "Skin setup"
-msgstr ""
+msgstr "Selezionare Skin"
 
 #
 msgid "Skins"
@@ -7756,7 +7754,7 @@ msgid "Skip empty services"
 msgstr "Proteggere canali"
 
 msgid "Skip internet connection check (disables automatic package installation)"
-msgstr ""
+msgstr "Salta connessione internet assegnata((disabilita installazione automatica del pacchetto)"
 
 #
 #, fuzzy
@@ -9329,10 +9327,8 @@ msgstr ""
 msgid "Use individual settings for each directory"
 msgstr ""
 
-#
-#, fuzzy
 msgid "Use interface"
-msgstr "Usare l'Interfaccia"
+msgstr "Usare Interfaccia"
 
 msgid "Use official channel numbering"
 msgstr ""
@@ -9343,7 +9339,6 @@ msgstr ""
 msgid "Use original teletext position"
 msgstr ""
 
-#
 msgid "Use power measurement"
 msgstr "Usare misurazione di potenza"
 
@@ -9365,39 +9360,33 @@ msgstr ""
 msgid "Use the alternative screen"
 msgstr ""
 
-#, fuzzy
 msgid "Use the network wizard to configure selected network adapter"
 msgstr "Usare NetworkWizard per configurare l'adattatore di rete selezionato"
 
-#
-#, fuzzy
 msgid "Use the network wizard to configure your Network\n"
 msgstr "Usare la configurazione guidata rete\n"
 
-#
 msgid "Use the up/down keys on your remote control to select an option. After that, press OK."
 msgstr "Usare i tasti Sù/Giù del telecomando per selezionare un'opzione, poi premere OK."
 
 msgid "Use the wizard to set up basic features"
-msgstr ""
+msgstr "Utilizzare la procedura guidata per configurare le caratteristiche di base"
 
 msgid "Use these input device settings?"
-msgstr ""
+msgstr "Utilizzare queste impostazioni del dispositivo di input?"
 
 msgid "Use these settings?"
-msgstr ""
+msgstr "Utilizzare queste Impostazioni?"
 
-#
 msgid "Use this video enhancement settings?"
 msgstr "Usare questa configurazione per il miglioramento immagine?"
 
 msgid "Use timeshift seekbar while timeshifting?"
-msgstr ""
+msgstr "Utilizzare timeshift SeekBar durante il timeshifting?"
 
 msgid "Use trash can in movielist"
-msgstr ""
+msgstr "Utilizzare cestino in lista di film"
 
-#
 msgid "Used service scan type"
 msgstr "Tipo ricerca canali in uso"
 
@@ -9407,20 +9396,15 @@ msgstr ""
 msgid "User - bouquets"
 msgstr ""
 
-#
 msgid "User defined"
 msgstr "Definito dall'utente"
 
-#
-#, fuzzy
 msgid "User defined transponder"
 msgstr "Transponder predefinito"
 
 msgid "User interface"
 msgstr ""
 
-#
-#, fuzzy
 msgid "User interface visibility"
 msgstr "Usare l'Interfaccia"
 
@@ -9499,14 +9483,7 @@ msgstr "Anteprima miglioramento immagine"
 msgid "Video enhancement setup"
 msgstr "Configurazione miglioramento immagine"
 
-#
-#, fuzzy
 msgid "Video fine tuning"
-msgstr "Regolazione fine video"
-
-#
-#, fuzzy
-msgid "Video fine-tuning"
 msgstr "Regolazione fine video"
 
 msgid ""
@@ -9589,8 +9566,6 @@ msgstr "Elenco estensioni comunicazione disponibili."
 msgid "View list of available default settings"
 msgstr "Elenco configurazioni predefinite disponibili."
 
-#
-#, fuzzy
 msgid "View list of available display and userinterface extensions."
 msgstr "Elenco estensioni display e interfaccia utente disponibili."
 
@@ -9621,8 +9596,6 @@ msgstr "Elenco estensioni di sistema disponibili."
 msgid "View mode"
 msgstr ""
 
-#
-#, fuzzy
 msgid "View photos..."
 msgstr "Visualizzare foto..."
 
@@ -9633,8 +9606,6 @@ msgstr "Televideo..."
 msgid "View the changes"
 msgstr ""
 
-#
-#, fuzzy
 msgid "View video CD..."
 msgstr "Riprodurre CD video..."
 
@@ -9642,7 +9613,6 @@ msgid "Virtuosso Image Xtreme"
 msgstr ""
 
 #
-#, fuzzy
 msgid "Vix forum user name"
 msgstr "Ricerca canali"
 
@@ -9697,7 +9667,6 @@ msgid "Wake Up"
 msgstr ""
 
 #
-#, fuzzy
 msgid "Wake Up To Standby"
 msgstr "Spegnimento (Deep-Standby)"
 
@@ -9782,7 +9751,6 @@ msgstr ""
 "Benvenuto.\n"
 "\n"
 "Questa configurazione guidata fornirà supporto di base per la configurazione di rete del %s %s e la sua connessione a Internet.\n"
-"\n"
 "Premere OK per iniziare la configurazione della rete."
 
 #
@@ -9796,7 +9764,6 @@ msgstr ""
 "Benvenuto.\n"
 "\n"
 "Questa configurazione guidata fornirà supporto di base per la configurazione di rete del %s %s e la sua connessione a Internet.\n"
-"\n"
 "Premere OK per iniziare la configurazione della rete."
 
 #
@@ -10313,17 +10280,17 @@ msgstr ""
 
 #, python-format
 msgid "Your internet connection is working (ip: %s)"
-msgstr ""
+msgstr "Il vostro collegamento internet funziona (ip: %s)"
 
 #
 msgid "Your network configuration has been activated."
 msgstr "Configurazione di rete attivata correttamente."
 
 msgid "Your receiver does not have an internet connection"
-msgstr ""
+msgstr "Il ricevitore non dispone di una connessione ad internet"
 
 msgid "Your receiver is not connected to the internet"
-msgstr ""
+msgstr "Il ricevitore non è connesso a Internet"
 
 #
 msgid ""
