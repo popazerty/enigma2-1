@@ -213,8 +213,8 @@ msgstr[1] "%d canali trovati!"
 #, python-format
 msgid "%d hour"
 msgid_plural "%d hours"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d ora"
+msgstr[1] "%d ore"
 
 #
 #, fuzzy, python-format
@@ -240,18 +240,18 @@ msgstr "%d min"
 #, python-format
 msgid "%d minute"
 msgid_plural "%d minutes"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d minuto"
+msgstr[1] "%d minuti"
 
 #, python-format
 msgid "%d minutes"
-msgstr ""
+msgstr "%d minuti"
 
 #, python-format
 msgid "%d second"
 msgid_plural "%d seconds"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d secondo"
+msgstr[1] "%d secondi"
 
 #
 #, fuzzy, python-format
@@ -270,7 +270,7 @@ msgstr ""
 
 #, python-format
 msgid "%s %s advanced remote control (native)"
-msgstr ""
+msgstr "%s %s telecomando avanzato (nativo)"
 
 #
 #, fuzzy, python-format
@@ -279,7 +279,7 @@ msgstr "Formato DVD: dati %s %s (compatibile HDTV)"
 
 #, python-format
 msgid "%s %s front panel"
-msgstr ""
+msgstr "%s %s pannello frontale"
 
 #
 #, fuzzy, python-format
@@ -308,13 +308,13 @@ msgstr "%s (%s)\n"
 #. TRANSLATORS: The satellite with name '%s' is no longer used after a configuration change. The user is asked whether or not the satellite should be deleted.
 #, python-format
 msgid "%s is no longer used. Should it be deleted?"
-msgstr ""
+msgstr "%s non più utilizzato. Dovrebbe essere cancellato?"
 
 #, python-format
 msgid "%s updated package available"
 msgid_plural "%s updated packages available"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%s aggiornamento pacchetto disponibile"
+msgstr[1] "%s aggiornamento pacchetti disponibili"
 
 #
 #, fuzzy, python-format
@@ -330,10 +330,10 @@ msgid "'%s' contains %d file(s) and %d sub-directories.\n"
 msgstr ""
 
 msgid "( All readers)"
-msgstr ""
+msgstr "( Tutti i Lettori)"
 
-msgid "(Show only reader:"
-msgstr ""
+msgid "Show only reader:"
+msgstr "mostra solo lettore:"
 
 #
 msgid "(ZAP)"
@@ -348,7 +348,7 @@ msgid "(show optional DVD audio menu)"
 msgstr "(Mostrare il menu opzionale DVD audio)"
 
 msgid "* = Restart Required"
-msgstr ""
+msgstr "* = Riavvio Richiesto"
 
 #
 msgid "* Only available if more than one interface is active."
@@ -459,7 +459,7 @@ msgid "30"
 msgstr "0"
 
 msgid "3D Mode"
-msgstr ""
+msgstr "Modo 3D"
 
 #
 #, fuzzy
@@ -467,13 +467,13 @@ msgid "3D Surround"
 msgstr "Audio"
 
 msgid "3D setup"
-msgstr ""
+msgstr "Impostazioni 3D"
 
 msgid "3X"
 msgstr ""
 
 msgid "3d mode"
-msgstr ""
+msgstr "modo 3d"
 
 #
 msgid "4:3"
@@ -521,13 +521,15 @@ msgid "A"
 msgstr "A"
 
 msgid "A background update check is in progress, please wait a few minutes and try again."
-msgstr ""
+msgstr "Un controllo di aggiornamento in ambiente è in corso, attendere qualche minuto e riprovare."
 
 #, python-format
 msgid ""
 "A configuration file (%s) has been modified since it was installed.\n"
 "Do you want to keep your modifications?"
 msgstr ""
+"Un file di configurazione (%s) è stato modificato da quando è stato installato.\n"
+"Vuoi mantenere le modifiche?"
 
 #
 #, python-format
@@ -608,6 +610,8 @@ msgid ""
 "A recording has been started:\n"
 "%s"
 msgstr ""
+"La registrazione è stata avviata:\n"
+"%s"
 
 #
 msgid ""
@@ -622,14 +626,14 @@ msgid "A recording is currently running. Please stop the recording before trying
 msgstr "Registrazioni in corso! Prima di poter configurare il motore, è necessario arrestarle!"
 
 msgid "A recording is currently running. Please stop the recording before trying to scan."
-msgstr ""
+msgstr "La registrazione è attualmente in esecuzione. Si prega di interrompere la registrazione prima di provare a eseguire la scansione."
 
 #
 msgid "A recording is currently running. Please stop the recording before trying to start the satfinder."
 msgstr "Registrazioni in corso! Prima di avviare una ricerca satelliti, è necessario arrestarle!"
 
 msgid "A repeating timer or just once?"
-msgstr ""
+msgstr "Un timer di ripetizione o solo una volta?"
 
 #
 #, python-format
@@ -680,7 +684,7 @@ msgstr ""
 "Disabilitare la TV e riprovare?\n"
 
 msgid "A/V settings"
-msgstr ""
+msgstr "Settaggi A/V"
 
 #
 msgid "AA"
@@ -694,17 +698,17 @@ msgid "AB"
 msgstr "AB"
 
 msgid "ACQUIRING TSID/ONID"
-msgstr ""
+msgstr "ACQUISIZIONE TSID/ONID"
 
 msgid "AFP Setup"
-msgstr ""
+msgstr "Settaggi AFP"
 
 msgid "AFP setup"
-msgstr ""
+msgstr "Settaggi AFP"
 
 #, python-format
 msgid "AV aspect is %s."
-msgstr ""
+msgstr "Aspetto AV è %s."
 
 #
 msgid "Abort"
@@ -723,13 +727,13 @@ msgid "Accesspoint:"
 msgstr "Accesspoint:"
 
 msgid "Action on long power button press"
-msgstr ""
+msgstr "Premere a lungo il pulsante di acensione"
 
 msgid "Action on short power button press"
-msgstr ""
+msgstr "premere il pulsante di acensione"
 
 msgid "Activate"
-msgstr ""
+msgstr "Attivare"
 
 #
 #, fuzzy
@@ -737,7 +741,7 @@ msgid "Activate MAC-address configuration"
 msgstr "Attivare configurazione corrente"
 
 msgid "Activate PiP"
-msgstr ""
+msgstr "Attivare PiP"
 
 #
 msgid "Activate Picture in Picture"
@@ -753,13 +757,13 @@ msgid "Activate network settings"
 msgstr "Attivare configurazione di rete"
 
 msgid "Activate the configured network settings."
-msgstr ""
+msgstr "Attivare le impostazioni di rete configurate"
 
 msgid "Active"
 msgstr "Attiva"
 
 msgid "Active clients"
-msgstr ""
+msgstr "Attivare clients"
 
 #
 msgid "Adapter settings"
@@ -770,13 +774,13 @@ msgid "Add"
 msgstr "Agg."
 
 msgid "Add AutoTimer"
-msgstr ""
+msgstr "Aggiungi AutoTimer"
 
 msgid "Add Timer"
-msgstr ""
+msgstr "Aggiungi Timer"
 
 msgid "Add a auto timer for current event"
-msgstr ""
+msgstr "Aggiungi Auto Timer per evento corrente"
 
 #
 msgid "Add a mark"
@@ -792,15 +796,14 @@ msgid "Add a new title"
 msgstr "Aggiungere nuovo titolo"
 
 #
-#, fuzzy
 msgid "Add a record timer"
-msgstr "Agg. timer"
+msgstr "Aggiungi timer di registrazione"
 
 msgid "Add a record timer for current event"
-msgstr ""
+msgstr "Aggiungi timer di registrazione per evento corrente"
 
 msgid "Add a zap timer for current event"
-msgstr ""
+msgstr "Aggiungere un timer zap per l'evento in corso"
 
 #
 #, fuzzy
@@ -833,16 +836,16 @@ msgid "Add provider"
 msgstr "Agg. provider"
 
 msgid "Add recording (enter recording duration)"
-msgstr ""
+msgstr "Aggiungere Registrazione (inserire durata)"
 
 msgid "Add recording (enter recording endtime)"
-msgstr ""
+msgstr "Aggiungere Registrazione (inserire ora Termine"
 
 msgid "Add recording (indefinitely)"
-msgstr ""
+msgstr "Aggiungere registrazione (illimitata)"
 
 msgid "Add recording (stop after current event)"
-msgstr ""
+msgstr "Aggiungere registrazione (evento corrente)"
 
 #
 #, fuzzy
@@ -866,19 +869,19 @@ msgid "Add to favourites"
 msgstr "Aggiungere a preferiti"
 
 msgid "Add/Remove timer for current event"
-msgstr ""
+msgstr "Aggiungere/Rimuovere timer per evento corrente"
 
 msgid "Adding schedule..."
-msgstr ""
+msgstr "Aggiunta di pianificazione"
 
 msgid "Additional Info"
-msgstr ""
+msgstr "Informazioni Addizionali"
 
 msgid "Address"
-msgstr ""
+msgstr "Indirizzo"
 
 msgid "Adjust 3D settings"
-msgstr ""
+msgstr "Configurare opzioni 3D"
 
 #
 msgid "Adjust the color settings so that all the color shades are distinguishable, but appear as saturated as possible. If you are happy with the result, press OK to close the video fine-tuning, or use the number keys to select other test screens."
@@ -909,7 +912,7 @@ msgid "Advanced video enhancement setup"
 msgstr "Configurazione avanzata miglioramento immagine"
 
 msgid "Advanced video setup"
-msgstr ""
+msgstr "Impostazioni avanzate video"
 
 #
 msgid "After event"
@@ -927,7 +930,7 @@ msgid "All"
 msgstr "Tutti"
 
 msgid "All ages"
-msgstr ""
+msgstr "Tutte le età"
 
 #
 #, fuzzy
@@ -935,25 +938,25 @@ msgid "All resolutions"
 msgstr "Risoluzione"
 
 msgid "All satellites"
-msgstr ""
+msgstr "Tutti i Satelliti"
 
 msgid "Allocate"
-msgstr ""
+msgstr "Allocare"
 
 msgid "Allocate unused memory index"
-msgstr ""
+msgstr "Allocare l'ndice della memoria inutilizzata"
 
 msgid "Allow subtitle language to equal audio language"
-msgstr ""
+msgstr "Associare la lingua sottotitoli alla lingua audio"
 
 msgid "Allow subtitles for hearing impaired"
-msgstr ""
+msgstr "Abilitare sottotitoli per non udenti"
 
 msgid "Allow unstable (experimental) updates"
-msgstr ""
+msgstr "Consentire instabili aggiornamenti (sperimentale)"
 
 msgid "Allows more detailed information to be in the crash log"
-msgstr ""
+msgstr "Consente informazioni più dettagliate nel crash log"
 
 msgid "Allows the %s %s to read the stored EPG data regularly."
 msgstr ""
