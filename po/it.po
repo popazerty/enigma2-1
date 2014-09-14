@@ -110,6 +110,9 @@ msgid ""
 "Select your backup device.\n"
 "Current device: "
 msgstr ""
+"\n"
+"Selezionare il supporto per il backup.\n"
+"Supporto corrente: "
 
 #
 msgid ""
@@ -1124,7 +1127,7 @@ msgid "Artist"
 msgstr "Artista"
 
 msgid "Arts/Culture"
-msgstr "Arte/Cultura"
+msgstr "Arte/Cultura""
 
 #
 msgid "Ask user"
@@ -8424,7 +8427,7 @@ msgid ""
 "Please install it."
 msgstr ""
 "Il plugin IMDb non è installato!\n" 
-"Si prega di installarlo."
+"Si prega di installarlo.
 
 msgid ""
 "The MediaPlayer plugin is not installed!\n"
@@ -8842,7 +8845,7 @@ msgstr ""
 "Questo test verifica se la scheda LAN è impostato per la configurazione automatica degli indirizzi IP con DHCP.\n" 
 "Se si ottiene un \"disabled\"messaggio:\n" 
 "- Che l'adattatore LAN è configurata per il manuale di configurazione IP\n" 
-"- Verificare thay aver inserito le informazioni IP corretti nella finestra di configurazione dell'adattatore.\n" 
+"- Verificare thay aver inserito le informazioni IP corretti nella finestra di configurazione dell'adattatore \n". 
 "Se si ottiene un \"abilitata\" messaggio:\n"
 "-verificare che si disponga di un server DHCP configurato e funzionante nella rete."
 
@@ -9555,6 +9558,11 @@ msgid ""
 "\n"
 "The next input port will be automatically probed in 20 seconds."
 msgstr ""
+"Selezione ingresso video\n" 
+"\n" 
+"Premere OK se si può vedere questa pagina sul proprio televisore (o selezionare una porta di ingresso diverso).\n" 
+"\n" 
+"La prossima porta di ingresso verrà sondato automaticamente in 20 secondi.
 
 #
 msgid "Video mode selection."

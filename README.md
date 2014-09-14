@@ -1,4 +1,4 @@
 enigma2
 =======
 
-OpenDroid gui
+OpenDroid Enigma2

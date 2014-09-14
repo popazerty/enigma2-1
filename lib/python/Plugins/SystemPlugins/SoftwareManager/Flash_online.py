@@ -22,23 +22,20 @@ from boxbranding import getBoxType,  getImageDistro, getMachineName, getMachineB
 distro =  getImageDistro()
 
 #############################################################################################################
-image = 0 # 0=openATV / 1=openMips 2=openhdf 3=opendroid
+image = 0 # 0=openATV / 1=openMips 2=openhdf
 if distro.lower() == "openmips":
 	image = 1
 elif distro.lower() == "openatv":
 	image = 0
 elif distro.lower() == "openhdf":
 	image = 2
-elif distro.lower() == "opendroid":
-	image = 3
 feedurl_atv = 'http://images.mynonpublic.com/openatv/nightly'
 feedurl_om = 'http://image.openmips.com/2.0'
 feedurl_hdf = 'http://v4.hdfreaks.cc'
 feedurl_team = 'http://v4.hdfreaks.cc/team'
-feedurl_opendroid = 'http://droidsat.org/image'
-imagePath = '/hdd/images'
-flashPath = '/hdd/images/flash'
-flashTmp = '/hdd/images/tmp'
+imagePath = '/media/hdd/images'
+flashPath = '/media/hdd/images/flash'
+flashTmp = '/media/hdd/images/tmp'
 ofgwritePath = '/usr/bin/ofgwrite'
 #############################################################################################################
 
@@ -100,7 +97,7 @@ class FlashOnline(Screen):
 				os.mkdir(imagePath)
 			except:
 				pass
-		
+
 		if os.path.exists(flashPath):
 			try:
 				os.system('rm -rf ' + flashPath)
@@ -158,11 +155,11 @@ class doFlashImage(Screen):
 		self.simulate = False
 		self.Online = online
 		self.imagePath = imagePath
-		self.feedurl = feedurl_opendroid
+		self.feedurl = feedurl_hdf
 		if image == 0:
 			self.feed = "atv"
 		else:
-			self.feed = "opendroid"
+			self.feed = "hdf"
 		self["imageList"] = MenuList(self.imagelist)
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
 		{
@@ -183,7 +180,7 @@ class doFlashImage(Screen):
 		if self.Online:
 			if image == 2:
 				if self.feed == "team":
-					self.feed = "opendroid"
+					self.feed = "hdf"
 				else:
 					self.feed = "team"
 				self.layoutFinished()
@@ -221,9 +218,9 @@ class doFlashImage(Screen):
 			box = "miraclebox-twin"
 		elif box == "xp1000" and machinename.lower() == "sf8 hd":
 			box = "sf8"
-		elif box.startswith('et') and not box == "et10000":
+		elif box.startswith('et') and not box == "et10000" and not box == "et8000":
 			box = box[0:3] + 'x00'
-		elif box == 'odinm9' and self.feed == "opendroid":
+		elif box == 'odinm9' and self.feed == "hdf":
 			box = 'maram9'
 		return box
 
@@ -308,8 +305,8 @@ class doFlashImage(Screen):
 				message += "'"
 			self.session.open(Console, text,[message, cmd])
 
- 	def prepair_flashtmp(self, tmpPath):
- 		if os.path.exists(flashTmp):
+	def prepair_flashtmp(self, tmpPath):
+		if os.path.exists(flashTmp):
 			flashTmpold = flashTmp + 'old'
 			os.system('mv %s %s' %(flashTmp, flashTmpold))
 			os.system('rm -rf %s' %flashTmpold)
@@ -317,7 +314,7 @@ class doFlashImage(Screen):
 			os.mkdir(flashTmp)
 		kernel = True
 		rootfs = True
-
+		
 		for path, subdirs, files in os.walk(tmpPath):
 			for name in files:
 				if name.find('kernel') > -1 and name.endswith('.bin') and kernel:
@@ -328,6 +325,16 @@ class doFlashImage(Screen):
 				elif name.find('root') > -1 and (name.endswith('.bin') or name.endswith('.jffs2')) and rootfs:
 					binfile = os.path.join(path, name)
 					dest = flashTmp + '/rootfs.bin'
+					shutil.copyfile(binfile, dest)
+					rootfs = False
+				elif name.find('uImage') > -1 and kernel:
+					binfile = os.path.join(path, name)
+					dest = flashTmp + '/uImage'
+					shutil.copyfile(binfile, dest)
+					kernel = False
+				elif name.find('e2jffs2') > -1 and name.endswith('.img') and rootfs:
+					binfile = os.path.join(path, name)
+					dest = flashTmp + '/e2jffs2.img'
 					shutil.copyfile(binfile, dest)
 					rootfs = False
 
@@ -347,7 +354,7 @@ class doFlashImage(Screen):
 			os.mkdir(flashTmp)
 			if binorzip == 0:
 				for files in os.listdir(self.imagePath):
-					if files.endswith(".bin") or files.endswith('.jffs2'):
+					if files.endswith(".bin") or files.endswith('.jffs2') or files.endswith('.img'):
 						self.prepair_flashtmp(strPath)
 						break
 				self.Start_Flashing()
@@ -355,7 +362,7 @@ class doFlashImage(Screen):
 				self.unzip_image(strPath + '/' + filename, flashPath)
 			else:
 				self.layoutFinished()
-
+	
 		else:
 			self.imagePath = imagePath
 
@@ -364,13 +371,13 @@ class doFlashImage(Screen):
 		self.imagelist = []
 		if self.Online:
 			self["key_yellow"].setText("")
-			if image == 3:
-				if self.feed == "opendroid":
-					self.feedurl = feedurl_opendroid
-					self["key_blue"].setText("Opendroid")
+			if image == 2:
+				if self.feed == "hdf":
+					self.feedurl = feedurl_hdf
+					self["key_blue"].setText("Teamimages")
 				else:
 					self.feedurl = feedurl_team
-					self["key_blue"].setText("image")
+					self["key_blue"].setText("Nightly V4")
 			else:
 				self.feedurl = feedurl_atv
 				self["key_blue"].setText("")

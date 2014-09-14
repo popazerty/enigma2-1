@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--suppress XmlUnboundNsPrefix, XmlUnboundNsPrefix -->
 <skin>
-	<windowstyle id="2" type="skinned">
+	<windowstyle id="1" type="skinned">
 		<color color="#000000" name="Background"/>
 		<color color="#ffffff" name="LabelForeground"/>
 		<color color="#000000" name="ListboxBackground"/>
