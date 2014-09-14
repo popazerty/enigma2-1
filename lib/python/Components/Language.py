@@ -8,8 +8,6 @@ from time import time, localtime, strftime
 
 LPATH = resolveFilename(SCOPE_LANGUAGE, "")
 
-Lpackagename = "enigma2-locale-"
-
 class Language:
 	def __init__(self):
 		gettext.install('enigma2', resolveFilename(SCOPE_LANGUAGE, ""), unicode=0, codeset="utf-8")
@@ -21,7 +19,6 @@ class Language:
 
 	def InitLang(self):
 		self.langlist = []
-		self.langlistselection = []
 		self.ll = os.listdir(LPATH)
 		# FIXME make list dynamically
 		# name, iso-639 language, iso-3166 country. Please don't mix language&country!
@@ -64,7 +61,8 @@ class Language:
 		self.addLanguage("ภาษาไทย", "th", "TH")
 		self.addLanguage("Türkçe", "tr", "TR")
 		self.addLanguage("Ukrainian", "uk", "UA")
-	
+
+		
 
 	def addLanguage(self, name, lang, country):
 		try:
@@ -76,16 +74,14 @@ class Language:
 				else:
 					self.lang[str(lang + "_" + country)] = ((name, lang, country))
 					self.langlist.append(str(lang + "_" + country))
-
 		except:
 			print "Language " + str(name) + " not found"
-		self.langlistselection.append((str(lang + "_" + country), name))
 
 	def activateLanguage(self, index):
 		try:
 			lang = self.lang[index]
 			print "Activating language " + lang[0]
-			self.catalog = gettext.translation('enigma2', resolveFilename(SCOPE_LANGUAGE, ""), languages=[index], fallback=True)
+			self.catalog = gettext.translation('enigma2', resolveFilename(SCOPE_LANGUAGE, ""), languages=[index])
 			self.catalog.install(names=("ngettext", "pgettext"))
 			self.activeLanguage = index
 			for x in self.callbacks:
@@ -110,9 +106,6 @@ class Language:
 
 	def getLanguageList(self):
 		return [ (x, self.lang[x]) for x in self.langlist ]
-
-	def getLanguageListSelection(self):
-		return self.langlistselection
 
 	def getActiveLanguage(self):
 		return self.activeLanguage
@@ -140,35 +133,31 @@ class Language:
 	def delLanguage(self, delLang = None):
 		from Components.config import config, configfile
 		from shutil import rmtree
-		lang = config.osd.language.value
-
+		lang = config.osd.language.getValue()
 		if delLang:
-			print"DELETE LANG", delLang
+			print"DELETE", delLang
 			if delLang == "en_US":
 				print"Default Language can not be deleted !!"
 				return
-			elif delLang == "en_GB" or delLang == "pt_BR":
-				delLang = delLang.lower()
-				delLang = delLang.replace('_','-')				
-				os.system("opkg remove " + Lpackagename + delLang)
+			elif delLang == "en_GB":
+				rmtree(LPATH + delLang)
+			elif delLang == "pt_BR":
+				rmtree(LPATH + delLang)
 			else:
-				os.system("opkg remove " + Lpackagename + delLang[:2])
+				rmtree(LPATH + delLang[:2])
 		else:
-			print"Delete all lang except ", lang
 			ll = os.listdir(LPATH)
 			for x in ll:
+				print x
 				if len(x) > 2:
 					if x != lang:
-						x = x.lower()
-						x = x.replace('_','-')
-						os.system("opkg remove " + Lpackagename + x)
+						rmtree(LPATH + x)
 				else:
 					if x != lang[:2] and x != "en":
-						os.system("opkg remove " + Lpackagename + x)
+						rmtree(LPATH + x)
 					elif x == "pt":
 						if x != lang:
-							os.system("opkg remove " + Lpackagename + x)
-			
+							rmtree(LPATH + x)
 			os.system("touch /etc/enigma2/.removelang")
 
 		self.InitLang()
@@ -181,7 +170,7 @@ class Language:
 		f.write('# date: ' + createdate + '\n#\n\n')
 		f.write('LANG_TEXT = {\n')
 		for lang in self.langlist:
-			catalog = gettext.translation('enigma2', resolveFilename(SCOPE_LANGUAGE, ""), languages=[str(lang)], fallback=True)
+			catalog = gettext.translation('enigma2', resolveFilename(SCOPE_LANGUAGE, ""), languages=[str(lang)])
 			T1 = catalog.gettext("Please use the UP and DOWN keys to select your language. Afterwards press the OK button.")
 			T2 = catalog.gettext("Language selection")
 			T3 = catalog.gettext("Cancel")

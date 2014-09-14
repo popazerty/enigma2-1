@@ -5,13 +5,13 @@ from Components.AVSwitch import AVSwitch
 from Components.SystemInfo import SystemInfo
 from GlobalActions import globalActionMap
 from enigma import eDVBVolumecontrol, eTimer
-from boxbranding import getMachineBrand, getMachineName, getBoxType
+from boxbranding import getMachineBrand, getMachineName, getMachineProcModel
 from Tools import Notifications
 from time import localtime, time
 import Screens.InfoBar
+from os import path
 from gettext import dgettext
-import PowerTimer
-import RecordTimer
+from time import time, localtime
 
 inStandby = None
 
@@ -33,10 +33,7 @@ class Standby2(Screen):
 		self.leaveMute()
 		# set LCDminiTV 
 		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
-			setLCDModeMinitTV(config.lcd.modeminitv.value)
-		#remove wakup files and reset wakup state
-		PowerTimer.resetTimerWakeup()
-		RecordTimer.resetTimerWakeup()
+			setLCDModeMinitTV(config.lcd.modeminitv.getValue())
 		#kill me
 		self.close(True)
 
@@ -58,7 +55,34 @@ class Standby2(Screen):
 		self.avswitch = AVSwitch()
 
 		print "enter standby"
+		if getMachineProcModel() in ('ini-7012'):
+			if path.exists("/proc/stb/lcd/symbol_scrambled"):
+				open("/proc/stb/lcd/symbol_scrambled", "w").write("0")
+		
+			if path.exists("/proc/stb/lcd/symbol_1080p"):
+				open("/proc/stb/lcd/symbol_1080p", "w").write("0")
+				
+			if path.exists("/proc/stb/lcd/symbol_1080i"):
+				open("/proc/stb/lcd/symbol_1080i", "w").write("0")
+			  
+			if path.exists("/proc/stb/lcd/symbol_720p"):
+				open("/proc/stb/lcd/symbol_720p", "w").write("0")
+			  
+			if path.exists("/proc/stb/lcd/symbol_576i"):
+				open("/proc/stb/lcd/symbol_576i", "w").write("0")
+			  
+			if path.exists("/proc/stb/lcd/symbol_576p"): 
+				open("/proc/stb/lcd/symbol_576p", "w").write("0")
+			
+			if path.exists("/proc/stb/lcd/symbol_hd"): 
+				open("/proc/stb/lcd/symbol_hd", "w").write("0")  
 
+			if path.exists("/proc/stb/lcd/symbol_dolby_audio"): 
+				open("/proc/stb/lcd/symbol_dolby_audio", "w").write("0") 
+
+			if path.exists("/proc/stb/lcd/symbol_mp3"): 
+				open("/proc/stb/lcd/symbol_mp3", "w").write("0") 
+				
 		self["actions"] = ActionMap( [ "StandbyActions" ],
 		{
 			"power": self.Power,
@@ -71,7 +95,7 @@ class Standby2(Screen):
 
 		#mute adc
 		self.setMute()
-	
+		
 		if SystemInfo["Display"] and SystemInfo["LCDMiniTV"]:
 			# set LCDminiTV off
 			setLCDModeMinitTV("0")
@@ -90,7 +114,6 @@ class Standby2(Screen):
 			elif self.session.current_dialog.ALLOW_SUSPEND == Screen.SUSPEND_PAUSES:
 				self.paused_service = self.session.current_dialog
 				self.paused_service.pauseService()
-
 		if self.session.pipshown:
 			del self.session.pip
 			self.session.pipshown = False
@@ -210,8 +233,6 @@ class TryQuitMainloop(MessageBox):
 #				reason += (_("%d jobs are running in the background!") % jobs) + '\n'
 		if inTimeshift:
 			reason = _("You seem to be in timeshift!") + '\n'
-			default_yes = True
-			timeout=30
 		if recordings or (next_rec_time > 0 and (next_rec_time - time()) < 360):
 			default_yes = False
 			reason = _("Recording(s) are in progress or coming up in few seconds!") + '\n'
@@ -267,7 +288,6 @@ class TryQuitMainloop(MessageBox):
 			self.session.nav.stopService()
 			self.quitScreen = self.session.instantiateDialog(QuitMainloopScreen,retvalue=self.retval)
 			self.quitScreen.show()
-			print "[Standby] quitMainloop #1"
 			quitMainloop(self.retval)
 		else:
 			MessageBox.close(self, True)

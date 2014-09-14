@@ -4,5 +4,4 @@ SUBDIRS = meta
 
 install_PYTHON =	\
 	__init__.py \
-	plugin.py \
-	MediaScanner.png
+	plugin.py

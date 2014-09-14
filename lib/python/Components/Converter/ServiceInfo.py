@@ -2,8 +2,6 @@ from Components.Converter.Converter import Converter
 from enigma import iServiceInformation, iPlayableService
 from Components.Element import cached
 
-from os import path
-
 WIDESCREEN = [3, 4, 7, 8, 0xB, 0xC, 0xF, 0x10]
 
 class ServiceInfo(Converter, object):
@@ -119,13 +117,13 @@ class ServiceInfo(Converter, object):
 		elif self.type == self.IS_STREAM:
 			return service.streamed() is not None
 		elif self.type == self.IS_SD:
-			return video_height < 720
+			return info.getInfo(iServiceInformation.sVideoHeight) < 720
 		elif self.type == self.IS_HD:
-			return video_height >= 720
+			return info.getInfo(iServiceInformation.sVideoHeight) >= 720
 		elif self.type == self.IS_SD_AND_WIDESCREEN:
-			return video_height < 720 and video_aspect in WIDESCREEN
+			return info.getInfo(iServiceInformation.sVideoHeight) < 720 and info.getInfo(iServiceInformation.sAspect) in WIDESCREEN
 		elif self.type == self.IS_SD_AND_NOT_WIDESCREEN:
-			return video_height < 720 and video_aspect not in WIDESCREEN
+			return info.getInfo(iServiceInformation.sVideoHeight) < 720 and info.getInfo(iServiceInformation.sAspect) not in WIDESCREEN
 		return False
 
 	boolean = property(getBoolean)
