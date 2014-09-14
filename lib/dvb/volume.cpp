@@ -137,8 +137,8 @@ void eDVBVolumecontrol::setVolume(int left, int right)
 	mixer.volume_left = left;
 	mixer.volume_right = right;
 
-	//eDebug("Setvolume: %d %d (raw)", leftVol, rightVol);
-	//eDebug("Setvolume: %d %d (-1db)", left, right);
+	eDebug("Setvolume: %d %d (raw)", leftVol, rightVol);
+	eDebug("Setvolume: %d %d (-1db)", left, right);
 
 	int fd = openMixer();
 	if (fd >= 0)

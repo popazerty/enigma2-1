@@ -1,38 +1,8 @@
 # -*- coding: UTF-8 -*-
-# date: 03.06.2014   23:48:00
+# date: 30.08.2014  13:39:12
 #
 
 LANG_TEXT = {
-"it_IT": {
-	 "T1": "Selezionare la propria lingua utilizzando i tasti Sù/Giù. Premere OK per confermare.",
-	 "T2": "Selezione lingua",
-	 "T3": "Annull.",
-	 "T4": "Salvare",
-},
-"en_GB": {
-	 "T1": "Please use the UP and DOWN keys to select your language. Afterwards press the OK button.",
-	 "T2": "Language selection",
-	 "T3": "Cancel",
-	 "T4": "Save",
-},
-"en_US": {
-	 "T1": "Please use the UP and DOWN keys to select your language. Afterwards press the OK button.",
-	 "T2": "Language selection",
-	 "T3": "Cancel",
-	 "T4": "Save",
-},
-"fr_FR": {
-	 "T1": "Veuillez utiliser les touches HAUT et BAS pour choisir votre langue. Ensuite pressez le bouton OK.",
-	 "T2": "Sélection de la langue",
-	 "T3": "Annuler",
-	 "T4": "Sauver",
-},
-"es_ES": {
-	 "T1": "Usa las teclas ARRIBA y ABAJO para seleccionar el idioma. Después, pulsa el botón OK.",
-	 "T2": "Selección de idioma",
-	 "T3": "Cancelar",
-	 "T4": "Guardar",
-},
 "de_DE": {
 	 "T1": "Für Sprachauswahl Hoch/Runter-Tasten nutzen. Danach OK drücken.",
 	 "T2": "Sprachauswahl",
@@ -81,6 +51,24 @@ LANG_TEXT = {
 	 "T3": "Άκυρο ",
 	 "T4": "Αποθήκευση",
 },
+"en_GB": {
+	 "T1": "Please use the UP and DOWN keys to select your language. Afterwards press the OK button.",
+	 "T2": "Language selection",
+	 "T3": "Cancel",
+	 "T4": "Save",
+},
+"en_US": {
+	 "T1": "Please use the UP and DOWN keys to select your language. Afterwards press the OK button.",
+	 "T2": "Language selection",
+	 "T3": "Cancel",
+	 "T4": "Save",
+},
+"es_ES": {
+	 "T1": "Usa las teclas ARRIBA y ABAJO para seleccionar el idioma. Después, pulsa el botón OK.",
+	 "T2": "Selección de idioma",
+	 "T3": "Cancelar",
+	 "T4": "Guardar",
+},
 "et_EE": {
 	 "T1": "Kasuta keele valimiseks 'ÜLES' ja 'ALLA' nuppe, seejärel vajuta OK.",
 	 "T2": "Keele valik",
@@ -98,6 +86,12 @@ LANG_TEXT = {
 	 "T2": "Kielivalinta",
 	 "T3": "Peruuta",
 	 "T4": "Tallenna",
+},
+"fr_FR": {
+	 "T1": "Veuillez utiliser les touches HAUT et BAS pour choisir votre langue. Ensuite pressez le bouton OK.",
+	 "T2": "Sélection de la langue",
+	 "T3": "Annuler",
+	 "T4": "Sauver",
 },
 "fy_NL": {
 	 "T1": "Brúk de op en del toets om jo taal te kiezen. Dernei druk op OK",
@@ -129,6 +123,12 @@ LANG_TEXT = {
 	 "T3": "Hætta við",
 	 "T4": "Vista",
 },
+"it_IT": {
+	 "T1": "Selezionare la propria lingua utilizzando i tasti Sù/Giù. Premere OK per confermare.",
+	 "T2": "Selezione lingua",
+	 "T3": "Annull.",
+	 "T4": "Salvare",
+},
 "ku_KU": {
 	 "T1": "Please use the UP and DOWN keys to select your language. Afterwards press the OK button.",
 	 "T2": "Language selection",
@@ -148,7 +148,7 @@ LANG_TEXT = {
 	 "T4": "Saglabāt",
 },
 "nl_NL": {
-	 "T1": "Gebruik de omhoog/omlaag toeten om de gewenste taal te selecteren. Druk daarna op OK.",
+	 "T1": "Gebruik de omhoog/omlaag toetsen om de gewenste taal te selecteren. Druk daarna op OK.",
 	 "T2": "Taalkeuze",
 	 "T3": "Annuleren",
 	 "T4": "Opslaan",
@@ -160,10 +160,10 @@ LANG_TEXT = {
 	 "T4": "Save",
 },
 "no_NO": {
-	 "T1": "Please use the UP and DOWN keys to select your language. Afterwards press the OK button.",
+	 "T1": "Vennligst bruk OPP og NED tastene for å velge ditt språk. Deretter trykk OK.",
 	 "T2": "Språkvalg",
 	 "T3": "Avbryte",
-	 "T4": "Save",
+	 "T4": "Lagre",
 },
 "pl_PL": {
 	 "T1": "W celu wyboru języka użyj klawiszy GÓRA i DÓŁ. Nastepnie nacisnij przycisk OK.",

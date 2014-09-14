@@ -3,6 +3,7 @@ from enigma import eConsoleAppContainer
 from Components.Harddisk import harddiskmanager
 from Components.config import config
 from shutil import rmtree
+from boxbranding import getImageDistro, getImageVersion
 
 opkgDestinations = []
 opkgStatusPath = ''
@@ -85,8 +86,13 @@ class IpkgComponent:
 
 	def startCmd(self, cmd, args = None):
 		if cmd == self.CMD_UPDATE:
-			if os.path.exists('/var/lib/opkg/lists'):
-				rmtree('/var/lib/opkg/lists')
+			if getImageVersion() == '4.0':
+				if os.path.exists('/var/lib/opkg/lists'):
+					rmtree('/var/lib/opkg/lists')
+			else:
+				for fn in os.listdir('/var/lib/opkg'):
+					if fn.startswith(getImageDistro()):
+						os.remove('/var/lib/opkg/'+fn)
 			self.runCmdEx("update")
 		elif cmd == self.CMD_UPGRADE:
 			append = ""
@@ -145,22 +151,22 @@ class IpkgComponent:
 	def parseLine(self, data):
 		if self.currentCommand in (self.CMD_LIST, self.CMD_UPGRADE_LIST):
 			item = data.split(' - ', 2)
-			if item[0].find('-settings-') > -1 and not config.plugins.softwaremanager.overwriteSettingsFiles.getValue():
+			if item[0].find('-settings-') > -1 and not config.plugins.softwaremanager.overwriteSettingsFiles.value:
 				self.excludeList.append(item)
 				return
-			elif item[0].find('kernel-module-') > -1 and not config.plugins.softwaremanager.overwriteDriversFiles.getValue():
+			elif item[0].find('kernel-module-') > -1 and not config.plugins.softwaremanager.overwriteDriversFiles.value:
 				self.excludeList.append(item)
 				return
-			elif item[0].find('-softcams-') > -1 and not config.plugins.softwaremanager.overwriteEmusFiles.getValue():
+			elif item[0].find('-softcams-') > -1 and not config.plugins.softwaremanager.overwriteEmusFiles.value:
 				self.excludeList.append(item)
 				return
-			elif item[0].find('-picons-') > -1 and not config.plugins.softwaremanager.overwritePiconsFiles.getValue():
+			elif item[0].find('-picons-') > -1 and not config.plugins.softwaremanager.overwritePiconsFiles.value:
 				self.excludeList.append(item)
 				return
-			elif item[0].find('-bootlogo') > -1 and not config.plugins.softwaremanager.overwriteBootlogoFiles.getValue():
+			elif item[0].find('-bootlogo') > -1 and not config.plugins.softwaremanager.overwriteBootlogoFiles.value:
 				self.excludeList.append(item)
 				return
-			elif item[0].find('openaaf-spinner') > -1 and not config.plugins.softwaremanager.overwriteSpinnerFiles.getValue():
+			elif item[0].find('opendroid-spinner') > -1 and not config.plugins.softwaremanager.overwriteSpinnerFiles.value:
 				self.excludeList.append(item)
 				return
 			else:
