@@ -3,6 +3,7 @@ SUBDIRS = fonts extensions keymaps defaults
 dist_pkgdata_DATA = \
 	encoding.conf \
 	keymap.xml \
+	keymap.usr \
 	keymap.ntr \
 	keymap.u80 \
 	keymap.xpe \
@@ -33,10 +34,6 @@ if HAVE_COLORLCD1
 SUBDIRS += display128
 endif
 
-if HAVE_BWLCD128
-SUBDIRS += display128
-endif
-
 if HAVE_COLORLCD220
 SUBDIRS += display220
 endif
@@ -52,3 +49,16 @@ endif
 if HAVE_BWLCD140
 SUBDIRS += display140
 endif
+
+if HAVE_BWLCD255
+SUBDIRS += vfd255
+endif
+
+if HAVE_BWLCD140
+SUBDIRS += vfd140
+endif
+
+if HAVE_BWLCD128
+SUBDIRS += vfd128
+endif
+

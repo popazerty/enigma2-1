@@ -2,7 +2,6 @@ from time import time
 from os import path
 from enigma import eServiceCenter, eServiceReference, eTimer, pNavigation, getBestPlayableServiceReference, iPlayableService
 from Components.ParentalControl import parentalControl
-from Components.SystemInfo import SystemInfo
 from Components.config import config
 from Tools.BoundFunction import boundFunction
 from Tools.StbHardware import getFPWasTimerWakeup
@@ -14,9 +13,6 @@ import NavigationInstance
 import ServiceReference
 from Screens.InfoBar import InfoBar, MoviePlayer
 from boxbranding import getBoxType, getBrandOEM
-
-if SystemInfo["isGBIPBOX"]:
-	from gbipbox import ZAP
 
 # TODO: remove pNavgation, eNavigation and rewrite this stuff in python.
 class Navigation:
@@ -49,14 +45,13 @@ class Navigation:
 
 		wasTimerWakeup = getFPWasTimerWakeup()
 		thisBox = getBoxType()
-		if config.workaround.deeprecord.value:
-			if thisBox in ('ixussone', 'uniboxhd1', 'uniboxhd2', 'uniboxhd3', 'sezam5000hd', 'mbtwin', 'beyonwizt3') or getBrandOEM() in ('ebox', 'azbox', 'xp', 'ini', 'dags'):
-				config.workaround.deeprecord.setValue(True)
-				config.workaround.deeprecord.save()
-				config.save()
-				print"[NAVIGATION] USE DEEPSTAND-WORKAROUND FOR THIS BOXTYPE (%s) !!" %thisBox
-			
-		if not wasTimerWakeup and config.workaround.deeprecord.value: #work-around for boxes where driver not sent was_timer_wakeup signal to e2
+		if thisBox in ('gbquad', 'ixussone', 'uniboxhd1', 'uniboxhd2', 'uniboxhd3', 'sezam5000hd', 'mbtwin') or getBrandOEM() in ('dags', 'ebox', 'azbox', 'xp', 'ini'):
+			config.workaround.deeprecord.setValue(True)
+			config.workaround.deeprecord.save()
+			config.save()
+			print"[NAVIGATION] USE DEEPSTAND-WORKAROUND FOR THIS BOXTYPE (%s) !!" %thisBox
+		
+		if not wasTimerWakeup and config.workaround.deeprecord.getValue(): #work-around for boxes where driver not sent was_timer_wakeup signal to e2
 			print"=================================================================================="
 			print"[NAVIGATION] getNextRecordingTime= %s" % self.RecordTimer.getNextRecordingTime()
 			print"[NAVIGATION] nextRecordTimerAfterEventActionAuto= %s" % nextRecordTimerAfterEventActionAuto
@@ -226,10 +221,6 @@ class Navigation:
 				self.currentlyPlayingServiceOrGroup = ref
 				if InfoBarInstance and InfoBarInstance.servicelist.servicelist.setCurrent(ref, adjust):
 					self.currentlyPlayingServiceOrGroup = InfoBarInstance.servicelist.servicelist.getCurrent()
-
-				if ref.toString().find('//') == -1 and SystemInfo["isGBIPBOX"]:
-					playref = ZAP.gref(ref, self.pnav)
-
 				if self.pnav.playService(playref):
 					print "Failed to start", playref
 					self.currentlyPlayingServiceReference = None

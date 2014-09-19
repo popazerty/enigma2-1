@@ -453,10 +453,7 @@ class Network:
 	def restartNetworkFinished(self,extra_args):
 		( callback ) = extra_args
 		if callback is not None:
-			try:
-				callback(True)
-			except:
-				pass
+			callback(True)
 
 	def getLinkState(self,iface,callback):
 		cmd = self.ethtool_bin + " " + iface

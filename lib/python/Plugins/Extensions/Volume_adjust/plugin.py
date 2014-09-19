@@ -280,12 +280,12 @@ class Change_volume(ConfigListScreen, Screen):
 
 	def greenPressed(self):
 		global offset
-		offset  = self.offset.value
+		offset  = self.offset.getValue()
 		self.close()
 
 	def yellowPressed(self):
 		global offset
-		offset  = self.offset.value * -1
+		offset  = self.offset.getValue() * -1
 		self.offset.setValue(str(offset))
 		self["config"].list = self.Clist
 		self["config"].l.setList(self.Clist)
@@ -379,8 +379,8 @@ class Volume_Config(ConfigListScreen, Screen):
 	def __init__(self, session):
 		self.skin = Volume_Config.skin
 		Screen.__init__(self, session)
-		self.oldEnable = config.Volume.Enabled.value
-		self.oldOffset = config.Volume.AC3_vol.value
+		self.oldEnable = config.Volume.Enabled.getValue()
+		self.oldOffset = config.Volume.AC3_vol.getValue()
 		self.Clist = []
 		self.Clist.append(getConfigListEntry(_('Enable AC3/Dolby'), config.Volume.Enabled))
 		self.Clist.append(getConfigListEntry(_('AC3/Dolby offset'), config.Volume.AC3_vol))
@@ -409,7 +409,7 @@ class Volume_Config(ConfigListScreen, Screen):
 	def yellowPressed(self):
 		#config.Volume.Enabled.value = False
 		#config.Volume.AC3_vol.value = 10
-		config.Volume.AC3_vol.setValue(config.Volume.AC3_vol.value * -1)
+		config.Volume.AC3_vol.setValue(config.Volume.AC3_vol.getValue() * -1)
 		self["config"].list = self.Clist
 		self["config"].l.setList(self.Clist)
 
@@ -517,18 +517,18 @@ class Volume:
 					# store the new offset, need to change it back when new channel not in list
 					self.oldvol = int(voloffset)
 				else:
-					if config.Volume.Enabled.value:
+					if config.Volume.Enabled.getValue():
 						print '[Volume Adjust] Check for AC3/Dolby'
 						if self.isCurrentAudioAC3DTS():
 							vol = self.volctrl.getVolume()
-							newvol = int(vol) + config.Volume.AC3_vol.value
+							newvol = int(vol) + config.Volume.AC3_vol.getValue()
 							print '[Volume Adjust] newvol AC3/Dolby = ' + str(newvol)
 							self.volctrl.setVolume(newvol, newvol)
-							self.oldvol = config.Volume.AC3_vol.value
+							self.oldvol = config.Volume.AC3_vol.getValue()
 
 	def setvolume(self):
 		vol = 50
-		vol = config.audio.volume.value
+		vol = config.audio.volume.getValue()
 		print '[Setvolume] start with volume ' + str(vol)
 		self.volctrl.setVolume(vol, vol)
 		self.startonce = True

@@ -44,11 +44,11 @@ class IconCheckPoller:
 			if LinkState != 'down':
 				LinkState = open('/sys/class/net/eth0/carrier').read()
 		LinkState = LinkState[:1]
-		if fileExists("/proc/stb/lcd/symbol_network") and config.lcd.mode.value == '1':
+		if fileExists("/proc/stb/lcd/symbol_network") and config.lcd.mode.getValue() == '1':
 			f = open("/proc/stb/lcd/symbol_network", "w")
 			f.write(str(LinkState))
 			f.close()
-		elif fileExists("/proc/stb/lcd/symbol_network") and config.lcd.mode.value == '0':
+		elif fileExists("/proc/stb/lcd/symbol_network") and config.lcd.mode.getValue() == '0':
 			f = open("/proc/stb/lcd/symbol_network", "w")
 			f.write('0')
 			f.close()
@@ -65,11 +65,11 @@ class IconCheckPoller:
 					# print "  idVendor: %d (0x%04x)" % (dev.idVendor, dev.idVendor)
 					# print "  idProduct: %d (0x%04x)" % (dev.idProduct, dev.idProduct)
 					USBState = 1
-		if fileExists("/proc/stb/lcd/symbol_usb") and config.lcd.mode.value == '1':
+		if fileExists("/proc/stb/lcd/symbol_usb") and config.lcd.mode.getValue() == '1':
 			f = open("/proc/stb/lcd/symbol_usb", "w")
 			f.write(str(USBState))
 			f.close()
-		elif fileExists("/proc/stb/lcd/symbol_usb") and config.lcd.mode.value == '0':
+		elif fileExists("/proc/stb/lcd/symbol_usb") and config.lcd.mode.getValue() == '0':
 			f = open("/proc/stb/lcd/symbol_usb", "w")
 			f.write('0')
 			f.close()
@@ -111,7 +111,7 @@ class LCD:
 			f = open("/proc/stb/lcd/show_symbols", "w")
 			f.write(value)
 			f.close()
-		if config.lcd.mode.value == "0":
+		if config.lcd.mode.getValue() == "0":
 			if fileExists("/proc/stb/lcd/symbol_hdd"):
 				f = open("/proc/stb/lcd/symbol_hdd", "w")
 				f.write("0")
@@ -191,12 +191,12 @@ def standbyCounterChanged(configElement):
 	config.lcd.ledbrightnessdeepstandby.apply()
 
 def InitLcd():
-	if getBoxType() in ('gb800se', 'gb800solo', 'gb800seplus', 'gbipbox', 'tmsingle', 'tmnano2super', 'iqonios300hd', 'optimussos1plus', 'optimussos1', 'vusolo', 'et4x00', 'et5x00', 'et6x00', 'et7000', 'mixosf7', 'mixoslumi', 'vusolose'):
+	if getBoxType() in ('gb800se', 'gb800solo','gb800seplus', 'tmsingle', 'vusolo', 'et4x00', 'et5x00', 'et6x00', 'mixosf7', 'mixoslumi'):
 		detected = False
 	else:
 		detected = eDBoxLCD.getInstance().detected()
 	SystemInfo["Display"] = detected
-	config.lcd = ConfigSubsection()
+	config.lcd = ConfigSubsection();
 
 	if fileExists("/proc/stb/lcd/mode"):
 		f = open("/proc/stb/lcd/mode", "r")
@@ -205,14 +205,6 @@ def InitLcd():
 	else:
 		can_lcdmodechecking = False
 	SystemInfo["LCDMiniTV"] = can_lcdmodechecking	
-
-	if SystemInfo["StandbyLED"]:
-		def standbyLEDChanged(configElement):
-			file = open("/proc/stb/power/standbyled", "w")
-			file.write(configElement.value and "yes" or "no")
-			file.close()
-		config.usage.standbyLED = ConfigYesNo(default = True)
-		config.usage.standbyLED.addNotifier(standbyLEDChanged)
 	
 	if detected:
 		if can_lcdmodechecking:
@@ -269,31 +261,31 @@ def InitLcd():
 			("noscrolling", _("off"))])
 	
 		def setLCDbright(configElement):
-			ilcd.setBright(configElement.value);
+			ilcd.setBright(configElement.getValue());
 
 		def setLCDcontrast(configElement):
-			ilcd.setContrast(configElement.value);
+			ilcd.setContrast(configElement.getValue());
 
 		def setLCDinverted(configElement):
-			ilcd.setInverted(configElement.value);
+			ilcd.setInverted(configElement.getValue());
 
 		def setLCDflipped(configElement):
-			ilcd.setFlipped(configElement.value);
+			ilcd.setFlipped(configElement.getValue());
 
 		def setLCDmode(configElement):
-			ilcd.setMode(configElement.value);
+			ilcd.setMode(configElement.getValue());
 			
 		def setLCDpower(configElement):
-			ilcd.setPower(configElement.value);	
+			ilcd.setPower(configElement.getValue());	
 			
 		def setLCDshowoutputresolution(configElement):
-			ilcd.setShowoutputresolution(configElement.value);	
+			ilcd.setShowoutputresolution(configElement.getValue());	
 
 		def setLCDrepeat(configElement):
-			ilcd.setRepeat(configElement.value);
+			ilcd.setRepeat(configElement.getValue());
 
 		def setLCDscrollspeed(configElement):
-			ilcd.setScrollspeed(configElement.value);
+			ilcd.setScrollspeed(configElement.getValue());
 			
 		if fileExists("/proc/stb/lcd/symbol_hdd"):
 			f = open("/proc/stb/lcd/symbol_hdd", "w")
