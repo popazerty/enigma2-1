@@ -59,7 +59,7 @@ class DefaultWizard(WizardLanguage, DreamInfoHandler):
 		#self.installPackage(int(index))
 		self.indexList = []
 		for x in range(len(self.packagesConfig)):
-			if self.packagesConfig[x].value:
+			if self.packagesConfig[x].getValue():
 				self.indexList.append(x)
 
 class DreamPackageWizard(DefaultWizard):
@@ -113,9 +113,9 @@ print "add dreampackage scanner plugin"
 plugins.addPlugin(PluginDescriptor(name="Dream-Package", where = PluginDescriptor.WHERE_FILESCAN, fnc = filescan, internal = True))
 print "added"
 
-wizardManager.registerWizard(DefaultWizard, config.misc.defaultchosen.value, priority = 6)
+wizardManager.registerWizard(DefaultWizard, config.misc.defaultchosen.getValue(), priority = 6)
 
-if config.misc.defaultchosen.value:
+if config.misc.defaultchosen.getValue():
 	print "Installing image defaults"
 	installer = ImageDefaultInstaller()
 	print "installing done!"

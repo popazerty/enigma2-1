@@ -168,11 +168,6 @@ RESULT eDVBService::getEvent(const eServiceReference &ref, ePtr<eServiceEvent> &
 	return eEPGCache::getInstance()->lookupEventTime(ref, start_time, ptr);
 }
 
-bool eDVBService::isCrypted(const eServiceReference &ref)
-{
-	return m_ca.size() > 0;
-}
-
 int eDVBService::isPlayable(const eServiceReference &ref, const eServiceReference &ignore, bool simulate)
 {
 	ePtr<eDVBResourceManager> res_mgr;
@@ -346,7 +341,7 @@ static ePtr<eDVBFrontendParameters> parseFrontendData(const char* line, int vers
 {
 	switch(line[0])
 	{
-		case 's':
+		case 's': 
 		{
 			eDVBFrontendParametersSatellite sat;
 			int frequency, symbol_rate, polarisation, fec, orbital_position, inversion,
@@ -378,7 +373,7 @@ static ePtr<eDVBFrontendParameters> parseFrontendData(const char* line, int vers
 			feparm->setFlags(flags);
 			return feparm;
 		}
-		case 't':
+		case 't': 
 		{
 			eDVBFrontendParametersTerrestrial ter;
 			int frequency, bandwidth, code_rate_HP, code_rate_LP, modulation, transmission_mode,
@@ -1189,7 +1184,8 @@ PyObject *eDVBDB::readCables(ePyObject cab_list, ePyObject tp_dict)
 				}
 				if (freq && sr)
 				{
-					freq /= 1000;
+					while (freq > 999999)
+						freq /= 10;
 					tuple = PyTuple_New(7);
 					PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(1));
 					PyTuple_SET_ITEM(tuple, 1, PyInt_FromLong(freq));
@@ -1289,7 +1285,7 @@ PyObject *eDVBDB::readTerrestrials(ePyObject ter_list, ePyObject tp_dict)
 				transm = eDVBFrontendParametersTerrestrial::TransmissionMode_Auto;
 				hierarchy = eDVBFrontendParametersTerrestrial::Hierarchy_Auto;
 				inv = eDVBFrontendParametersTerrestrial::Inversion_Unknown;
-				system = eDVBFrontendParametersTerrestrial::System_DVB_T_T2;
+				system = eDVBFrontendParametersTerrestrial::System_DVB_T;
 				plpid = 0;
 				for (AttributeConstIterator it(tp_attributes.begin()); it != end; ++it)
 				{

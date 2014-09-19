@@ -14,11 +14,7 @@ class SleepTimerEdit(ConfigListScreen, Screen):
 		Screen.__init__(self, session)
 
 		self["current_status"] = Label()
-		try:
-			self.is_active = self.session.nav.SleepTimer.isActive()
-		except:
-			self.close()
-			return
+		self.is_active = self.session.nav.SleepTimer.isActive()
 		if self.is_active:
 			config.SleepTimer.defaulttime.setValue(self.session.nav.SleepTimer.getCurrentSleepTime())
 		else:
@@ -54,7 +50,7 @@ class SleepTimerEdit(ConfigListScreen, Screen):
 		if self["config"].getCurrent()[0] == _("Enable timer"):
 			self.createSetup()
 		elif self["config"].getCurrent()[0] == _("Use time of currently running service"):
-			if config.SleepTimer.servicetime.value:
+			if config.SleepTimer.servicetime.getValue():
 				self.useServiceTime()
 			else:
 				if self.is_active:
@@ -73,7 +69,7 @@ class SleepTimerEdit(ConfigListScreen, Screen):
 	def createSetup(self):
 		self.list = []
 		self.list.append(getConfigListEntry(_("Enable timer"), config.SleepTimer.enabled))
-		if config.SleepTimer.enabled.value:
+		if config.SleepTimer.enabled.getValue():
 			self.list.append(getConfigListEntry(_("Use time of currently running service"), config.SleepTimer.servicetime))
 			self.list.append(getConfigListEntry(_("Shutdown in (mins)"), config.SleepTimer.defaulttime))
 			self.list.append(getConfigListEntry(_("Action"), config.SleepTimer.action))
@@ -88,10 +84,10 @@ class SleepTimerEdit(ConfigListScreen, Screen):
 		self.close()
 
 	def keySave(self):
-		if config.SleepTimer.enabled.value:
+		if config.SleepTimer.enabled.getValue():
 			for x in self["config"].list:
 				x[1].save()
-			self.session.nav.SleepTimer.setSleepTime(config.SleepTimer.defaulttime.value)
+			self.session.nav.SleepTimer.setSleepTime(config.SleepTimer.defaulttime.getValue())
 			AddPopup(_("The sleep timer has been activated."), type = MessageBox.TYPE_INFO, timeout = 3)
 			self.close(True)
 		else:
