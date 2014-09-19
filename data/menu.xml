@@ -50,7 +50,8 @@
 				<menu level="0" text="Display" entryID="display_selection" requires="Display">
 					<id val="display" />
 					<item level="0" entryID="displaysetup"><setup id="display" /></item>
-					<item requires="OledDisplay" level="0" text="VFD Skin Selector" entryID="vfd_skin"><screen module="VfdSkinSelector" screen="VFDSkinSelector"/></item>
+					<!--item requires="OledDisplay" level="0" text="VFD Skin Selector" entryID="vfd_skin"><screen module="VfdSkinSelector" screen="VFDSkinSelector"/></item-->
+					<item requires="LCDSKINSetup" level="0" text="VFD Skin Selector" entryID="vfd_skin"><screen module="VfdSkinSelector" screen="VFDSkinSelector"/></item>
 				</menu>
 				<menu level="2" text="EPG" entryID="epg_menu">
 					<id val="epg" />
@@ -96,7 +97,7 @@ self.session.openWithCallback(msgClosed, EpgLoadMsg)
 				<menu level="2" text="User interface" entryID="osd_setup" requires="OsdMenu">
 					<id val="osd_menu" />
 					<item level="0" entryID="user_interface"><setup id="userinterface" /></item>
-					<item level="2" text="Position setup" entryID="osdsetup" requires="OsdSetup"><screen module="UserInterfacePositioner" screen="UserInterfacePositioner"/></item>
+					<item level="2" text="Position setup" entryID="osdsetup" requires="CanChangeOsdPosition"><screen module="UserInterfacePositioner" screen="UserInterfacePositioner"/></item>
 					<item level="2" text="3D setup" entryID="osd3dsetup" requires="CanChange3DOsd"><screen module="UserInterfacePositioner" screen="OSD3DSetupScreen"/></item>
 					<item level="0" text="Skin setup" entryID="skin_setup"><screen module="SkinSelector" screen="SkinSelector"/></item>
 				</menu>
@@ -124,6 +125,7 @@ self.session.open(HdmiCECSetupScreen)
 					<item level="2" text="MiniDLNA setup" entryID="netushare_setup"><screen module="NetworkSetup" screen="NetworkMiniDLNA"/></item>
 					<item level="2" text="NFS setup" entryID="netnfs_setup"><screen module="NetworkSetup" screen="NetworkNfs"/></item>
 					<item level="2" text="OpenVPN setup" entryID="netvpn_setup"><screen module="NetworkSetup" screen="NetworkOpenvpn"/></item>
+					<item level="2" text="Remote Tuner Server Setup" entryID="netrts_setup"><screen module="NetworkSetup" screen="RemoteTunerServer"/></item>
 					<item level="2" text="SABnzbd setup" entryID="netsabnzbd_setup" requires="SABSetup">
 <code>
 from Plugins.SystemPlugins.SABnzbd.plugin import SABnzbdSetupScreen
@@ -134,11 +136,10 @@ self.session.open(SABnzbdSetupScreen)
 					<item level="2" text="Telnet setup" entryID="nettelnet_setup"><screen module="NetworkSetup" screen="NetworkTelnet"/></item>
 					<item level="2" text="uShare setup" entryID="netushare_setup"><screen module="NetworkSetup" screen="NetworkuShare"/></item>
 				</menu>
-				<item level="0" entryID="dvdplayer_setup"><setup id="dvdplayer" /></item> 
+				<item level="0" entryID="dvdplayer_setup"><setup id="dvdplayer" /></item>
 				<item level="1" entryID="onlineupdate_setup"><setup id="softwareupdate"/></item>
 				<item level="0" text="Recording settings" entryID="recording_setup"><screen module="Recordings" screen="RecordingSettings" /></item>
 				<item level="1" entryID="rfmod_setup" requires="RfModulator"><setup id="RFmod"/></item>
-				<item level="0" text="Skin setup" entryID="skin_setup"><screen module="SkinSelector" screen="SkinSelector"/></item>
 				<item level="2" entryID="subtitle_setup"><setup id="subtitlesetup" /></item>
 				<item level="0" text="Timeshift settings" entryID="timshift_setup"><screen module="Timershift" screen="TimeshiftSettings" /></item>
 				<item level="0" entryID="time_setup"><setup id="time"/></item>
@@ -147,6 +148,7 @@ self.session.open(SABnzbdSetupScreen)
 				<id val="cam" />
 				<item weight="1" level="2" entryID="softcam_setup"><setup id="softcamsetup" /></item>
 				<item weight="10" level="1" text="Common interface" entryID="ci_setup" requires="CommonInterface"><screen module="Ci" screen="CiSelection" /></item>
+				<item weight="10" level="1" text="Common interface PIN Setup" entryID="ci_setup"><screen module="Ci" screen="CiDefaultPinSetup" /></item>
 				<item weight="11" level="2" text="CCcam info" entryID="cccaminfo" requires="CCcamInstalled"><screen module="CCcamInfo" screen="CCcamInfoMain" /></item>
 				<item weight="11" level="2" text="OScam info" entryID="oscaminfo" requires="OScamInstalled"><screen module="OScamInfo" screen="OscamInfoMenu" /></item>
 			</menu>
@@ -186,7 +188,7 @@ if recordings:
 	self.session.openWithCallback(self.gotoStandby,MessageBox,_("PowerOff while Recording in progress!\nEntering standby, after recording the box will shutdown."), type = MessageBox.TYPE_INFO, timeout = 10)
 else:
 	self.session.open(TryQuitMainloop, 1)
-</code>			
+</code>
 			</item>
 			<item text="WOL Standby" requires="GBWOL" entryID="deep_standby">
 <code>
@@ -204,8 +206,8 @@ if recordings:
 	self.session.openWithCallback(self.gotoStandby,MessageBox,_("PowerOff while Recording in progress!\nEntering standby, after recording the box will shutdown."), type = MessageBox.TYPE_INFO, timeout = 10)
 else:
 	self.session.open(TryQuitMainloop, 45)
-</code>			
-			</item>			
+</code>
+			</item>
 			<item text="Standby" entryID="standby"><screen module="Standby" screen="Standby"/></item>
 			<item text="Restart" entryID="restart"><screen module="Standby" screen="TryQuitMainloop">2</screen></item>
 			<item text="PowerTimers" entryID="powertimer_edit"><screen module="PowerTimerEdit" screen="PowerTimerEditList" /></item>

@@ -4,6 +4,7 @@ from Components.Harddisk import harddiskmanager, findMountPoint
 from Components.Input import Input
 from Components.Label import Label
 from Components.MovieList import AUDIO_EXTENSIONS, MOVIE_EXTENSIONS, DVD_EXTENSIONS
+import Screens.MovieSelection
 from Components.PluginComponent import plugins
 from Components.ServiceEventTracker import ServiceEventTracker
 from Components.Sources.Boolean import Boolean
@@ -46,11 +47,13 @@ from Tools import Directories, Notifications
 from Tools.Directories import pathExists, fileExists, getRecordingFilename, copyfile, moveFiles, resolveFilename, SCOPE_TIMESHIFT, SCOPE_CURRENT_SKIN
 from Tools.KeyBindings import getKeyDescription
 from enigma import eTimer, eServiceCenter, eDVBServicePMTHandler, iServiceInformation, iPlayableService, eServiceReference, eEPGCache, eActionMap
-from boxbranding import getBoxType, getMachineBrand, getMachineName, getBrandOEM, getDriverDate, getImageVersion, getImageBuild, getMachineProcModel
+from boxbranding import getBoxType, getMachineBrand, getMachineName, getBrandOEM, getDriverDate, getImageVersion, getImageBuild, getMachineProcModel, getMachineBuild
 
 from time import time, localtime, strftime
 from bisect import insort
 from sys import maxint
+from keyids import KEYIDS
+from datetime import datetime
 
 import os, cPickle
 
@@ -232,12 +235,15 @@ class InfoBarUnhandledKey:
 
 	#this function is called on every keypress!
 	def actionA(self, key, flag):
-		if config.plisettings.ShowPressedButtons.getValue():
+		if config.plisettings.ShowPressedButtons.value:
 			print "Enable debug mode for every pressed key."
 			try:
-				print 'Pressed KEY: %s %s' % (key,getKeyDescription(key)[0])
+				print 'KEY: %s %s %s %s' % (key,(key_name for key_name,value in KEYIDS.items() if value==key).next(),getKeyDescription(key)[0],datetime.now())
 			except:
-				print 'Pressed KEY: %s' % key
+				try:
+					print 'KEY: %s %s %s' % (key,(key_name for key_name,value in KEYIDS.items() if value==key).next(),datetime.now()) # inverse dictionary lookup in KEYIDS
+				except:
+					print 'KEY: %s %s' % (key,datetime.now())
 		self.unhandledKeyDialog.hide()
 		if self.closeSIB(key) and self.secondInfoBarScreen and self.secondInfoBarScreen.shown:
 			self.secondInfoBarScreen.hide()
@@ -252,7 +258,8 @@ class InfoBarUnhandledKey:
 		return 0
 
 	def closeSIB(self, key):
-		if key >= 12 and key != 352 and key != 272 and key != 103 and key != 108 and key != 402 and key != 403 and key != 407 and key != 412 :
+		if key >= 12 and key not in (114, 115, 352, 272, 103, 108, 402, 403, 407, 412):
+		#if key >= 12 and key != 352 and key != 272 and key != 103 and key != 108 and key != 402 and key != 403 and key != 407 and key != 412 :
 			return True
 		else:
 			return False
@@ -280,17 +287,17 @@ class InfoBarScreenSaver:
 		self.screensaver.hide()
 
 	def __onExecBegin(self):
+		eActionMap.getInstance().bindAction('', -maxint - 1, self.keypressScreenSaver)
 		self.ScreenSaverTimerStart()
 
 	def __onExecEnd(self):
-		if self.screensaver.shown:
-			self.screensaver.hide()
-			eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
 		self.screenSaverTimer.stop()
+		self.screensaver.hide()
+		eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
 
 	def ScreenSaverTimerStart(self):
 		time = int(config.usage.screen_saver.value)
-		flag = self.seekstate[0]
+		flag = hasattr(self, "seekstate") and self.seekstate[0]
 		if not flag:
 			ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
 			if ref:
@@ -305,19 +312,15 @@ class InfoBarScreenSaver:
 		if self.execing and not Screens.Standby.inStandby and not Screens.Standby.inTryQuitMainloop:
 			self.hide()
 			if hasattr(self, "pvrStateDialog"):
-				try:
-					self.pvrStateDialog.hide()
-				except:
-					pass
+				self.pvrStateDialog.hide()
 			self.screensaver.show()
-			eActionMap.getInstance().bindAction('', -maxint - 1, self.keypressScreenSaver)
 
 	def keypressScreenSaver(self, key, flag):
 		if flag:
-			self.screensaver.hide()
-			self.show()
+			if self.screensaver.shown:
+				self.screensaver.hide()
+				self.show()
 			self.ScreenSaverTimerStart()
-			eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
 
 class SecondInfoBar(Screen):
 	ADD_TIMER = 0
@@ -358,7 +361,7 @@ class SecondInfoBar(Screen):
 		self["epg_description"].pageDown()
 
 	def __Show(self):
-		if config.plisettings.ColouredButtons.getValue():
+		if config.plisettings.ColouredButtons.value:
 			self["key_yellow"].setText(_("Search"))
 		self["key_red"].setText(_("Similar"))
 		self["key_blue"].setText(_("Extensions"))
@@ -466,7 +469,7 @@ class SecondInfoBar(Screen):
 						self.session.nav.RecordTimer.timeChanged(x)
 				simulTimerList = self.session.nav.RecordTimer.record(entry)
 				if simulTimerList is not None:
-					if not entry.repeated and not config.recording.margin_before.getValue() and not config.recording.margin_after.getValue() and len(simulTimerList) > 1:
+					if not entry.repeated and not config.recording.margin_before.value and not config.recording.margin_after.value and len(simulTimerList) > 1:
 						change_time = False
 						conflict_begin = simulTimerList[1].begin
 						conflict_end = simulTimerList[1].end
@@ -603,23 +606,23 @@ class InfoBarShowHide(InfoBarScreenSaver):
 			self.pvrStateDialog = None
 
 	def OkPressed(self):
-		if config.usage.okbutton_mode.getValue() == "0":
+		if config.usage.okbutton_mode.value == "0":
 			self.toggleShow()
-		elif config.usage.okbutton_mode.getValue() == "1":
+		elif config.usage.okbutton_mode.value == "1":
 			try:
 				self.openServiceList()
 			except:
 				self.toggleShow()
 
 	def SwitchSecondInfoBarScreen(self):
-		if self.lastSecondInfoBar == config.usage.show_second_infobar.getValue():
+		if self.lastSecondInfoBar == config.usage.show_second_infobar.value:
 			return
 		self.secondInfoBarScreen = self.session.instantiateDialog(SecondInfoBar)
-		self.lastSecondInfoBar = config.usage.show_second_infobar.getValue()
+		self.lastSecondInfoBar = config.usage.show_second_infobar.value
 
 	def LongOKPressed(self):
 		if isinstance(self, InfoBarEPG):
-			if config.plisettings.InfoBarEpg_mode.getValue() == "1":
+			if config.plisettings.InfoBarEpg_mode.value == "1":
 				self.openInfoBarEPG()
 
 	def __onShow(self):
@@ -642,7 +645,7 @@ class InfoBarShowHide(InfoBarScreenSaver):
 				ref = ref.toString()
 			else:
 				ref = " "
-			if config.plisettings.InfoBarEpg_mode.getValue() == "2" and not ref[1:].startswith(":0:0:0:0:0:0:0:0:0:"):
+			if config.plisettings.InfoBarEpg_mode.value == "2" and not ref[1:].startswith(":0:0:0:0:0:0:0:0:0:"):
 				try:
 					self.openInfoBarEPG()
 				except:
@@ -652,8 +655,8 @@ class InfoBarShowHide(InfoBarScreenSaver):
 				if self.secondInfoBarScreen and self.secondInfoBarScreen.shown:
 					self.secondInfoBarScreen.hide()
 					self.secondInfoBarWasShown = False
-			if self.session.pipshown and "popup" in config.usage.pip_hideOnExit.getValue():
-				if config.usage.pip_hideOnExit.getValue() == "popup":
+			if self.session.pipshown and "popup" in config.usage.pip_hideOnExit.value:
+				if config.usage.pip_hideOnExit.value == "popup":
 					self.session.openWithCallback(self.hidePipOnExitCallback, MessageBox, _("Disable Picture in Picture"), simple=True)
 				else:
 					self.hidePipOnExitCallback(True)
@@ -676,7 +679,7 @@ class InfoBarShowHide(InfoBarScreenSaver):
 
 	def serviceStarted(self):
 		if self.execing:
-			if config.usage.show_infobar_on_zap.getValue():
+			if config.usage.show_infobar_on_zap.value:
 				self.doShow()
 
 	def startHideTimer(self):
@@ -685,7 +688,7 @@ class InfoBarShowHide(InfoBarScreenSaver):
 			idx = config.usage.infobar_timeout.index
 			if idx:
 				self.hideTimer.start(idx*1000, True)
-		elif (self.secondInfoBarScreen and self.secondInfoBarScreen.shown) or ((not config.usage.show_second_infobar.getValue() or isMoviePlayerInfoBar(self)) and self.EventViewIsShown):
+		elif (self.secondInfoBarScreen and self.secondInfoBarScreen.shown) or ((not config.usage.show_second_infobar.value or isMoviePlayerInfoBar(self)) and self.EventViewIsShown):
 			self.hideTimer.stop()
 			idx = config.usage.second_infobar_timeout.index
 			if idx:
@@ -729,19 +732,19 @@ class InfoBarShowHide(InfoBarScreenSaver):
 			self.LongButtonPressed = False
 		if not self.LongButtonPressed:
 			if self.__state == self.STATE_HIDDEN:
-				if not self.secondInfoBarWasShown or (config.usage.show_second_infobar.getValue() == "1" and not self.EventViewIsShown):
+				if not self.secondInfoBarWasShown or (config.usage.show_second_infobar.value == "1" and not self.EventViewIsShown):
 					self.show()
 				if self.secondInfoBarScreen:
 					self.secondInfoBarScreen.hide()
 				self.secondInfoBarWasShown = False
 				self.EventViewIsShown = False
-			elif self.secondInfoBarScreen and config.usage.show_second_infobar.getValue() == "2" and not self.secondInfoBarScreen.shown:
+			elif self.secondInfoBarScreen and config.usage.show_second_infobar.value == "2" and not self.secondInfoBarScreen.shown:
 				self.SwitchSecondInfoBarScreen()
 				self.hide()
 				self.secondInfoBarScreen.show()
 				self.secondInfoBarWasShown = True
 				self.startHideTimer()
-			elif (config.usage.show_second_infobar.getValue() == "1" or isMoviePlayerInfoBar(self)) and not self.EventViewIsShown:
+			elif (config.usage.show_second_infobar.value == "1" or isMoviePlayerInfoBar(self)) and not self.EventViewIsShown:
 				self.hide()
 				try:
 					self.openEventView()
@@ -749,7 +752,7 @@ class InfoBarShowHide(InfoBarScreenSaver):
 					pass
 				self.EventViewIsShown = True
 				self.hideTimer.stop()
-			elif isMoviePlayerInfoBar(self) and not self.EventViewIsShown and config.usage.show_second_infobar.getValue():
+			elif isMoviePlayerInfoBar(self) and not self.EventViewIsShown and config.usage.show_second_infobar.value:
 				self.hide()
 				self.openEventView(True)
 				self.EventViewIsShown = True
@@ -768,7 +771,7 @@ class InfoBarShowHide(InfoBarScreenSaver):
 	def toggleShowLong(self):
 		if self.LongButtonPressed:
 			if isinstance(self, InfoBarEPG):
-				if config.plisettings.InfoBarEpg_mode.getValue() == "1":
+				if config.plisettings.InfoBarEpg_mode.value == "1":
 					self.openInfoBarEPG()
 
 	def lockShow(self):
@@ -944,7 +947,7 @@ class InfoBarNumberZap:
 			if isinstance(self, InfoBarPiP) and self.pipHandles0Action():
 				self.pipDoHandle0Action()
 			else:
-				if config.usage.panicbutton.getValue():
+				if config.usage.panicbutton.value:
 					if self.session.pipshown:
 						del self.session.pip
 						self.session.pipshown = False
@@ -956,7 +959,7 @@ class InfoBarNumberZap:
 					self.servicelist2.history_radio = []
 					self.servicelist2.history = self.servicelist.history_tv
 					self.servicelist2.history_pos = 0
-					if config.usage.multibouquet.getValue():
+					if config.usage.multibouquet.value:
 						bqrootstr = '1:7:1:0:0:0:0:0:0:0:FROM BOUQUET "bouquets.tv" ORDER BY bouquet'
 					else:
 						bqrootstr = '%s FROM BOUQUET "userbouquet.favourites.tv" ORDER BY bouquet'% self.service_types
@@ -1027,7 +1030,7 @@ class InfoBarNumberZap:
 							if not playable:
 								service = None
 							break
-						if config.usage.alternative_number_mode.getValue() or firstBouquetOnly:
+						if config.usage.alternative_number_mode.value or firstBouquetOnly:
 							break
 					bouquet = bouquetlist.getNext()
 		return service, bouquet
@@ -1072,6 +1075,7 @@ class InfoBarChannelSelection:
 				"zapDown": (self.zapDown, _("Switch next channel")),
 				"historyBack": (self.historyBack, _("Switch to previous channel in history")),
 				"historyNext": (self.historyNext, _("Switch to next channel in history")),
+				"useBookmark": (self.useBookmark, _("Use function assigned to bookmark button")),
 				"openServiceList": (self.openServiceList, _("Open service list")),
 				"openSatellites": (self.openSatellites, _("Open satellites list")),
 				"LeftPressed": self.LeftPressed,
@@ -1089,45 +1093,49 @@ class InfoBarChannelSelection:
 		self.openServiceList()
 
 	def LeftPressed(self):
-		if config.plisettings.InfoBarEpg_mode.getValue() == "3":
-			self.openInfoBarEPG()
-		else:
+		if config.usage.leftrightbutton_mode.value == "0":
 			self.zapUp()
+		elif config.usage.leftrightbutton_mode.value == "1":
+			self.switchChannelUp()
 
 	def RightPressed(self):
-		if config.plisettings.InfoBarEpg_mode.getValue() == "3":
-			self.openInfoBarEPG()
-		else:
+		if config.usage.leftrightbutton_mode.value == "0":
 			self.zapDown()
+		elif config.usage.leftrightbutton_mode.value == "1":
+			self.switchChannelDown()
 
 	def UpPressed(self):
-		if config.usage.updownbutton_mode.getValue() == "0":
+		if config.usage.updownbutton_mode.value == "0":
 			self.zapDown()
-		elif config.usage.updownbutton_mode.getValue() == "1":
+		if config.usage.updownbutton_mode.value == "2":
+			self.zapUp()
+		elif config.usage.updownbutton_mode.value == "1":
 			self.switchChannelUp()
 
 	def DownPressed(self):
-		if config.usage.updownbutton_mode.getValue() == "0":
+		if config.usage.updownbutton_mode.value == "0":
 			self.zapUp()
-		elif config.usage.updownbutton_mode.getValue() == "1":
+		if config.usage.updownbutton_mode.value == "2":
+			self.zapDown()
+		elif config.usage.updownbutton_mode.value == "1":
 			self.switchChannelDown()
 
 	def ChannelPlusPressed(self):
-		if config.usage.channelbutton_mode.getValue() == "0":
+		if config.usage.channelbutton_mode.value == "0":
 			self.zapDown()
-		elif config.usage.channelbutton_mode.getValue() == "1":
+		elif config.usage.channelbutton_mode.value == "1":
 			self.openServiceList()
-		elif config.usage.channelbutton_mode.getValue() == "2":
+		elif config.usage.channelbutton_mode.value == "2":
 			self.serviceListType = "Norm"
 			self.servicelist.showFavourites()
 			self.session.execDialog(self.servicelist)
 
 	def ChannelMinusPressed(self):
-		if config.usage.channelbutton_mode.getValue() == "0":
+		if config.usage.channelbutton_mode.value == "0":
 			self.zapUp()
-		elif config.usage.channelbutton_mode.getValue() == "1":
+		elif config.usage.channelbutton_mode.value == "1":
 			self.openServiceList()
-		elif config.usage.channelbutton_mode.getValue() == "2":
+		elif config.usage.channelbutton_mode.value == "2":
 			self.serviceListType = "Norm"
 			self.servicelist.showFavourites()
 			self.session.execDialog(self.servicelist)
@@ -1136,46 +1144,55 @@ class InfoBarChannelSelection:
 		self.servicelist.setModeTv()
 		if zap:
 			self.servicelist.zap()
-		if config.usage.show_servicelist.getValue():
+		if config.usage.show_servicelist.value:
 			self.session.execDialog(self.servicelist)
 
 	def showRadioChannelList(self, zap=False):
 		self.servicelist.setModeRadio()
 		if zap:
 			self.servicelist.zap()
-		if config.usage.show_servicelist.getValue():
+		if config.usage.show_servicelist.value:
 			self.session.execDialog(self.servicelist)
 
 	def historyBack(self):
-		if config.usage.historymode.getValue() == "0":
+		if config.usage.historymode.value == "0":
 			self.servicelist.historyBack()
-		elif config.usage.historymode.getValue() == "2":
+		elif config.usage.historymode.value == "2":
 			if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/ZapHistoryBrowser/plugin.pyo"):
 					self.showZapHistoryBrowser()
 		else:
 			self.servicelist.historyZap(-1)
 
 	def historyNext(self):
-		if config.usage.historymode.getValue() == "0":
+		if config.usage.historymode.value == "0":
 			self.servicelist.historyNext()
-		elif config.usage.historymode.getValue() == "2":
+		elif config.usage.historymode.value == "2":
 			if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/ZapHistoryBrowser/plugin.pyo"):
 					self.showZapHistoryBrowser()
 		else:
 			self.servicelist.historyZap(+1)
 
+	def useBookmark(self):
+		if config.usage.bookmarkmode.value == "1":
+			self.showEMC()
+		elif config.usage.bookmarkmode.value == "2":
+			if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+				self.showsimplelist()
+		else:
+			self.showMovies()
+
 	def switchChannelUp(self):
-		if not self.LongButtonPressed:
-			if not config.usage.show_bouquetalways.getValue():
-				if "keep" not in config.usage.servicelist_cursor_behavior.getValue():
+		if not self.LongButtonPressed or SystemInfo.get("NumVideoDecoders", 1) <= 1:
+			if not config.usage.show_bouquetalways.value:
+				if "keep" not in config.usage.servicelist_cursor_behavior.value:
 					self.servicelist.moveUp()
 				self.session.execDialog(self.servicelist)
 			else:
 				self.servicelist.showFavourites()
 				self.session.execDialog(self.servicelist)
 		elif self.LongButtonPressed:
-			if not config.usage.show_bouquetalways.getValue():
-				if "keep" not in config.usage.servicelist_cursor_behavior.getValue():
+			if not config.usage.show_bouquetalways.value:
+				if "keep" not in config.usage.servicelist_cursor_behavior.value:
 					self.servicelist2.moveUp()
 				self.session.execDialog(self.servicelist2)
 			else:
@@ -1183,17 +1200,17 @@ class InfoBarChannelSelection:
 				self.session.execDialog(self.servicelist2)
 
 	def switchChannelDown(self):
-		if not self.LongButtonPressed:
-			if not config.usage.show_bouquetalways.getValue():
-				if "keep" not in config.usage.servicelist_cursor_behavior.getValue():
+		if not self.LongButtonPressed or SystemInfo.get("NumVideoDecoders", 1) <= 1:
+			if not config.usage.show_bouquetalways.value:
+				if "keep" not in config.usage.servicelist_cursor_behavior.value:
 					self.servicelist.moveDown()
 				self.session.execDialog(self.servicelist)
 			else:
 				self.servicelist.showFavourites()
 				self.session.execDialog(self.servicelist)
 		elif self.LongButtonPressed:
-			if not config.usage.show_bouquetalways.getValue():
-				if "keep" not in config.usage.servicelist_cursor_behavior.getValue():
+			if not config.usage.show_bouquetalways.value:
+				if "keep" not in config.usage.servicelist_cursor_behavior.value:
 					self.servicelist2.moveDown()
 				self.session.execDialog(self.servicelist2)
 			else:
@@ -1211,7 +1228,7 @@ class InfoBarChannelSelection:
 		self.session.execDialog(self.servicelist)
 
 	def zapUp(self):
-		if not self.LongButtonPressed:
+		if not self.LongButtonPressed or SystemInfo.get("NumVideoDecoders", 1) <= 1:
 			if self.pts_blockZap_timer.isActive():
 				return
 
@@ -1220,7 +1237,7 @@ class InfoBarChannelSelection:
 				if prev:
 					prev = prev.toString()
 					while True:
-						if config.usage.quickzap_bouquet_change.getValue():
+						if config.usage.quickzap_bouquet_change.value:
 							if self.servicelist.atBegin():
 								self.servicelist.prevBouquet()
 						self.servicelist.moveUp()
@@ -1249,7 +1266,7 @@ class InfoBarChannelSelection:
 				if prev:
 					prev = prev.toString()
 					while True:
-						if config.usage.quickzap_bouquet_change.getValue():
+						if config.usage.quickzap_bouquet_change.value:
 							if self.servicelist2.atBegin():
 								self.servicelist2.prevBouquet()
 						self.servicelist2.moveUp()
@@ -1267,7 +1284,7 @@ class InfoBarChannelSelection:
 			ChannelSelectionInstance.dopipzap = False
 
 	def zapDown(self):
-		if not self.LongButtonPressed:
+		if not self.LongButtonPressed or SystemInfo.get("NumVideoDecoders", 1) <= 1:
 			if self.pts_blockZap_timer.isActive():
 				return
 
@@ -1352,13 +1369,13 @@ class InfoBarMenu:
 	def toggleAspectRatio(self):
 		ASPECT = [ "auto", "16_9", "4_3" ]
 		ASPECT_MSG = { "auto":"Auto", "16_9":"16:9", "4_3":"4:3" }
-		if config.av.aspect.getValue() in ASPECT:
-			index = ASPECT.index(config.av.aspect.getValue())
+		if config.av.aspect.value in ASPECT:
+			index = ASPECT.index(config.av.aspect.value)
 			config.av.aspect.value = ASPECT[(index+1)%3]
 		else:
 			config.av.aspect.value = "auto"
 		config.av.aspect.save()
-		self.session.open(MessageBox, _("AV aspect is %s." % ASPECT_MSG[config.av.aspect.getValue()]), MessageBox.TYPE_INFO, timeout=5)
+		self.session.open(MessageBox, _("AV aspect is %s." % ASPECT_MSG[config.av.aspect.value]), MessageBox.TYPE_INFO, timeout=5)
 
 	def showSystemMenu(self):
 		menulist = mdom.getroot().findall('menu')
@@ -1499,10 +1516,23 @@ class InfoBarEPG:
 
 		self["EPGActions"] = HelpableActionMap(self, "InfobarEPGActions",
 			{
-				"RedPressed": (self.RedPressed, _("Show epg")),
+				"RedButtonPressed": (self.RedButtonPressed, _("show red button information...")),
+				"RedButtonLongPressed": (self.RedButtonLongPressed, _("show red button information...")),
+				"GreenButtonPressed": (self.GreenButtonPressed, _("show green button information...")),
+				"GreenButtonLongPressed": (self.GreenButtonLongPressed, _("show green button information...")),
+				"YellowButtonPressed": (self.YellowButtonPressed, _("show yellow button information...")),
+				"YellowButtonLongPressed": (self.YellowButtonLongPressed, _("show yellow button information...")),
+				"BlueButtonPressed": (self.BlueButtonPressed, _("show blue button information...")),
+				"BlueButtonLongPressed": (self.BlueButtonLongPressed, _("show blue button information...")),
 				"IPressed": (self.IPressed, _("show program information...")),
 				"InfoPressed": (self.InfoPressed, _("show program information...")),
 				"FavPressed": (self.FavPressed, _("show fav information...")),
+				"F1Pressed": (self.F1Pressed, _("show f1 information...")),
+				"F2Pressed": (self.F2Pressed, _("show f2 information...")),
+				"F3Pressed": (self.F3Pressed, _("show f3 information...")),
+				"F4Pressed": (self.F4Pressed, _("show f4 information...")),
+				"WebButtonPressed": (self.WebButtonPressed, _("show WebButton information...")),
+				"PluginButtonPressed": (self.PluginButtonPressed, _("show PluginButton information...")),
 				"showEventInfoPlugin": (self.showEventInfoPlugins, _("List EPG functions...")),
 				"EPGPressed":  (self.showDefaultEPG, _("show EPG...")),
 				"showEventGuidePlugin": (self.showEventGuidePlugins, _("List EPG functions...")),
@@ -1523,7 +1553,7 @@ class InfoBarEPG:
 		pluginlist = self.getEPGPluginList()
 		config.usage.defaultEPGType=ConfigSelection(default = "None", choices = pluginlist)
 		for plugin in pluginlist:
-			if plugin[0] == config.usage.defaultEPGType.getValue():
+			if plugin[0] == config.usage.defaultEPGType.value:
 				return plugin[1]
 		return None
 
@@ -1587,31 +1617,600 @@ class InfoBarEPG:
 		if answer is not None:
 			answer[1]()
 
-	def RedPressed(self):
+	def RedButtonPressed(self):
 		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.usage.defaultEPGType.getValue() != _("Graphical EPG") and config.usage.defaultEPGType.getValue() != _("None"):
-					self.openGraphEPG()
-			else:
+			if config.plisettings.redbutton_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbutton_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.redbutton_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.redbutton_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.redbutton_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.redbutton_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.redbutton_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.redbutton_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.redbutton_mode.value == "single":
 				self.openSingleServiceEPG()
+			elif config.plisettings.redbutton_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.redbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.redbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.redbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.redbutton_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.redbutton_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.redbutton_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.redbutton_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.redbutton_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.redbutton_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.redbutton_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.redbutton_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbutton_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbutton_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbutton_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def GreenButtonPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if config.plisettings.greenbutton_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greenbutton_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.greenbutton_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.greenbutton_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.greenbutton_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.greenbutton_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.greenbutton_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.greenbutton_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.greenbutton_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.greenbutton_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.greenbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.greenbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.greenbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.greenbutton_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.greenbutton_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.greenbutton_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.greenbutton_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.greenbutton_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.greenbutton_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.greenbutton_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.greenbutton_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greenbutton_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greenbutton_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greebutton_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def YellowButtonPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if config.plisettings.yellowbutton_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbutton_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.yellowbutton_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.yellowbutton_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.yellowbutton_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.yellowbutton_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.yellowbutton_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.yellowbutton_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.yellowbutton_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.yellowbutton_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.yellowbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.yellowbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.yellowbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.yellowbutton_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.yellowbutton_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.yellowbutton_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.yellowbutton_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.yellowbutton_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.yellowbutton_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.yellowbutton_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.yellowbutton_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbutton_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbutton_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbutton_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def BlueButtonPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if config.plisettings.bluebutton_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebutton_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.bluebutton_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.bluebutton_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.bluebutton_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.bluebutton_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.bluebutton_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.bluebutton_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.bluebutton_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.bluebutton_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.bluebutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.bluebutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.bluebutton_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.bluebutton_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.bluebutton_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.bluebutton_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.bluebutton_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.bluebutton_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.bluebutton_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.bluebutton_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.bluebutton_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebutton_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebutton_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebutton_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def RedButtonLongPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if config.plisettings.redbuttonlong_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbuttonlong_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.redbuttonlong_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.redbuttonlong_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.redbuttonlong_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.redbuttonlong_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.redbuttonlong_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.redbuttonlong_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.redbuttonlong_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.redbuttonlong_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.redbuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.redbuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.redbuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.redbuttonlong_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.redbuttonlong_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.redbuttonlong_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.redbuttonlong_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.redbuttonlong_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.redbuttonlong_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.redbuttonlong_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.redbuttonlong_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbuttonlong_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbuttonlong_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.redbuttonlong_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def GreenButtonLongPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if config.plisettings.greenbuttonlong_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greenbuttonlong_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.greenbuttonlong_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.greenbuttonlong_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.greenbuttonlong_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.greenbuttonlong_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.greenbuttonlong_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.greenbuttonlong_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.greenbuttonlong_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.greenbuttonlong_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.greenbuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.greenbuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.greenbuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.greenbuttonlong_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.greenbuttonlong_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.greenbuttonlong_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.greenbuttonlong_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.greenbuttonlong_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.greenbuttonlong_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.greenbuttonlong_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.greenbuttonlong_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greenbuttonlong_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greenbuttonlong_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.greenbuttonlong_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def YellowButtonLongPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if config.plisettings.yellowbuttonlong_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbuttonlong_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.yellowbuttonlong_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.yellowbuttonlong_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.yellowbuttonlong_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.yellowbuttonlong_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.yellowbuttonlong_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.yellowbuttonlong_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.yellowbuttonlong_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.yellowbuttonlong_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.yellowbuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.yellowbuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.yellowbuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.yellowbuttonlong_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.yellowbuttonlong_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.yellowbuttonlong_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.yellowbuttonlong_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.yellowbuttonlong_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.yellowbuttonlong_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.yellowbuttonlong_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.yellowbuttonlong_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbuttonlong_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbuttonlong_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.yellowbuttonlong_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def BlueButtonLongPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if config.plisettings.bluebuttonlong_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebuttonlong_mode.value == "timerSelection":
+				self.showTimerList()
+			elif config.plisettings.bluebuttonlong_mode.value == "subserviceSelection":
+				self.subserviceSelection()
+			elif config.plisettings.bluebuttonlong_mode.value == "subtitleSelection":
+				self.subtitleSelection()
+			elif config.plisettings.bluebuttonlong_mode.value == "audioSelection":
+				self.audioSelection()
+			elif config.plisettings.bluebuttonlong_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.bluebuttonlong_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.bluebuttonlong_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.bluebuttonlong_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.bluebuttonlong_mode.value == "openInfoBarEPG":
+				self.openInfoBarEPG()
+			elif config.plisettings.bluebuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.bluebuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.bluebuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.bluebuttonlong_mode.value == "extensions":
+				self.showExtensionSelection()
+			elif config.plisettings.bluebuttonlong_mode.value == "showPluginBrowser":
+				self.showPluginBrowser()
+			elif config.plisettings.bluebuttonlong_mode.value == "instantRecord":
+				self.instantRecord()
+			elif config.plisettings.bluebuttonlong_mode.value == "showEventInfoPlugins":
+				self.showEventInfoPlugins()
+			elif config.plisettings.bluebuttonlong_mode.value == "hbbtv":
+				self.activateRedButton()
+			elif config.plisettings.bluebuttonlong_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.bluebuttonlong_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+			elif config.plisettings.bluebuttonlong_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebuttonlong_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebuttonlong_mode.value == "werbezapper":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPER()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.bluebuttonlong_mode.value == "werbezappermon":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
+					self.showWERBEZAPPERMON()
+				else:
+					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
 
 	def InfoPressed(self):
 		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
 			if getBoxType().startswith('vu'):
 				self.showDefaultEPG()
-			elif config.plisettings.PLIINFO_mode.getValue() == "eventview":
+			elif config.plisettings.PLIINFO_mode.value == "eventview":
 				self.openEventView()
-			elif config.plisettings.PLIINFO_mode.getValue() == "epgpress":
+			elif config.plisettings.PLIINFO_mode.value == "epgpress":
 				self.showDefaultEPG()
-			elif config.plisettings.PLIINFO_mode.getValue() == "single":
+			elif config.plisettings.PLIINFO_mode.value == "single":
 				self.openSingleServiceEPG()
-			elif config.plisettings.PLIINFO_mode.getValue() == "coolinfoguide" and COOLTVGUIDE:
+			elif config.plisettings.PLIINFO_mode.value == "coolinfoguide" and COOLTVGUIDE:
 				self.showCoolInfoGuide()
-			elif config.plisettings.PLIINFO_mode.getValue() == "coolsingleguide" and COOLTVGUIDE:
+			elif config.plisettings.PLIINFO_mode.value == "coolsingleguide" and COOLTVGUIDE:
 				self.showCoolSingleGuide()
-			elif config.plisettings.PLIINFO_mode.getValue() == "cooltvguide" and COOLTVGUIDE:
+			elif config.plisettings.PLIINFO_mode.value == "cooltvguide" and COOLTVGUIDE:
 				if self.isInfo:
 					self.showCoolTVGuide()
-			elif config.plisettings.PLIINFO_mode.getValue() == "etportal":
+			elif config.plisettings.PLIINFO_mode.value == "etportal":
 				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
 					self.showETPORTAL()
 				else:
@@ -1625,18 +2224,23 @@ class InfoBarEPG:
 
 	def EPGPressed(self):
 		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.PLIEPG_mode.getValue() == "pliepg":
+			if config.plisettings.PLIEPG_mode.value == "pliepg":
 				self.openGraphEPG()
-			elif config.plisettings.PLIEPG_mode.getValue() == "multi":
+			elif config.plisettings.PLIEPG_mode.value == "multi":
 				self.openMultiServiceEPG()
-			elif config.plisettings.PLIEPG_mode.getValue() == "single":
+			elif config.plisettings.PLIEPG_mode.value == "single":
 				self.openSingleServiceEPG()
-			elif config.plisettings.PLIEPG_mode.getValue() == "merlinepgcenter":
+			elif config.plisettings.PLIEPG_mode.value == "merlinepgcenter":
 				self.openMerlinEPGCenter()	
-			elif config.plisettings.PLIEPG_mode.getValue() == "cooltvguide" and COOLTVGUIDE:
+			elif config.plisettings.PLIEPG_mode.value == "cooltvguide" and COOLTVGUIDE:
 				if self.isInfo:
 					self.showCoolTVGuide()
-			elif config.plisettings.PLIEPG_mode.getValue() == "eventview":
+			elif config.plisettings.PLIEPG_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+				else:
+					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.PLIEPG_mode.value == "eventview":
 				self.openEventView()
 			else:
 				self.openSingleServiceEPG()
@@ -1705,7 +2309,7 @@ class InfoBarEPG:
 			cnt = 0
 		else:
 			cnt = len(bouquets)
-		if (self.EPGtype == "multi" and config.epgselection.multi_showbouquet.getValue()) or (self.EPGtype == "graph" and config.epgselection.graph_showbouquet.getValue()):
+		if (self.EPGtype == "multi" and config.epgselection.multi_showbouquet.value) or (self.EPGtype == "graph" and config.epgselection.graph_showbouquet.value):
 			if cnt > 1: # show bouquet list
 				self.bouquetSel = self.session.openWithCallback(self.closed, EpgBouquetSelector, bouquets, self.openBouquetEPG, enableWrapAround=True)
 				self.dlg_stack.append(self.bouquetSel)
@@ -1746,7 +2350,7 @@ class InfoBarEPG:
 		if not reopen:
 			self.StartBouquet = self.servicelist.getRoot()
 			self.StartRef = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-		if config.epgselection.infobar_type_mode.getValue() == 'single':
+		if config.epgselection.infobar_type_mode.value == 'single':
 			self.EPGtype = "infobar"
 			self.SingleServiceEPG()
 		else:
@@ -1763,6 +2367,15 @@ class InfoBarEPG:
 					break
 		else:
 			self.session.open(MessageBox, _("The Cool TV Guide plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+
+	def showHDFTOOLBOX(self):
+		try:
+			for plugin in plugins.getPlugins([PluginDescriptor.WHERE_EXTENSIONSMENU, PluginDescriptor.WHERE_EVENTINFO]):
+				if plugin.name.startswith(' opendroid Toolbox'):
+					self.runPlugin(plugin)
+					break
+		except Exception, e:
+			self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
 
 	def showETPORTAL(self):
 		try:
@@ -1788,6 +2401,32 @@ class InfoBarEPG:
 		except Exception, e:
 			self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
 
+	def showDREAMPLEX(self):
+		try:
+			from Plugins.Extensions.DreamPlex.plugin import *
+			from Components.PluginComponent import plugins
+			self.session.open(DPS_MainMenu)
+		except Exception, e:
+			self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+
+	def showWERBEZAPPER(self):
+		try:
+			for plugin in plugins.getPlugins([PluginDescriptor.WHERE_EXTENSIONSMENU, PluginDescriptor.WHERE_EVENTINFO]):
+				if plugin.name == _("Werbezapper"):
+					self.runPlugin(plugin)
+					break
+		except Exception, e:
+			self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+
+	def showWERBEZAPPERMON(self):
+		try:
+			for plugin in plugins.getPlugins([PluginDescriptor.WHERE_EXTENSIONSMENU, PluginDescriptor.WHERE_EVENTINFO]):
+				if plugin.name == _("Werbezapper Start / Stop monitoring"):
+					self.runPlugin(plugin)
+					break
+		except Exception, e:
+			self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+
 	def showZapHistoryBrowser(self):
 		try:
 			for plugin in plugins.getPlugins([PluginDescriptor.WHERE_EXTENSIONSMENU, PluginDescriptor.WHERE_EVENTINFO]):
@@ -1796,6 +2435,15 @@ class InfoBarEPG:
 					break
 		except Exception, e:
 			self.session.open(MessageBox, _("The Zap-History Browser plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+
+	def showsimplelist(self):
+		try:
+			for plugin in plugins.getPlugins([PluginDescriptor.WHERE_EXTENSIONSMENU, PluginDescriptor.WHERE_EVENTINFO]):
+				if plugin.name == _("Simple Movie List"):
+					self.runPlugin(plugin)
+					break
+		except Exception, e:
+			self.session.open(MessageBox, _("Please wait."), type = MessageBox.TYPE_INFO,timeout = 1 )
 
 	def SingleServiceEPG(self):
 		self.StartBouquet = self.servicelist.getRoot()
@@ -1919,38 +2567,369 @@ class InfoBarEPG:
 		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
 			if getBoxType().startswith('vu'):
 				self.showDefaultEPG()
-			elif config.plisettings.PLIFAV_mode.getValue() == "eventview":
+			elif config.plisettings.PLIFAV_mode.value == "eventview":
 				self.openEventView()
-			elif config.plisettings.PLIFAV_mode.getValue() == "showfavourites":
+			elif config.plisettings.PLIFAV_mode.value == "showfavourites":
 				self.serviceListType = "Norm"
 				self.servicelist.showFavourites()
 				self.session.execDialog(self.servicelist)
-			elif config.plisettings.PLIFAV_mode.getValue() == "epgpress":
+			elif config.plisettings.PLIFAV_mode.value == "epgpress":
 				self.showDefaultEPG()
-			elif config.plisettings.PLIFAV_mode.getValue() == "single":
+			elif config.plisettings.PLIFAV_mode.value == "single":
 				self.openSingleServiceEPG()
-			elif config.plisettings.PLIFAV_mode.getValue() == "coolinfoguide" and COOLTVGUIDE:
+			elif config.plisettings.PLIFAV_mode.value == "coolinfoguide" and COOLTVGUIDE:
 				self.showCoolInfoGuide()
-			elif config.plisettings.PLIFAV_mode.getValue() == "coolsingleguide" and COOLTVGUIDE:
+			elif config.plisettings.PLIFAV_mode.value == "coolsingleguide" and COOLTVGUIDE:
 				self.showCoolSingleGuide()
-			elif config.plisettings.PLIFAV_mode.getValue() == "cooltvguide" and COOLTVGUIDE:
+			elif config.plisettings.PLIFAV_mode.value == "cooltvguide" and COOLTVGUIDE:
 				if self.isInfo:
 					self.showCoolTVGuide()
-			elif config.plisettings.PLIFAV_mode.getValue() == "etportal":
+			elif config.plisettings.PLIFAV_mode.value == "etportal":
 				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
 					self.showETPORTAL()
 				else:
 					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
-			elif config.plisettings.PLIFAV_mode.getValue() == "emc":
+			elif config.plisettings.PLIFAV_mode.value == "emc":
 				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
 					self.showEMC()
 				else:
 					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
-			elif config.plisettings.PLIFAV_mode.getValue() == "mediaportal":
+			elif config.plisettings.PLIFAV_mode.value == "mediaportal":
 				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
 					self.showMEDIAPORTAL()
 				else:
 					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.PLIFAV_mode.value == "dreamplex":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
+					self.showDREAMPLEX()
+				else:
+					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def F1Pressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if getBoxType().startswith('vu'):
+				self.showDefaultEPG()
+			elif config.plisettings.F1_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.F1_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.F1_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.F1_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.F1_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.F1_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.F1_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.F1_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.F1_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F1_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+				else:
+					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F1_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )					
+			elif config.plisettings.F1_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F1_mode.value == "dreamplex":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
+					self.showDREAMPLEX()
+				else:
+					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F1_mode.value == "showsimplelist":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+					self.showsimplelist()
+				else:
+					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+				
+	def F2Pressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if getBoxType().startswith('vu'):
+				self.showDefaultEPG()
+			elif config.plisettings.F2_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.F2_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.F2_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.F2_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.F2_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.F2_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.F2_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.F2_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.F2_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F2_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+				else:
+					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F2_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F2_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F2_mode.value == "dreamplex":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
+					self.showDREAMPLEX()
+				else:
+					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F2_mode.value == "showsimplelist":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+					self.showsimplelist()
+				else:
+					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def F3Pressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if getBoxType().startswith('vu'):
+				self.showDefaultEPG()
+			elif config.plisettings.F3_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.F3_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.F3_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.F3_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.F3_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.F3_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.F3_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.F3_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.F3_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F3_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+				else:
+					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F3_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F3_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F3_mode.value == "dreamplex":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
+					self.showDREAMPLEX()
+				else:
+					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F3_mode.value == "showsimplelist":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+					self.showsimplelist()
+				else:
+					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def F4Pressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if getBoxType().startswith('vu'):
+				self.showDefaultEPG()
+			elif config.plisettings.F4_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.F4_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.F4_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.F4_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.F4_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.F4_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.F4_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.F4_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.F4_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F4_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+				else:
+					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F4_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F4_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F4_mode.value == "dreamplex":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
+					self.showDREAMPLEX()
+				else:
+					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.F4_mode.value == "showsimplelist":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+					self.showsimplelist()
+				else:
+					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def WebButtonPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if getBoxType().startswith('vu'):
+				self.showDefaultEPG()
+			elif config.plisettings.webbutton_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.webbutton_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.webbutton_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.webbutton_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.webbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.webbutton_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.webbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.webbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.webbutton_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.webbutton_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+				else:
+					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.webbutton_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.webbutton_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.webbutton_mode.value == "showsimplelist":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+					self.showsimplelist()
+				else:
+					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			else:
+				self.showDefaultEPG()
+
+	def PluginButtonPressed(self):
+		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
+			if getBoxType().startswith('vu'):
+				self.showDefaultEPG()
+			elif config.plisettings.pluginbutton_mode.value == "eventview":
+				self.openEventView()
+			elif config.plisettings.pluginbutton_mode.value == "showfavourites":
+				self.serviceListType = "Norm"
+				self.servicelist.showFavourites()
+				self.session.execDialog(self.servicelist)
+			elif config.plisettings.pluginbutton_mode.value == "epgpress":
+				self.showDefaultEPG()
+			elif config.plisettings.pluginbutton_mode.value == "single":
+				self.openSingleServiceEPG()
+			elif config.plisettings.pluginbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
+				self.showCoolInfoGuide()
+			elif config.plisettings.pluginbutton_mode.value == "vmodeSelection":
+				self.vmodeSelection()
+			elif config.plisettings.pluginbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
+				self.showCoolSingleGuide()
+			elif config.plisettings.pluginbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
+				if self.isInfo:
+					self.showCoolTVGuide()
+			elif config.plisettings.pluginbutton_mode.value == "opendroidtoolbox":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/plugin.pyo"):
+					self.showHDFTOOLBOX()
+				else:
+					self.session.open(MessageBox, _("The opendroid-Toolbox is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.pluginbutton_mode.value == "etportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+					self.showETPORTAL()
+				else:
+					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.pluginbutton_mode.value == "emc":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+					self.showEMC()
+				else:
+					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.pluginbutton_mode.value == "mediaportal":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
+					self.showMEDIAPORTAL()
+				else:
+					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
+			elif config.plisettings.pluginbutton_mode.value == "showsimplelist":
+				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+					self.showsimplelist()
+				else:
+					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type = MessageBox.TYPE_INFO,timeout = 10 )
 			else:
 				self.showDefaultEPG()
 
@@ -2050,12 +3029,12 @@ class Seekbar(Screen):
 			self.exit()
 
 	def keyLeft(self):
-		self.percent -= float(config.seek.sensibility.getValue()) / 10.0
+		self.percent -= float(config.seek.sensibility.value) / 10.0
 		if self.percent < 0.0:
 			self.percent = 0.0
 
 	def keyRight(self):
-		self.percent += float(config.seek.sensibility.getValue()) / 10.0
+		self.percent += float(config.seek.sensibility.value) / 10.0
 		if self.percent > 100.0:
 			self.percent = 100.0
 
@@ -2096,9 +3075,9 @@ class InfoBarSeek:
 					return 1
 				elif action[:8] == "seekdef:":
 					key = int(action[8:])
-					time = (-config.seek.selfdefined_13.getValue(), False, config.seek.selfdefined_13.getValue(),
-						-config.seek.selfdefined_46.getValue(), False, config.seek.selfdefined_46.getValue(),
-						-config.seek.selfdefined_79.getValue(), False, config.seek.selfdefined_79.getValue())[key-1]
+					time = (-config.seek.selfdefined_13.value, False, config.seek.selfdefined_13.value,
+						-config.seek.selfdefined_46.value, False, config.seek.selfdefined_46.value,
+						-config.seek.selfdefined_79.value, False, config.seek.selfdefined_79.value)[key-1]
 					self.screen.doSeekRelative(time * 90000)
 					return 1
 				else:
@@ -2235,12 +3214,12 @@ class InfoBarSeek:
 				self.activity = 0
 			if SystemInfo["FrontpanelDisplay"] and SystemInfo["Display"]:
 				if os.path.exists("/proc/stb/lcd/symbol_hdd"):
-					if config.lcd.hdd.getValue() == "1":
+					if config.lcd.hdd.value == "1":
 						file = open("/proc/stb/lcd/symbol_hdd", "w")
 						file.write('%d' % int(hdd))
 						file.close()
 				if os.path.exists("/proc/stb/lcd/symbol_hddprogress"):
-					if config.lcd.hdd.getValue() == "1":
+					if config.lcd.hdd.value == "1":
 						file = open("/proc/stb/lcd/symbol_hddprogress", "w")
 						file.write('%d' % int(self.activity))
 						file.close() 
@@ -2323,11 +3302,11 @@ class InfoBarSeek:
 			self.pauseService()
 		else:
 			if self.seekstate == self.SEEK_STATE_PAUSE:
-				if config.seek.on_pause.getValue() == "play":
+				if config.seek.on_pause.value == "play":
 					self.unPauseService()
-				elif config.seek.on_pause.getValue() == "step":
+				elif config.seek.on_pause.value == "step":
 					self.doSeekRelative(1)
-				elif config.seek.on_pause.getValue() == "last":
+				elif config.seek.on_pause.value == "last":
 					self.setSeekState(self.lastseekstate)
 					self.lastseekstate = self.SEEK_STATE_PLAY
 			else:
@@ -2366,7 +3345,7 @@ class InfoBarSeek:
 			else:
 				self.setSeekState(self.SEEK_STATE_PLAY)
 		seekable.seekRelative(pts<0 and -1 or 1, abs(pts))
-		if abs(pts) > 100 and config.usage.show_infobar_on_skip.getValue():
+		if abs(pts) > 100 and config.usage.show_infobar_on_skip.value:
 			self.showAfterSeek()
 
 	def seekFwd(self):
@@ -2378,31 +3357,31 @@ class InfoBarSeek:
 				return
 			return 0 # trade as unhandled action
 		if self.seekstate == self.SEEK_STATE_PLAY:
-			self.setSeekState(self.makeStateForward(int(config.seek.enter_forward.getValue())))
+			self.setSeekState(self.makeStateForward(int(config.seek.enter_forward.value)))
 		elif self.seekstate == self.SEEK_STATE_PAUSE:
-			if len(config.seek.speeds_slowmotion.getValue()):
-				self.setSeekState(self.makeStateSlowMotion(config.seek.speeds_slowmotion.getValue()[-1]))
+			if len(config.seek.speeds_slowmotion.value):
+				self.setSeekState(self.makeStateSlowMotion(config.seek.speeds_slowmotion.value[-1]))
 			else:
-				self.setSeekState(self.makeStateForward(int(config.seek.enter_forward.getValue())))
+				self.setSeekState(self.makeStateForward(int(config.seek.enter_forward.value)))
 		elif self.seekstate == self.SEEK_STATE_EOF:
 			pass
 		elif self.isStateForward(self.seekstate):
 			speed = self.seekstate[1]
 			if self.seekstate[2]:
 				speed /= self.seekstate[2]
-			speed = self.getHigher(speed, config.seek.speeds_forward.getValue()) or config.seek.speeds_forward.getValue()[-1]
+			speed = self.getHigher(speed, config.seek.speeds_forward.value) or config.seek.speeds_forward.value[-1]
 			self.setSeekState(self.makeStateForward(speed))
 		elif self.isStateBackward(self.seekstate):
 			speed = -self.seekstate[1]
 			if self.seekstate[2]:
 				speed /= self.seekstate[2]
-			speed = self.getLower(speed, config.seek.speeds_backward.getValue())
+			speed = self.getLower(speed, config.seek.speeds_backward.value)
 			if speed:
 				self.setSeekState(self.makeStateBackward(speed))
 			else:
 				self.setSeekState(self.SEEK_STATE_PLAY)
 		elif self.isStateSlowMotion(self.seekstate):
-			speed = self.getLower(self.seekstate[2], config.seek.speeds_slowmotion.getValue()) or config.seek.speeds_slowmotion.getValue()[0]
+			speed = self.getLower(self.seekstate[2], config.seek.speeds_slowmotion.value) or config.seek.speeds_slowmotion.value[0]
 			self.setSeekState(self.makeStateSlowMotion(speed))
 
 	def seekBack(self):
@@ -2415,9 +3394,9 @@ class InfoBarSeek:
 			return 0 # trade as unhandled action
 		seekstate = self.seekstate
 		if seekstate == self.SEEK_STATE_PLAY:
-			self.setSeekState(self.makeStateBackward(int(config.seek.enter_backward.getValue())))
+			self.setSeekState(self.makeStateBackward(int(config.seek.enter_backward.value)))
 		elif seekstate == self.SEEK_STATE_EOF:
-			self.setSeekState(self.makeStateBackward(int(config.seek.enter_backward.getValue())))
+			self.setSeekState(self.makeStateBackward(int(config.seek.enter_backward.value)))
 			self.doSeekRelative(-6)
 		elif seekstate == self.SEEK_STATE_PAUSE:
 			self.doSeekRelative(-1)
@@ -2425,7 +3404,7 @@ class InfoBarSeek:
 			speed = seekstate[1]
 			if seekstate[2]:
 				speed /= seekstate[2]
-			speed = self.getLower(speed, config.seek.speeds_forward.getValue())
+			speed = self.getLower(speed, config.seek.speeds_forward.value)
 			if speed:
 				self.setSeekState(self.makeStateForward(speed))
 			else:
@@ -2434,10 +3413,10 @@ class InfoBarSeek:
 			speed = -seekstate[1]
 			if seekstate[2]:
 				speed /= seekstate[2]
-			speed = self.getHigher(speed, config.seek.speeds_backward.getValue()) or config.seek.speeds_backward.getValue()[-1]
+			speed = self.getHigher(speed, config.seek.speeds_backward.value) or config.seek.speeds_backward.value[-1]
 			self.setSeekState(self.makeStateBackward(speed))
 		elif self.isStateSlowMotion(seekstate):
-			speed = self.getHigher(seekstate[2], config.seek.speeds_slowmotion.getValue())
+			speed = self.getHigher(seekstate[2], config.seek.speeds_slowmotion.value)
 			if speed:
 				self.setSeekState(self.makeStateSlowMotion(speed))
 			else:
@@ -2445,19 +3424,19 @@ class InfoBarSeek:
 		self.pts_lastseekspeed = self.seekstate[1]
 
 	def seekFwdManual(self, fwd=True):
-		if config.seek.baractivation.getValue() == "leftright":
+		if config.seek.baractivation.value == "leftright":
 			self.session.open(Seekbar, fwd)
 		else:
 			self.session.openWithCallback(self.fwdSeekTo, MinuteInput)
 
 	def seekBackManual(self, fwd=False):
-		if config.seek.baractivation.getValue() == "leftright":
+		if config.seek.baractivation.value == "leftright":
 			self.session.open(Seekbar, fwd)
 		else:
 			self.session.openWithCallback(self.rwdSeekTo, MinuteInput)
 
 	def seekFwdSeekbar(self, fwd=True):
-		if not config.seek.baractivation.getValue() == "leftright":
+		if not config.seek.baractivation.value == "leftright":
 			self.session.open(Seekbar, fwd)
 		else:
 			self.session.openWithCallback(self.fwdSeekTo, MinuteInput)
@@ -2466,7 +3445,7 @@ class InfoBarSeek:
 		self.doSeekRelative(minutes * 60 * 90000)
 
 	def seekBackSeekbar(self, fwd=False):
-		if not config.seek.baractivation.getValue() == "leftright":
+		if not config.seek.baractivation.value == "leftright":
 			self.session.open(Seekbar, fwd)
 		else:
 			self.session.openWithCallback(self.rwdSeekTo, MinuteInput)
@@ -2481,7 +3460,7 @@ class InfoBarSeek:
 			self.unlockShow()
 		else:
 			wantlock = self.seekstate != self.SEEK_STATE_PLAY
-			if config.usage.show_infobar_on_skip.getValue():
+			if config.usage.show_infobar_on_skip.value:
 				if self.lockedBecauseOfSkipping and not wantlock:
 					self.unlockShow()
 					self.lockedBecauseOfSkipping = False
@@ -2549,11 +3528,11 @@ class InfoBarPVRState:
 		return InfoBarMoviePlayerSummary
 
 	def _mayShow(self):
-		if self.has_key("state") and not config.usage.movieplayer_pvrstate.getValue():
+		if self.has_key("state") and not config.usage.movieplayer_pvrstate.value:
 			self["state"].setText("")
 			self["statusicon"].setPixmapNum(6)
 			self["speed"].setText("")
-		if self.shown and self.seekstate != self.SEEK_STATE_EOF and not config.usage.movieplayer_pvrstate.getValue():
+		if self.shown and self.seekstate != self.SEEK_STATE_EOF and not config.usage.movieplayer_pvrstate.value:
 			self.pvrStateDialog.show()
 			self.startHideTimer()
 
@@ -2566,7 +3545,7 @@ class InfoBarPVRState:
 			self.pvrStateDialog["speed"].setText("")
 			speed_summary = self.pvrStateDialog["speed"].text
 			statusicon_summary = 0
-			if self.has_key("state") and config.usage.movieplayer_pvrstate.getValue():
+			if self.has_key("state") and config.usage.movieplayer_pvrstate.value:
 				self["state"].setText(playstateString)
 				self["statusicon"].setPixmapNum(0)
 				self["speed"].setText("")
@@ -2575,7 +3554,7 @@ class InfoBarPVRState:
 			self.pvrStateDialog["speed"].setText("")
 			speed_summary = self.pvrStateDialog["speed"].text
 			statusicon_summary = 1
-			if self.has_key("state") and config.usage.movieplayer_pvrstate.getValue():
+			if self.has_key("state") and config.usage.movieplayer_pvrstate.value:
 				self["state"].setText(playstateString)
 				self["statusicon"].setPixmapNum(1)
 				self["speed"].setText("")
@@ -2584,7 +3563,7 @@ class InfoBarPVRState:
 			self.pvrStateDialog["speed"].setText("")
 			speed_summary = self.pvrStateDialog["speed"].text
 			statusicon_summary = 2
-			if self.has_key("state") and config.usage.movieplayer_pvrstate.getValue():
+			if self.has_key("state") and config.usage.movieplayer_pvrstate.value:
 				self["state"].setText(playstateString)
 				self["statusicon"].setPixmapNum(2)
 				self["speed"].setText("")
@@ -2594,7 +3573,7 @@ class InfoBarPVRState:
 			self.pvrStateDialog["speed"].setText(speed[1])
 			speed_summary = self.pvrStateDialog["speed"].text
 			statusicon_summary = 3
-			if self.has_key("state") and config.usage.movieplayer_pvrstate.getValue():
+			if self.has_key("state") and config.usage.movieplayer_pvrstate.value:
 				self["state"].setText(playstateString)
 				self["statusicon"].setPixmapNum(3)
 				self["speed"].setText(speed[1])
@@ -2604,7 +3583,7 @@ class InfoBarPVRState:
 			self.pvrStateDialog["speed"].setText(speed[1])
 			speed_summary = self.pvrStateDialog["speed"].text
 			statusicon_summary = 4
-			if self.has_key("state") and config.usage.movieplayer_pvrstate.getValue():
+			if self.has_key("state") and config.usage.movieplayer_pvrstate.value:
 				self["state"].setText(playstateString)
 				self["statusicon"].setPixmapNum(4)
 				self["speed"].setText(speed[1])
@@ -2613,7 +3592,7 @@ class InfoBarPVRState:
 			self.pvrStateDialog["speed"].setText(playstateString)
 			speed_summary = self.pvrStateDialog["speed"].text
 			statusicon_summary = 5
-			if self.has_key("state") and config.usage.movieplayer_pvrstate.getValue():
+			if self.has_key("state") and config.usage.movieplayer_pvrstate.value:
 				self["state"].setText(playstateString)
 				self["statusicon"].setPixmapNum(5)
 				self["speed"].setText(playstateString)
@@ -2622,7 +3601,7 @@ class InfoBarPVRState:
 			cb(state_summary, speed_summary, statusicon_summary)
 
 		# if we return into "PLAY" state, ensure that the dialog gets hidden if there will be no infobar displayed
-		if not config.usage.show_infobar_on_skip.getValue() and self.seekstate == self.SEEK_STATE_PLAY and not self.force_show:
+		if not config.usage.show_infobar_on_skip.value and self.seekstate == self.SEEK_STATE_PLAY and not self.force_show:
 			self.pvrStateDialog.hide()
 		else:
 			self._mayShow()
@@ -2636,9 +3615,10 @@ class InfoBarTimeshiftState(InfoBarPVRState):
 	def _mayShow(self):
 		if self.shown and self.timeshiftEnabled() and self.isSeekable():
 			InfoBarTimeshift.ptsSeekPointerSetCurrentPos(self)
-			if config.timeshift.showinfobar.getValue():
+			if config.timeshift.showinfobar.value:
 				self["TimeshiftSeekPointerActions"].setEnabled(True)
 			self.pvrStateDialog.show()
+		if not self.isSeekable():
 			self.startHideTimer()
 
 	def __hideTimeshiftState(self):
@@ -2646,8 +3626,8 @@ class InfoBarTimeshiftState(InfoBarPVRState):
 		self.pvrStateDialog.hide()
 
 	def __timeshiftEventName(self,state):
-		if self.timeshiftEnabled() and os.path.exists("%spts_livebuffer_%s.meta" % (config.usage.timeshift_path.getValue(),self.pts_currplaying)):
-			readmetafile = open("%spts_livebuffer_%s.meta" % (config.usage.timeshift_path.getValue(),self.pts_currplaying), "r")
+		if self.timeshiftEnabled() and os.path.exists("%spts_livebuffer_%s.meta" % (config.usage.timeshift_path.value,self.pts_currplaying)):
+			readmetafile = open("%spts_livebuffer_%s.meta" % (config.usage.timeshift_path.value,self.pts_currplaying), "r")
 			servicerefname = readmetafile.readline()[0:-1]
 			eventname = readmetafile.readline()[0:-1]
 			readmetafile.close()
@@ -2675,7 +3655,7 @@ class InfoBarExtensions:
 	def __init__(self):
 		self.list = []
 
-		if config.plisettings.ColouredButtons.getValue():
+		if config.plisettings.ColouredButtons.value:
 			self["InstantExtensionsActions"] = HelpableActionMap(self, "InfobarExtensions",
 				{
 					"extensions": (self.bluekey_ex, _("Show extensions...")),
@@ -2723,7 +3703,7 @@ class InfoBarExtensions:
 		return _("Log Manager")
 
 	def getLogManager(self):
-		if config.logmanager.showinextensions.getValue():
+		if config.logmanager.showinextensions.value:
 			return [((boundFunction(self.getLMname), boundFunction(self.openLogManager), lambda: True), None)]
 		else:
 			return []
@@ -2738,7 +3718,7 @@ class InfoBarExtensions:
 		return _("OSD 3D Setup")
 
 	def getOsd3DSetup(self):
-		if config.osd.show3dextensions .getValue():
+		if config.osd.show3dextensions .value:
 			return [((boundFunction(self.get3DSetupname), boundFunction(self.open3DSetup), lambda: True), None)]
 		else:
 			return []
@@ -2750,7 +3730,7 @@ class InfoBarExtensions:
 		softcams = sorted(filter(lambda x: x.startswith('softcam.'), os.listdir("/etc/init.d/")))
 
 		for softcam in softcams:
-			if "cccam" in os.readlink('/etc/init.d/softcam').lower() and config.cccaminfo.showInExtensions.getValue():
+			if "cccam" in os.readlink('/etc/init.d/softcam').lower() and config.cccaminfo.showInExtensions.value:
 				return [((boundFunction(self.getCCname), boundFunction(self.openCCcamInfo), lambda: True), None)] or []
 		else:
 			return []
@@ -2762,14 +3742,14 @@ class InfoBarExtensions:
 		softcams = sorted(filter(lambda x: x.startswith('softcam.'), os.listdir("/etc/init.d/")))
 
 		for softcam in softcams:
-			if "oscam" in os.readlink('/etc/init.d/softcam') and config.oscaminfo.showInExtensions.getValue():
+			if "oscam" in os.readlink('/etc/init.d/softcam') and config.oscaminfo.showInExtensions.value:
 				return [((boundFunction(self.getOSname), boundFunction(self.openOScamInfo), lambda: True), None)] or []
 		else:
 			return []
 
 	def addExtension(self, extension, key = None, type = EXTENSION_SINGLE):
 		self.list.append((type, extension, key))
-		if config.usage.sort_extensionslist.getValue():
+		if config.usage.sort_extensionslist.value:
 			self.list.sort()
 
 	def updateExtension(self, extension, key = None):
@@ -2818,7 +3798,7 @@ class InfoBarExtensions:
 					extensionsList.remove(extension)
 				else:
 					extensionsList.remove(extension)
-		if config.usage.sort_extensionslist.getValue():
+		if config.usage.sort_extensionslist.value:
 			list.sort()
 		for x in colorlist:
 			list.append(x)
@@ -2902,7 +3882,7 @@ class InfoBarExtensions:
 			self.autotimer.parseEPG()
 
 		# Start autopoller again if wanted
-		if config.plugins.autotimer.autopoll.getValue():
+		if config.plugins.autotimer.autopoll.value:
 			if self.autopoller is None:
 				from Plugins.Extensions.AutoTimer.AutoPoller import AutoPoller
 				self.autopoller = AutoPoller()
@@ -2990,7 +3970,7 @@ class InfoBarJobman:
 		self.addExtension(extension = self.getJobList, type = InfoBarExtensions.EXTENSION_LIST)
 
 	def getJobList(self):
-		if config.usage.jobtaksextensions.getValue():
+		if config.usage.jobtaksextensions.value:
 			return [((boundFunction(self.getJobName, job), boundFunction(self.showJobView, job), lambda: True), None) for job in job_manager.getPendingJobs()]
 		else:
 			return []
@@ -3031,7 +4011,7 @@ class InfoBarPiP:
 		return self.session.pipshown
 
 	def pipHandles0Action(self):
-		return self.pipShown() and config.usage.pip_zero_button.getValue() != "standard"
+		return self.pipShown() and config.usage.pip_zero_button.value != "standard"
 
 	def getShowHideName(self):
 		if self.session.pipshown:
@@ -3043,7 +4023,7 @@ class InfoBarPiP:
 		return _("Swap services")
 
 	def getMoveName(self):
-		return _("Move Picture in Picture")
+		return _("Setup Picture in Picture")
 
 	def getTogglePipzapName(self):
 		slist = self.servicelist
@@ -3118,7 +4098,7 @@ class InfoBarPiP:
 		self.session.open(PiPSetup, pip = self.session.pip)
 
 	def pipDoHandle0Action(self):
-		use = config.usage.pip_zero_button.getValue()
+		use = config.usage.pip_zero_button.value
 		if "swap" == use:
 			self.swapPiP()
 		elif "swapstop" == use:
@@ -3126,62 +4106,6 @@ class InfoBarPiP:
 			self.showPiP()
 		elif "stop" == use:
 			self.showPiP()
-
-class InfoBarINFOpanel:
-	"""INFO-Panel - handles the infoPanel action"""
-	def __init__(self):
-		self["INFOpanelActions"] = HelpableActionMap(self, "InfoBarINFOpanel",
-			{
-				"infoPanel": (self.selectRedKeytask, _("INFO-Panel...")),
-				"softcamPanel": (self.softcamPanel, _("Softcam-Panel...")),
-			})
-		self.onHBBTVActivation = [ ]
-		self.onRedButtonActivation = [ ]	
-
-	def selectRedKeytask(self):
-		isWEBBROWSER = None
-		isHBBTV = None
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/WebBrowser/browser.pyo"):
-			isWEBBROWSER = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/HbbTV/plugin.pyo"):
-			isHBBTV = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/E3Opera/plugin.pyo"):
-			isHBBTV = True			
-
-		if isWEBBROWSER or isHBBTV:
-			service = self.session.nav.getCurrentService()
-			info = service and service.info()
-			if info and info.getInfoString(iServiceInformation.sHBBTVUrl) != "":
-				for x in self.onHBBTVActivation:
-					x()
-					
-			elif config.plugins.infopanel_redpanel.enabled.getValue() == True:
-				try:
-					from Plugins.Extensions.Infopanel.plugin import Infopanel
-					self.session.open(Infopanel, services = self.servicelist)
-				except:
-					pass
-			else:
-				self.instantRecord()		
-		
-		elif config.plugins.infopanel_redpanel.enabled.getValue() == True:
-			try:
-				from Plugins.Extensions.Infopanel.plugin import Infopanel
-				self.session.open(Infopanel, services = self.servicelist)
-			except:
-				pass
-		else:
-			self.instantRecord()
-		
-	def softcamPanel(self):
-		if config.plugins.infopanel_redpanel.enabledlong.getValue() == True:
-			try:
-				from Plugins.Extensions.Infopanel.SoftcamPanel import SoftcamPanel
-				self.session.open(SoftcamPanel)
-			except:
-				pass
-		else:
-			pass
 
 class InfoBarQuickMenu:
 	def __init__(self):
@@ -3216,6 +4140,7 @@ class InfoBarInstantRecord:
 			InfoBarInstance = InfoBar.instance
 			if InfoBarInstance:
 				self.recording = InfoBarInstance.recording
+		self.saveTimeshiftEventPopupActive = False
 
 	def stopCurrentRecording(self, entry = -1):
 		if entry is not None and entry != -1:
@@ -3223,7 +4148,7 @@ class InfoBarInstantRecord:
 			self.recording.remove(self.recording[entry])
 
 	def getProgramInfoAndEvent(self, info, name):
-		info["serviceref"] = self.session.nav.getCurrentlyPlayingServiceOrGroup()
+		info["serviceref"] = hasattr(self, "SelectedInstantServiceRef") and self.SelectedInstantServiceRef or self.session.nav.getCurrentlyPlayingServiceOrGroup()
 
 		# try to get event info
 		event = None
@@ -3311,6 +4236,7 @@ class InfoBarInstantRecord:
 		# print 'test1'
 		if answer is None or answer[1] == "no":
 			# print 'test2'
+			self.saveTimeshiftEventPopupActive = False
 			return
 		list = []
 		recording = self.recording[:]
@@ -3358,6 +4284,9 @@ class InfoBarInstantRecord:
 		elif answer[1].startswith("pts_livebuffer") is True:
 			# print 'test2'
 			InfoBarTimeshift.SaveTimeshift(self, timeshiftfile=answer[1])
+
+		if answer[1] != "savetimeshiftEvent":
+			self.saveTimeshiftEventPopupActive = False
 
 	def setEndtime(self, entry):
 		if entry is not None and entry >= 0:
@@ -3478,7 +4407,7 @@ class InfoBarAudioSelection:
 
 	def audioSelectionLong(self):
 		if SystemInfo["CanDownmixAC3"] and self.LongButtonPressed:
-			if config.av.downmix_ac3.getValue():
+			if config.av.downmix_ac3.value:
 				message = _("Dobly Digital downmix is now") + " " + _("disabled")
 				print '[Audio] Dobly Digital downmix is now disabled'
 				config.av.downmix_ac3.setValue(False)
@@ -3512,7 +4441,7 @@ class InfoBarSubserviceSelection:
 		self.bsel = None
 
 	def GreenPressed(self):
-		if not config.plisettings.Subservice.getValue():
+		if not config.plisettings.Subservice.value:
 			self.openTimerList()
 		else:
 			service = self.session.nav.getCurrentService()
@@ -3596,7 +4525,7 @@ class InfoBarSubserviceSelection:
 
 			if self.bouquets and len(self.bouquets):
 				keys = ["red", "blue", "", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ] + [""] * n
-				if config.usage.multibouquet.getValue():
+				if config.usage.multibouquet.value:
 					tlist = [(_("Quick zap"), "quickzap", service.subServices()), (_("Add to bouquet"), "CALLFUNC", self.addSubserviceToBouquetCallback), ("--", "")] + tlist
 				else:
 					tlist = [(_("Quick zap"), "quickzap", service.subServices()), (_("Add to favourites"), "CALLFUNC", self.addSubserviceToBouquetCallback), ("--", "")] + tlist
@@ -4014,9 +4943,9 @@ class InfoBarCueSheetSupport:
 			if (last > 900000) and (not length[1]  or (last < length[1] - 900000)):
 				self.resume_point = last
 				l = last / 90000
-				if config.usage.on_movie_start.getValue() == "ask" or not length[1]:
+				if config.usage.on_movie_start.value == "ask" or not length[1]:
 					Notifications.AddNotificationWithCallback(self.playLastCB, MessageBox, _("Do you want to resume this playback?") + "\n" + (_("Resume position at %s") % ("%d:%02d:%02d" % (l/3600, l%3600/60, l%60))), timeout=10)
-				elif config.usage.on_movie_start.getValue() == "resume":
+				elif config.usage.on_movie_start.value == "resume":
 					Notifications.AddNotificationWithCallback(self.playLastCB, MessageBox, _("Resuming playback"), timeout=2, type=MessageBox.TYPE_INFO)
 
 	def playLastCB(self, answer):
@@ -4337,7 +5266,7 @@ class InfoBarServiceErrorPopupSupport:
 		Notifications.RemovePopup(id = "ZapError")
 
 	def __tuneFailed(self):
-		if not config.usage.hide_zap_errors.getValue():
+		if not config.usage.hide_zap_errors.value:
 			service = self.session.nav.getCurrentService()
 			info = service and service.info()
 			error = info and info.getInfo(iServiceInformation.sDVBState)
@@ -4407,11 +5336,10 @@ class InfoBarZoom:
 
 class InfoBarHdmi:
 	def __init__(self):
-		self.hdmi_enabled = False
 		self.hdmi_enabled_full = False
 		self.hdmi_enabled_pip = False
 
-		if getMachineProcModel().startswith('ini-90'):
+		if getMachineBuild() == 'inihdp':
 			if not self.hdmi_enabled_full:
 				self.addExtension((self.getHDMIInFullScreen, self.HDMIInFull, lambda: True), "blue")
 			if not self.hdmi_enabled_pip:
@@ -4465,6 +5393,46 @@ class InfoBarHdmi:
 			self.session.pip.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:'))
 			self.session.pip.show()
 			self.session.pipshown = True
+		else:
+			curref = self.session.pip.getCurrentService()
+			if curref and curref.type != 8192:
+				self.hdmi_enabled_pip = True
+				self.session.pip.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:'))
+			else:
+				self.hdmi_enabled_pip = False
+				self.session.pipshown = False
+				del self.session.pip
+
+	def HDMIInFull(self):
+		slist = self.servicelist
+		curref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
+		if curref and curref.type != 8192:
+			self.hdmi_enabled_full = True
+			self.session.nav.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:'))
+		else:
+			self.hdmi_enabled_full = False
+			self.session.nav.playService(slist.servicelist.getCurrent())
+
+	def getHDMIInFullScreen(self):
+		if not self.hdmi_enabled_full:
+			return _("Turn on HDMI-IN Full screen mode")
+		else:
+			return _("Turn off HDMI-IN Full screen mode")
+	      
+	def getHDMIInPiPScreen(self):
+		if not self.hdmi_enabled_pip:
+			return _("Turn on HDMI-IN PiP mode")
+		else:
+			return _("Turn off HDMI-IN PiP mode")
+
+	def HDMIInPiP(self):
+		if not hasattr(self.session, 'pip') and not self.session.pipshown:
+			self.hdmi_enabled_pip = True
+			self.session.pip = self.session.instantiateDialog(PictureInPicture)
+			self.session.pip.playService(eServiceReference('8192:0:1:0:0:0:0:0:0:0:'))
+			self.session.pip.show()
+			self.session.pipshown = True
+			self.session.pip.servicePath = self.servicelist.getCurrentServicePath()
 		else:
 			curref = self.session.pip.getCurrentService()
 			if curref and curref.type != 8192:

@@ -31,7 +31,7 @@ if test -s $FILE; then
 	echo "$FILE looks good"
 	else
 	rm -f /usr/lib/enigma2/python/Plugins/Extensions/MultiQuickButton/keymap.xml
-	cp /usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/scripts/mqb_keymap.xml $FILE
+	cp /usr/lib/enigma2/python/Plugins/Extensions/opendroid-Toolbox/scripts/mqb_keymap.xml $FILE
 	echo "$FILE restored from backup"
 fi
 

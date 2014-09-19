@@ -142,6 +142,7 @@ void eDVBFrontendParametersCable::set(const CableDeliverySystemDescriptor &descr
 		case 7: fec_inner = FEC_3_5; break;
 		case 8: fec_inner = FEC_4_5; break;
 		case 9: fec_inner = FEC_9_10; break;
+		case 10: fec_inner = FEC_6_7; break;
 	}
 	modulation = descriptor.getModulation();
 	if (modulation > Modulation_QAM256)
@@ -354,6 +355,10 @@ RESULT eDVBFrontendParameters::calculateDifference(const iDVBFrontendParameters 
 			else if (exact && oterrestrial.code_rate_HP != terrestrial.code_rate_HP &&
 				oterrestrial.code_rate_HP != eDVBFrontendParametersTerrestrial::FEC_Auto &&
 				terrestrial.code_rate_HP != eDVBFrontendParametersTerrestrial::FEC_Auto)
+				diff = 1 << 30;
+			else if (oterrestrial.plpid != terrestrial.plpid)
+				diff = 1 << 27;
+			else if (oterrestrial.system != terrestrial.system)
 				diff = 1 << 30;
 			else
 				diff = abs(terrestrial.frequency - oterrestrial.frequency) / 1000;
@@ -930,6 +935,18 @@ void eDVBFrontend::calculateSignalQuality(int snr, int &signalquality, int &sign
 	{
 		ret = (int)((((double(snr) / (65536.0 / 100.0)) * 0.1880) + 0.1959) * 100);
 	}
+	else if (!strcmp(m_description, "BCM7346 DVB-S2 NIM (internal)")) // Gigablue
+	{
+		ret = (int)((((double(snr) / (65536.0 / 100.0)) * 0.1800) - 1.0000) * 100);
+	}
+	else if (!strcmp(m_description, "BCM7358 DVB-S2 NIM (internal)")) // Gigablue
+	{
+		ret = (int)((((double(snr) / (65536.0 / 100.0)) * 0.1710) - 1.0000) * 100);
+	}
+	else if (!strcmp(m_description, "GIGA DVB-S2 NIM (Internal)")) // Gigablue
+	{
+		ret = (int)((((double(snr) / (65536.0 / 100.0)) * 0.1710) - 1.0000) * 100);
+	}
 	else if (!strcmp(m_description, "Genpix"))
 	{
 		ret = (int)((snr << 1) / 5);
@@ -1180,7 +1197,7 @@ int eDVBFrontend::readInputpower()
 	sprintf(proc_name, "/proc/stb/fp/lnb_sense%d", m_slotid);
 	if (CFile::parseInt(&power, proc_name) == 0)
 		return power;
-	
+
 	// open front processor
 	int fp=::open("/dev/dbox/fp0", O_RDWR);
 	if (fp < 0)
@@ -1738,6 +1755,9 @@ void eDVBFrontend::setFrontend(bool recvEvents)
 				case eDVBFrontendParametersCable::FEC_5_6: p[cmdseq.num].u.data = FEC_5_6; break;
 				case eDVBFrontendParametersCable::FEC_7_8: p[cmdseq.num].u.data = FEC_7_8; break;
 				case eDVBFrontendParametersCable::FEC_8_9: p[cmdseq.num].u.data = FEC_8_9; break;
+				case eDVBFrontendParametersCable::FEC_3_5: p[cmdseq.num].u.data = FEC_3_5; break;
+				case eDVBFrontendParametersCable::FEC_4_5: p[cmdseq.num].u.data = FEC_4_5; break;
+				case eDVBFrontendParametersCable::FEC_9_10: p[cmdseq.num].u.data = FEC_9_10; break;
 				case eDVBFrontendParametersCable::FEC_6_7: p[cmdseq.num].u.data = FEC_6_7; break;
 			}
 			cmdseq.num++;
@@ -1870,12 +1890,10 @@ void eDVBFrontend::setFrontend(bool recvEvents)
 			p[cmdseq.num].cmd = DTV_BANDWIDTH_HZ, p[cmdseq.num].u.data = parm.bandwidth, cmdseq.num++;
 			if (system == SYS_DVBT2)
 			{
-#if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 3
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0))
-				p[cmdseq.num].cmd = DTV_DVBT2_PLP_ID_LEGACY, p[cmdseq.num].u.data = parm.plpid, cmdseq.num++;
-#else
+#if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 9
+				p[cmdseq.num].cmd = DTV_STREAM_ID, p[cmdseq.num].u.data = parm.plpid, cmdseq.num++;
+#elif DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 3
 				p[cmdseq.num].cmd = DTV_DVBT2_PLP_ID, p[cmdseq.num].u.data = parm.plpid, cmdseq.num++;
-#endif
 #endif
 			}
 		}
@@ -2332,11 +2350,20 @@ int eDVBFrontend::isCompatibleWith(ePtr<iDVBFrontendParameters> &feparm)
 		{
 			return 0;
 		}
+		if (parm.system == eDVBFrontendParametersTerrestrial::System_DVB_T_T2 && !can_handle_dvbt)
+		{
+			return 0;
+		}
 		score = 2;
 		if (parm.system == eDVBFrontendParametersTerrestrial::System_DVB_T && can_handle_dvbt2)
 		{
 			/* prefer to use a T tuner, try to keep T2 free for T2 transponders */
 			score--;
+		}
+		if (parm.system == eDVBFrontendParametersTerrestrial::System_DVB_T_T2 && can_handle_dvbt2)
+		{
+			// System_DVB_T_T2 is a generic T/T2 type, so we prefer a dvb-t2 tuner
+			score++;
 		}
 	}
 	else if (type == eDVBFrontend::feATSC)
@@ -2398,7 +2425,7 @@ void eDVBFrontend::setDeliverySystemWhitelist(const std::vector<fe_delivery_syst
 
 bool eDVBFrontend::setSlotInfo(int id, const char *descr, bool enabled, bool isDVBS2, int frontendid)
 {
-	if (frontendid < 0 || frontendid != m_dvbid) 
+	if (frontendid < 0 || frontendid != m_dvbid)
 	{
 		return false;
 	}

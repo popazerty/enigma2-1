@@ -38,11 +38,11 @@ class About(Screen):
 
 	def populate(self):
 		self["lab1"] = StaticText(_("Opendroid"))
-		self["lab2"] = StaticText(_("By Opendroid Image Team"))
-		self["lab3"] = StaticText(_("Support at") + " www.droidsat.org")
+		self["lab2"] = StaticText(_("By HDF Image Team"))
+		self["lab3"] = StaticText(_("Support at") + " www.HDFreaks.cc")
 		model = None
 		AboutText = ""
-		self["lab3"] = StaticText(_("Support at") + " www.droidsat.org")
+		self["lab3"] = StaticText(_("Support at") + " www.hdfreaks.cc")
 		AboutText += _("Model:\t%s %s\n") % (getMachineBrand(), getMachineName())
 
 		if path.exists('/proc/stb/info/chipset'):
@@ -51,8 +51,8 @@ class About(Screen):
 		AboutText += _("CPU:\t%s") % about.getCPUString() + "\n"
 		AboutText += _("Cores:\t%s") % about.getCpuCoresString() + "\n"
 
-		AboutText += _("Opendroid Version:\t%s") % getImageVersion() + "\n"
-		AboutText += _("Opendroid Build:\t%s") % getImageBuild() + "\n"
+		AboutText += _("HDF Version:\t%s") % getImageVersion() + "\n"
+		AboutText += _("HDF Build:\t%s") % getImageBuild() + "\n"
 		AboutText += _("Kernel:\t%s") % about.getKernelVersionString() + "\n"
 
 		string = getDriverDate()
@@ -217,7 +217,7 @@ class SystemMemoryInfo(Screen):
 		Screen.setTitle(self, _("Memory Information"))
 		self.skinName = ["SystemMemoryInfo", "About"]
 		self["lab1"] = StaticText(_("Opendroid"))
-		self["lab2"] = StaticText(_("By Opendroid Image Team"))
+		self["lab2"] = StaticText(_("By HDF Image Team"))
 		self["AboutScrollLabel"] = ScrollLabel()
 
 		self["actions"] = ActionMap(["SetupActions", "ColorActions"],
@@ -484,7 +484,7 @@ class SystemNetworkInfo(Screen):
 class AboutSummary(Screen):
 	def __init__(self, session, parent):
 		Screen.__init__(self, session, parent = parent)
-		self["selected"] = StaticText("Opendroid:" + getImageVersion())
+		self["selected"] = StaticText("HDF:" + getImageVersion())
 
 		AboutText = _("Model: %s %s\n") % (getMachineBrand(), getMachineName())
 

@@ -206,7 +206,7 @@ static unsigned char *bmp_load(const char *file,  int *x, int *y)
 					read(fd, buff, skip);
 				wr_buffer -= (*x) * 6;
 			}
-			delete tbuffer;
+			delete [] tbuffer;
 			break;
 		}
 		case 8:
@@ -230,7 +230,7 @@ static unsigned char *bmp_load(const char *file,  int *x, int *y)
 					read(fd, buff, skip);
 				wr_buffer -= (*x) * 3;
 			}
-			delete tbuffer;
+			delete [] tbuffer;
 			break;
 		}
 		case 24:
@@ -1191,7 +1191,7 @@ RESULT ePicLoad::setPara(int width, int height, double aspectRatio, int as, bool
 	eDebug("[Picload] setPara max-X=%d max-Y=%d aspect_ratio=%lf cache=%d resize=%d bg=#%08X",
 			m_conf.max_x, m_conf.max_y, m_conf.aspect_ratio,
 			(int)m_conf.usecache, (int)m_conf.resizetype, m_conf.background);
-	return 1;	
+	return 1;
 }
 
 //------------------------------------------------------------------------------------
