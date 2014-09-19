@@ -56,7 +56,7 @@ def languageChanged():
 
 def CreateFeedConfig():
 	fileconf = "/etc/opkg/user-feed.conf"
-	feedurl = "src/gz user-feeds %s\n" % config.pluginfilter.userfeed.value
+	feedurl = "src/gz user-feeds %s\n" % config.pluginfilter.userfeed.getValue()
 	f = open(fileconf, "w")
 	f.write(feedurl)
 	f.close()
@@ -95,7 +95,7 @@ class PluginBrowser(Screen):
 
 		self.list = []
 		self["list"] = PluginList(self.list)
-		if config.usage.sort_pluginlist.value:
+		if config.usage.sort_pluginlist.getValue():
 			self["list"].list.sort()
 
 		self["actions"] = ActionMap(["SetupActions","WizardActions"],
@@ -116,7 +116,7 @@ class PluginBrowser(Screen):
 		self.onChangedEntry = []
 		self["list"].onSelectionChanged.append(self.selectionChanged)
 		self.onLayoutFinish.append(self.saveListsize)
-		if config.pluginfilter.userfeed.value != "http://":
+		if config.pluginfilter.userfeed.getValue() != "http://":
 				if not os.path.exists("/etc/opkg/user-feed.conf"):
 					CreateFeedConfig()
 
@@ -160,7 +160,7 @@ class PluginBrowser(Screen):
 
 	def updateList(self):
 		self.pluginlist = plugins.getPlugins(PluginDescriptor.WHERE_PLUGINMENU)
-		self.list = [PluginEntryComponent(plugin, self.listWidth) for plugin in self.pluginlist]
+		self.list = [PluginEntryComponent(plugin) for plugin in self.pluginlist]
 		self["list"].l.setList(self.list)
 
 	def delete(self):
@@ -202,7 +202,6 @@ class PluginDownloadBrowser(Screen):
 		self.type = type
 		self.needupdate = needupdate
 		self.createPluginFilter()
-		self.LanguageList = language.getLanguageListSelection()
 
 		self.container = eConsoleAppContainer()
 		self.container.appClosed.append(self.runFinished)
@@ -250,41 +249,38 @@ class PluginDownloadBrowser(Screen):
 	def createPluginFilter(self):
 		#Create Plugin Filter
 		self.PLUGIN_PREFIX2 = []
-		if config.pluginfilter.opendroid.value:
+		if config.pluginfilter.opendroid.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'opendroid')
-		if config.pluginfilter.po.value:
+		if config.pluginfilter.po.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'po')
-		if config.pluginfilter.src.value:
+		if config.pluginfilter.src.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'src')
-		if config.pluginfilter.drivers.value:
+		if config.pluginfilter.drivers.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'drivers')
-		if config.pluginfilter.extensions.value:
+		if config.pluginfilter.extensions.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'extensions')
-		if config.pluginfilter.gigabluesupportnet.value:
+		if config.pluginfilter.gigabluesupportnet.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'gigabluesupportnet')
-		if config.pluginfilter.picons.value:
-			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'picons')
-		if config.pluginfilter.pli.value:
+		if config.pluginfilter.addons.getValue():
+			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'addons')
+		if config.pluginfilter.pli.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'pli')
-		if config.pluginfilter.security.value:
+		if config.pluginfilter.security.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'security')
-		if config.pluginfilter.settings.value:
+		if config.pluginfilter.settings.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'settings')
-		if config.pluginfilter.skins.value:
+		if config.pluginfilter.skins.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'skins')
-		if config.pluginfilter.display.value:
-			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'display')
-		if config.pluginfilter.softcams.value:
+		if config.pluginfilter.softcams.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'softcams')
-		if config.pluginfilter.systemplugins.value:
+		if config.pluginfilter.systemplugins.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'systemplugins')
-		if config.pluginfilter.vix.value:
+		if config.pluginfilter.vix.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'vix')
-		if config.pluginfilter.weblinks.value:
+		if config.pluginfilter.weblinks.getValue():
 			self.PLUGIN_PREFIX2.append(self.PLUGIN_PREFIX + 'weblinks')
-		if config.pluginfilter.kernel.value:
+		if config.pluginfilter.kernel.getValue():
 			self.PLUGIN_PREFIX2.append('kernel-module-')
-		self.PLUGIN_PREFIX2.append('enigma2-locale-')
 
 	def go(self):
 		sel = self["list"].l.getCurrentSelection()
@@ -393,7 +389,7 @@ class PluginDownloadBrowser(Screen):
 				self.doToogle(self.installFinished, self["list"].l.getCurrentSelection()[0].name)
 
 	def doRemove(self, callback, pkgname):
-		if pkgname.startswith('kernel-module-') or pkgname.startswith('enigma2-locale-'):
+		if pkgname.startswith('kernel-module-'):
 			self.session.openWithCallback(callback, Console, cmdlist = [self.ipkg_remove + Ipkg.opkgExtraDestinations() + " " + pkgname, "sync"], closeOnSuccess = True)
 		else:
 			self.session.openWithCallback(callback, Console, cmdlist = [self.ipkg_remove + Ipkg.opkgExtraDestinations() + " " + self.PLUGIN_PREFIX + pkgname, "sync"], closeOnSuccess = True)
@@ -407,7 +403,7 @@ class PluginDownloadBrowser(Screen):
 			self.session.openWithCallback(callback, Console, cmdlist = [self.ipkg_toogle + " " + self.PLUGIN_PREFIX + pkgname, "sync"], closeOnSuccess = False)
 
 	def doInstall(self, callback, pkgname):
-		if pkgname.startswith('kernel-module-') or pkgname.startswith('enigma2-locale-'):
+		if pkgname.startswith('kernel-module-'):
 			self.session.openWithCallback(callback, Console, cmdlist = [self.ipkg_install + " " + pkgname, "sync"], closeOnSuccess = True)
 		else:
 			self.session.openWithCallback(callback, Console, cmdlist = [self.ipkg_install + " " + self.PLUGIN_PREFIX + pkgname, "sync"], closeOnSuccess = True)
@@ -466,7 +462,7 @@ class PluginDownloadBrowser(Screen):
 			pass
 		if self.type != self.TOOGLE:
 			for plugin in self.pluginlist:
-				if plugin[3] == self["list"].l.getCurrentSelection()[0].name or plugin[0] == self["list"].l.getCurrentSelection()[0].name:
+				if plugin[3] == self["list"].l.getCurrentSelection()[0].name:
 					self.pluginlist.remove(plugin)
 					break
 		self.plugins_changed = True
@@ -535,7 +531,7 @@ class PluginDownloadBrowser(Screen):
 			plugin = x.split(" - ", 2)
 			# 'opkg list_installed' only returns name + version, no description field
 			if len(plugin) >= 1:
-				if not plugin[0].endswith('-dev') and not plugin[0].endswith('-staticdev') and not plugin[0].endswith('-dbg') and not plugin[0].endswith('-doc') and not plugin[0].endswith('-src') and not plugin[0].endswith('-meta'):
+				if not plugin[0].endswith('-dev') and not plugin[0].endswith('-staticdev') and not plugin[0].endswith('-dbg') and not plugin[0].endswith('-doc') and not plugin[0].endswith('-src'):
 					# Plugin filter
 					for s in self.PLUGIN_PREFIX2:
 						if plugin[0].startswith(s):
@@ -546,14 +542,7 @@ class PluginDownloadBrowser(Screen):
 								if plugin[0] not in self.installedplugins:
 									if len(plugin) == 2:
 										# 'opkg list_installed' does not return descriptions, append empty description
-										if plugin[0].startswith('enigma2-locale-'):
-											lang = plugin[0].split('-')
-											if len(lang) > 3:
-												plugin.append(lang[2] + '-' + lang[3])
-											else:
-												plugin.append(lang[2])
-										else:
-											plugin.append('')
+										plugin.append('')
 									plugin.append(plugin[0][15:])
 
 									self.pluginlist.append(plugin)
@@ -575,40 +564,19 @@ class PluginDownloadBrowser(Screen):
 			split = x[3].split('-', 1)
 			if x[0][0:14] == 'kernel-module-':
 					split[0] = "kernel modules"
-			elif x[0][0:15] == 'enigma2-locale-':
-				split[0] = "languages"
 
 			if not self.plugins.has_key(split[0]):
 				self.plugins[split[0]] = []
 
 			if split[0] == "kernel modules":
 				self.plugins[split[0]].append((PluginDescriptor(name = x[0], description = x[2], icon = verticallineIcon), x[0][14:], x[1]))
-			elif split[0] == "languages":
-				for t in self.LanguageList:
-					if len(x[2])>2:
-						tmpT = t[0].lower()
-						tmpT = tmpT.replace('_','-')
-						if tmpT == x[2]:
-							countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + t[0] + ".png"))
-							if countryIcon is None:
-								countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/missing.png"))
-							self.plugins[split[0]].append((PluginDescriptor(name = x[0], description = x[2], icon = countryIcon), t[1], x[1]))
-							break
-					else:
-						if t[0][:2] == x[2] and t[0][3:] != 'GB':
-							countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + t[0] + ".png"))
-							if countryIcon is None:
-								countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/missing.png"))
-							self.plugins[split[0]].append((PluginDescriptor(name = x[0], description = x[2], icon = countryIcon), t[1], x[1]))
-							break
-							
 			else:
 				if len(split) < 2:
 					continue
 				self.plugins[split[0]].append((PluginDescriptor(name = x[3], description = x[2], icon = verticallineIcon), split[1], x[1]))
 
 		temp = self.plugins.keys()
-		if config.usage.sort_pluginlist.value:
+		if config.usage.sort_pluginlist.getValue():
 			temp.sort()
 		for x in temp:
 			if x in self.expanded:
@@ -670,8 +638,7 @@ class PluginFilter(ConfigListScreen, Screen):
 		self.list.append(getConfigListEntry(_("Systemplugins"), config.pluginfilter.systemplugins, _("This allows you to show systemplugins modules in downloads")))
 		self.list.append(getConfigListEntry(_("Softcams"), config.pluginfilter.softcams, _("This allows you to show softcams modules in downloads")))
 		self.list.append(getConfigListEntry(_("Skins"), config.pluginfilter.skins, _("This allows you to show skins modules in downloads")))
-		self.list.append(getConfigListEntry(_("display"), config.pluginfilter.skins, _("This allows you to show lcd skins in downloads")))
-		self.list.append(getConfigListEntry(_("Picons"), config.pluginfilter.picons, _("This allows you to show picons modules in downloads")))
+		self.list.append(getConfigListEntry(_("Addons"), config.pluginfilter.addons, _("This allows you to show addons modules in downloads")))
 		self.list.append(getConfigListEntry(_("Settings"), config.pluginfilter.settings, _("This allows you to show settings modules in downloads")))
 		self.list.append(getConfigListEntry(_("Weblinks"), config.pluginfilter.weblinks, _("This allows you to show weblinks modules in downloads")))
 		self.list.append(getConfigListEntry(_("PLi"), config.pluginfilter.pli, _("This allows you to show pli modules in downloads")))
@@ -683,7 +650,7 @@ class PluginFilter(ConfigListScreen, Screen):
 
 		self["config"].list = self.list
 		self["config"].setList(self.list)
-		if config.usage.sort_settings.value:
+		if config.usage.sort_settings.getValue():
 			self["config"].list.sort()
 
 	def selectionChanged(self):
@@ -704,7 +671,7 @@ class PluginFilter(ConfigListScreen, Screen):
 		for x in self["config"].list:
 			x[1].save()
 		configfile.save()
-		if config.pluginfilter.userfeed.value != "http://":
+		if config.pluginfilter.userfeed.getValue() != "http://":
 			CreateFeedConfig()
 
 	def keySave(self):
@@ -727,11 +694,11 @@ class PluginFilter(ConfigListScreen, Screen):
 	def KeyText(self):
 		sel = self['config'].getCurrent()
 		if sel:
-			self.session.openWithCallback(self.VirtualKeyBoardCallback, VirtualKeyBoard, title = self["config"].getCurrent()[0], text = self["config"].getCurrent()[1].value)
+			self.session.openWithCallback(self.VirtualKeyBoardCallback, VirtualKeyBoard, title = self["config"].getCurrent()[0], text = self["config"].getCurrent()[1].getValue())
 
 	def VirtualKeyBoardCallback(self, callback = None):
 		if callback is not None and len(callback):
-			self["config"].getCurrent()[1].value = callback
+			self["config"].getCurrent()[1].setValue(callback)
 			self["config"].invalidate(self["config"].getCurrent())
 			
 language.addCallback(languageChanged)

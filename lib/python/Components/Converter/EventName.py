@@ -1,9 +1,7 @@
-from enigma import eEPGCache
-
 from Components.Converter.Converter import Converter
 from Components.Element import cached
-from Components.Converter.genre import getGenreStringSub
-
+from Components.Converter.genre import getGenreStringLong, getGenreStringSub
+from enigma import eEPGCache
 
 class EventName(Converter, object):
 	NAME = 0
@@ -59,10 +57,7 @@ class EventName(Converter, object):
 			return ""
 
 		if self.type == self.NAME:
-			if event.getEventName() == "Visibile gratis su tv terrestre e TivuSat":
-				return event.getShortDescription().title()
-			else:
-				return event.getEventName()
+			return event.getEventName()
 		elif self.type == self.SRATING:
 			rating = event.getParentalData()
 			if rating is None:
@@ -144,5 +139,6 @@ class EventName(Converter, object):
 				if self.type == self.NAME_NEXT:
 					return pgettext("now/next: 'next' event label", "Next") + ": " + event.getEventName()
 				return ""
+
 
 	text = property(getText)

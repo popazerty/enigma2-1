@@ -13,10 +13,7 @@ from Tools.HardwareInfo import HardwareInfo
 
 def InitUsageConfig():
 	config.misc.useNTPminutes = ConfigSelection(default = "30", choices = [("30", "30" + " " +_("minutes")), ("60", _("Hour")), ("1440", _("Once per day"))])
-	if getBrandOEM() == 'vuplus':
-		config.misc.remotecontrol_text_support = ConfigYesNo(default = True)
-	else:
-		config.misc.remotecontrol_text_support = ConfigYesNo(default = False)
+	config.misc.remotecontrol_text_support = ConfigYesNo(default = True)
 
 	config.workaround = ConfigSubsection()
 	config.workaround.deeprecord = ConfigYesNo(default = False)
@@ -33,18 +30,10 @@ def InitUsageConfig():
 		eDVBDB.getInstance().setNumberingMode(configElement.value)
 		refreshServiceList()
 	config.usage.alternative_number_mode.addNotifier(alternativeNumberModeChange)
-	config.usage.crypto_icon_mode = ConfigSelection(default = "0", choices = [("0", _("None")), ("1", _("Left from servicename")), ("2", _("Right from servicename"))])
-	config.usage.crypto_icon_mode.addNotifier(refreshServiceList)
 
 	config.usage.panicbutton = ConfigYesNo(default = False)
 	config.usage.servicetype_icon_mode = ConfigSelection(default = "0", choices = [("0", _("None")), ("1", _("Left from servicename")), ("2", _("Right from servicename"))])
 	config.usage.servicetype_icon_mode.addNotifier(refreshServiceList)
-
-	choicelist = [("-1", _("Divide")), ("0", _("Disable"))]
-	for i in range(100,1300,100):
-		choicelist.append(("%d" % i, ngettext("%d pixel wide", "%d pixels wide", i) % i))
-	config.usage.servicelist_column = ConfigSelection(default="0", choices=choicelist)
-	config.usage.servicelist_column.addNotifier(refreshServiceList)
 
 	config.usage.service_icon_enable = ConfigYesNo(default = False)
 	config.usage.service_icon_enable.addNotifier(refreshServiceList)
@@ -253,10 +242,6 @@ def InitUsageConfig():
 					("2", _("Bouquet List"))])
 	config.usage.updownbutton_mode = ConfigSelection(default="1", choices = [
 					("0", _("Just change channels")),
-					("1", _("Channel List")),
-					("2", _("Just change channels revert"))])
-	config.usage.leftrightbutton_mode = ConfigSelection(default="0", choices = [
-					("0", _("Just change channels")),
 					("1", _("Channel List"))])
 	config.usage.okbutton_mode = ConfigSelection(default="0", choices = [
 					("0", _("InfoBar")),
@@ -342,7 +327,6 @@ def InitUsageConfig():
 	config.epg.freesat = ConfigYesNo(default = True)
 	config.epg.viasat = ConfigYesNo(default = True)
 	config.epg.netmed = ConfigYesNo(default = True)
-	config.epg.virgin = ConfigYesNo(default = False)
 
 	def EpgSettingsChanged(configElement):
 		from enigma import eEPGCache
@@ -357,15 +341,12 @@ def InitUsageConfig():
 			mask &= ~eEPGCache.VIASAT
 		if not config.epg.netmed.value:
 			mask &= ~(eEPGCache.NETMED_SCHEDULE | eEPGCache.NETMED_SCHEDULE_OTHER)
-		if not config.epg.virgin.value:
-			mask &= ~(eEPGCache.VIRGIN_NOWNEXT | eEPGCache.VIRGIN_SCHEDULE)
 		eEPGCache.getInstance().setEpgSources(mask)
 	config.epg.eit.addNotifier(EpgSettingsChanged)
 	config.epg.mhw.addNotifier(EpgSettingsChanged)
 	config.epg.freesat.addNotifier(EpgSettingsChanged)
 	config.epg.viasat.addNotifier(EpgSettingsChanged)
 	config.epg.netmed.addNotifier(EpgSettingsChanged)
-	config.epg.virgin.addNotifier(EpgSettingsChanged)
 
 	config.epg.histminutes = ConfigSelectionNumber(min = 0, max = 120, stepwidth = 15, default = 0, wraparound = True)
 	def EpgHistorySecondsChanged(configElement):
@@ -390,7 +371,6 @@ def InitUsageConfig():
 	config.osd.dst_top = ConfigSelectionNumber(default = 0, stepwidth = 1, min = 0, max = 576, wraparound = False)
 	config.osd.dst_height = ConfigSelectionNumber(default = 576, stepwidth = 1, min = 0, max = 576, wraparound = False)
 	config.osd.alpha = ConfigSelectionNumber(default = 255, stepwidth = 1, min = 0, max = 255, wraparound = False)
-	config.osd.alpha_teletext = ConfigSelectionNumber(default = 255, stepwidth = 1, min = 0, max = 255, wraparound = False)
 	config.av.osd_alpha = NoSave(ConfigNumber(default = 255))
 	config.osd.threeDmode = ConfigSelection([("off", _("Off")), ("auto", _("Auto")), ("sidebyside", _("Side by Side")),("topandbottom", _("Top and Bottom"))], "auto")
 	config.osd.threeDznorm = ConfigSlider(default = 50, increment = 1, limits = (0, 100))
@@ -427,45 +407,31 @@ def InitUsageConfig():
 			hdd[1].setIdleTime(int(configElement.value))
 	config.usage.hdd_standby.addNotifier(setHDDStandby, immediate_feedback=False)
 
-	if SystemInfo["12V_Output"]:
-		def set12VOutput(configElement):
-			Misc_Options.getInstance().set_12V_output(configElement.value == "on" and 1 or 0)
-		config.usage.output_12V.addNotifier(set12VOutput, immediate_feedback=False)
+	def set12VOutput(configElement):
+		if configElement.value == "on":
+			Misc_Options.getInstance().set_12V_output(1)
+		elif configElement.value == "off":
+			Misc_Options.getInstance().set_12V_output(0)
+	config.usage.output_12V.addNotifier(set12VOutput, immediate_feedback=False)
+
+	SystemInfo["12V_Output"] = Misc_Options.getInstance().detected_12V_output()
 
 	config.usage.keymap = ConfigText(default = eEnv.resolve("${datadir}/enigma2/keymap.xml"))
-	if getMachineName().lower().startswith('xp') or getMachineName().lower().startswith('lx') or getBoxType().startswith('atemio'):
-		if fileExists(eEnv.resolve("${datadir}/enigma2/keymap.usr")):
-			config.usage.keymap = ConfigSelection(default = eEnv.resolve("${datadir}/enigma2/keymap.xpe"), choices = [
-				(eEnv.resolve("${datadir}/enigma2/keymap.xml"), _("Default keymap - keymap.xml")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.xpe"), _("Xpeed keymap - keymap.xpe")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.usr"), _("User keymap - keymap.usr")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80"))])
-		else:
-			config.usage.keymap = ConfigSelection(default = eEnv.resolve("${datadir}/enigma2/keymap.xpe"), choices = [
-				(eEnv.resolve("${datadir}/enigma2/keymap.xml"), _("Default keymap - keymap.xml")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.xpe"), _("Xpeed keymap - keymap.xpe")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80"))])
+	if getMachineName().lower().startswith('xpeed'):
+		config.usage.keymap = ConfigSelection(default = eEnv.resolve("${datadir}/enigma2/keymap.xpe"), choices = [
+			(eEnv.resolve("${datadir}/enigma2/keymap.xml"), _("Default keymap - keymap.xml")),
+			(eEnv.resolve("${datadir}/enigma2/keymap.usr"), _("Xpeed keymap - keymap.xpe")),
+			(eEnv.resolve("${datadir}/enigma2/keymap.usr"), _("User keymap - keymap.usr")),
+			(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
+			(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80")) ] )
 	else:
-		if fileExists(eEnv.resolve("${datadir}/enigma2/keymap.usr")):
-			config.usage.keymap = ConfigSelection(default = eEnv.resolve("${datadir}/enigma2/keymap.xml"), choices = [
-				(eEnv.resolve("${datadir}/enigma2/keymap.xml"), _("Default keymap - keymap.xml")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.usr"), _("User keymap - keymap.usr")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80"))])
-		else:
-			config.usage.keymap = ConfigSelection(default = eEnv.resolve("${datadir}/enigma2/keymap.xml"), choices = [
-				(eEnv.resolve("${datadir}/enigma2/keymap.xml"), _("Default keymap - keymap.xml")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
-				(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80"))])
+		config.usage.keymap = ConfigSelection(default = eEnv.resolve("${datadir}/enigma2/keymap.xml"), choices = [
+			(eEnv.resolve("${datadir}/enigma2/keymap.xml"), _("Default keymap - keymap.xml")),
+			(eEnv.resolve("${datadir}/enigma2/keymap.usr"), _("User keymap - keymap.usr")),
+			(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
+			(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80")) ] )
 
 	config.network = ConfigSubsection()
-	if SystemInfo["WakeOnLAN"]:
-		def wakeOnLANChanged(configElement):
-			open(SystemInfo["WakeOnLAN"], "w").write(configElement.value and "enable" or "disable")
-		config.network.wol = ConfigYesNo(default = False)
-		config.network.wol.addNotifier(wakeOnLANChanged)
 	config.network.AFP_autostart = ConfigYesNo(default = False)
 	config.network.NFS_autostart = ConfigYesNo(default = False)
 	config.network.OpenVPN_autostart = ConfigYesNo(default = False)
@@ -496,8 +462,6 @@ def InitUsageConfig():
 	config.timeshift.favoriteSaveAction = ConfigSelection([("askuser", _("Ask user")),("savetimeshift", _("Save and stop")),("savetimeshiftandrecord", _("Save and record")),("noSave", _("Don't save"))], "askuser")
 	config.timeshift.autorecord = ConfigYesNo(default = False)
 	config.timeshift.isRecording = NoSave(ConfigYesNo(default = False))
-	config.timeshift.timeshiftMaxHours = ConfigSelectionNumber(min = 1, max = 999, stepwidth = 1, default = 12, wraparound = True)
-	config.timeshift.deleteAfterZap = ConfigYesNo(default = True)
 
 	config.seek = ConfigSubsection()
 	config.seek.baractivation = ConfigSelection([("leftright", _("Long Left/Right")),("ffrw", _("Long << / >>"))], "leftright")
@@ -571,20 +535,29 @@ def InitUsageConfig():
 		("3", _("Everywhere"))])
 	config.misc.erase_flags.addNotifier(updateEraseFlags, immediate_feedback = False)
 
+	SystemInfo["ZapMode"] = os.path.exists("/proc/stb/video/zapmode") or os.path.exists("/proc/stb/video/zapping_mode")
 	if SystemInfo["ZapMode"]:
-		def setZapmode(el):
-			file = open(zapfile, "w")
-			file.write(el.value)
-			file.close()
-		if os.path.exists("/proc/stb/video/zapping_mode"):
-			zapfile = "/proc/stb/video/zapping_mode"
-		else:
+		try:
+			if os.path.exists("/proc/stb/video/zapping_mode"):
+				zapoptions = [("mute", _("Black screen")), ("hold", _("Hold screen"))]
+				zapfile = "/proc/stb/video/zapping_mode"
+			else:
+				zapoptions = [("mute", _("Black screen")), ("hold", _("Hold screen")), ("mutetilllock", _("Black screen till locked")), ("holdtilllock", _("Hold till locked"))]
+				zapfile = "/proc/stb/video/zapmode"
+		except:
+			zapoptions = [("mute", _("Black screen")), ("hold", _("Hold screen")), ("mutetilllock", _("Black screen till locked")), ("holdtilllock", _("Hold till locked"))]
 			zapfile = "/proc/stb/video/zapmode"
-		zapoptions = [("mute", _("Black screen")), ("hold", _("Hold screen")), ("mutetilllock", _("Black screen till locked")), ("holdtilllock", _("Hold till locked"))]
+
+		def setZapmode(el):
+			try:
+				file = open(zapfile, "w")
+				file.write(el.value)
+				file.close()
+			except:
+				pass
 		config.misc.zapmode = ConfigSelection(default = "mute", choices = zapoptions )
 		config.misc.zapmode.addNotifier(setZapmode, immediate_feedback = False)
 	config.usage.historymode = ConfigSelection(default = "1", choices = [("1", _("Show menu")), ("0", _("Just zap")), ("2", _("Show Zap-History Browser"))])
-	config.usage.bookmarkmode = ConfigSelection(default = "0", choices = [("1", _("Show EMC")), ("0", _("Show Movielist")), ("2", _("Show Simple Movie List"))])
 
 	config.subtitles = ConfigSubsection()
 	config.subtitles.ttx_subtitle_colors = ConfigSelection(default = "1", choices = [
@@ -731,8 +704,7 @@ def InitUsageConfig():
 					("single", _("Show Single EPG")),
 					("multi", _("Show Multi EPG")),
 					("eventview", _("Show Eventview")),
-					("cooltvguide", _("Show CoolTVGuide")),
-					("etportal", _("Show EtPortal"))])
+					("cooltvguide", _("Show CoolTVGuide"))])
 		config.plisettings.PLIINFO_mode = ConfigSelection(default="coolinfoguide", choices = [
 					("eventview", _("Show Eventview")),
 					("epgpress", _("Show EPG")),
@@ -751,350 +723,22 @@ def InitUsageConfig():
 					("cooltvguide", _("Show CoolTVGuide")),
 					("emc", _("Show Enhanced Movie Center")),
 					("mediaportal", _("Show Media Portal")),
-					("dreamplex", _("Show DreamPlex")),
 					("etportal", _("Show EtPortal"))])
 	else:
 		config.plisettings.PLIEPG_mode = ConfigSelection(default="pliepg", choices = [
 					("pliepg", _("Show Graphical EPG")),
 					("single", _("Show Single EPG")),
 					("multi", _("Show Multi EPG")),
-					("showfavourites", _("Show Favourites")),
-					("eventview", _("Show Eventview")),
-					("etportal", _("Show EtPortal"))])
+					("eventview", _("Show Eventview"))])
 		config.plisettings.PLIINFO_mode = ConfigSelection(default="eventview", choices = [
 					("eventview", _("Show Eventview")),
 					("epgpress", _("Show EPG")),
-					("showfavourites", _("Show Favourites")),
-					("single", _("Show Single EPG")),
-					("etportal", _("Show EtPortal"))])
+					("single", _("Show Single EPG"))])
 		config.plisettings.PLIFAV_mode = ConfigSelection(default="eventview", choices = [
 					("eventview", _("Show Eventview")),
 					("epgpress", _("Show EPG")),
-					("showfavourites", _("Show Favourites")),
-					("single", _("Show Single EPG")),
-					("emc", _("Show Enhanced Movie Center")),
-					("mediaportal", _("Show Media Portal")),
-					("dreamplex", _("Show DreamPlex")),
-					("etportal", _("Show EtPortal"))])
-
-	config.plisettings.F1_mode = ConfigSelection(default="opendroidtoolbox", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("showsimplelist", _("Show Simple Movie List")),
-				("eventview", _("Show Eventview")),
-				("showfavourites", _("Show Favourites")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("dreamplex", _("Show DreamPlex")),
-				("etportal", _("Show EtPortal"))])
-
-	config.plisettings.F2_mode = ConfigSelection(default="mediaportal", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("showsimplelist", _("Show Simple Movie List")),
-				("eventview", _("Show Eventview")),
-				("showfavourites", _("Show Favourites")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("dreamplex", _("Show DreamPlex")),
-				("etportal", _("Show EtPortal"))])
-
-	config.plisettings.F3_mode = ConfigSelection(default="etportal", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("showsimplelist", _("Show Simple Movie List")),
-				("eventview", _("Show Eventview")),
-				("showfavourites", _("Show Favourites")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("dreamplex", _("Show DreamPlex")),
-				("etportal", _("Show EtPortal"))])
-
-	config.plisettings.F4_mode = ConfigSelection(default="vmodeSelection", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("showsimplelist", _("Show Simple Movie List")),
-				("eventview", _("Show Eventview")),
-				("showfavourites", _("Show Favourites")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("dreamplex", _("Show DreamPlex")),
-				("etportal", _("Show EtPortal"))])
-
-	config.plisettings.redbutton_mode = ConfigSelection(default="opendroidtoolbox", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("audioSelection", _("Show Audio channels")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.greenbutton_mode = ConfigSelection(default="subserviceSelection", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("audioSelection", _("Show Audio channels")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.yellowbutton_mode = ConfigSelection(default="single", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("audioSelection", _("Show Audio channels")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.bluebutton_mode = ConfigSelection(default="extensions", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("audioSelection", _("Show Audio channels")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.redbuttonlong_mode = ConfigSelection(default="instantRecord", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.greenbuttonlong_mode = ConfigSelection(default="subtitleSelection", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.yellowbuttonlong_mode = ConfigSelection(default="showfavourites", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.bluebuttonlong_mode = ConfigSelection(default="showPluginBrowser", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.webbutton_mode = ConfigSelection(default="opendroidtoolbox", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
-	config.plisettings.pluginbutton_mode = ConfigSelection(default="opendroidtoolbox", choices = [
-				("opendroidtoolbox", _("Show opendroid-Toolbox")),
-				("timerSelection", _("Show Timer List")),
-				("subserviceSelection", _("Show Subservices")),
-				("subtitleSelection", _("Show Subtitles")),
-				("showfavourites", _("Show Favourites")),
-				("eventview", _("Show Eventview")),
-				("epgpress", _("Show EPG")),
-				("single", _("Show Single EPG")),
-				("openInfoBarEPG", _("Show InfoBar EPG")),
-				("coolsingleguide", _("Show CoolSingleGuide")),
-				("coolinfoguide", _("Show CoolInfoGuide")),
-				("cooltvguide", _("Show CoolTVGuide")),
-				("emc", _("Show Enhanced Movie Center")),
-				("mediaportal", _("Show Media Portal")),
-				("instantRecord", _("start instantRecord")),
-				("showEventInfoPlugins", _("show EventInfoPlugins")),
-				("extensions", _("Show Extensions")),
-				("showPluginBrowser", _("Show Plugins")),
-				("hbbtv", _("HbbTV Red-Button")),
-				("vmodeSelection", _("Toggle aspect ratio")),
-				("etportal", _("Show EtPortal")),
-				("werbezapper", _("Show WerbeZapper")),
-				("werbezappermon", _("Start/Stop WerbeZapper Monitoring"))])
-
+					("single", _("Show Single EPG"))])
+					
 	config.epgselection = ConfigSubsection()
 	config.epgselection.sort = ConfigSelection(default="0", choices = [("0", _("Time")),("1", _("Alphanumeric"))])
 	config.epgselection.overjump = ConfigYesNo(default = False)
@@ -1206,7 +850,6 @@ def InitUsageConfig():
 	config.streaming.descramble = ConfigYesNo(default = True)
 	config.streaming.stream_eit = ConfigYesNo(default = True)
 	config.streaming.stream_ait = ConfigYesNo(default = True)
-	config.streaming.authentication = ConfigYesNo(default = False)
 
 	config.pluginbrowser = ConfigSubsection()
 	config.pluginbrowser.po = ConfigYesNo(default = False)

@@ -55,10 +55,6 @@ class ServiceList(HTMLComponent, GUIComponent):
 		if pic:
 			self.l.setPixmap(self.l.picServiceGroup, pic)
 
-		pic = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/icon_crypt.png"))
-		if pic:
-			self.l.setPixmap(self.l.picCrypto, pic)
-
 		self.root = None
 		self.mode = self.MODE_NORMAL
 		self.listHeight = None
@@ -152,7 +148,6 @@ class ServiceList(HTMLComponent, GUIComponent):
 				revert_mode = config.servicelist.lastmode.value
 				revert_root = self.getRoot()
 				self.serviceList.setTvMode()
-				revert_tv_root = self.getRoot()
 				bouquets = self.serviceList.getBouquetList()
 				for bouquet in bouquets:
 					self.serviceList.enterUserbouquet(bouquet[1])
@@ -160,9 +155,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 						config.servicelist.lastmode.save()
 						self.serviceList.saveChannel(ref)
 						return True
-				self.serviceList.enterUserbouquet(revert_tv_root)	
-				self.serviceList.setModeRadio()
-				revert_radio_root = self.getRoot()
+				self.serviceList.setRadioMode()
 				bouquets = self.serviceList.getBouquetList()
 				for bouquet in bouquets:
 					self.serviceList.enterUserbouquet(bouquet[1])
@@ -170,7 +163,6 @@ class ServiceList(HTMLComponent, GUIComponent):
 						config.servicelist.lastmode.save()
 						self.serviceList.saveChannel(ref)
 						return True
-				self.serviceList.enterUserbouquet(revert_radio_root)		
 				print "[servicelist] service not found in any userbouquets"
 				if revert_mode == "tv":
 					self.serviceList.setModeTv()
@@ -226,7 +218,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 
 	def setItemsPerPage(self):
 		if self.listHeight > 0:
-			itemHeight = self.listHeight / config.usage.serviceitems_per_page.value
+			itemHeight = self.listHeight / config.usage.serviceitems_per_page.getValue()
 		else:
 			itemHeight = 28
 		self.ItemHeight = itemHeight
@@ -235,9 +227,9 @@ class ServiceList(HTMLComponent, GUIComponent):
 			self.instance.resize(eSize(self.listWidth, self.listHeight / itemHeight * itemHeight))
 
 	def setServiceFontsize(self):
-		self.ServiceNumberFont = gFont(self.ServiceNameFontName, self.ServiceNameFontSize + config.usage.servicenum_fontsize.value)
-		self.ServiceNameFont = gFont(self.ServiceNameFontName, self.ServiceNameFontSize + config.usage.servicename_fontsize.value)
-		self.ServiceInfoFont = gFont(self.ServiceInfoFontName, self.ServiceInfoFontSize + config.usage.serviceinfo_fontsize.value)
+		self.ServiceNumberFont = gFont(self.ServiceNameFontName, self.ServiceNameFontSize + config.usage.servicenum_fontsize.getValue())
+		self.ServiceNameFont = gFont(self.ServiceNameFontName, self.ServiceNameFontSize + config.usage.servicename_fontsize.getValue())
+		self.ServiceInfoFont = gFont(self.ServiceInfoFontName, self.ServiceInfoFontSize + config.usage.serviceinfo_fontsize.getValue())
 		self.l.setElementFont(self.l.celServiceName, self.ServiceNameFont)
 		self.l.setElementFont(self.l.celServiceNumber, self.ServiceNumberFont)
 		self.l.setElementFont(self.l.celServiceInfo, self.ServiceInfoFont)
@@ -331,7 +323,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 		self.l.setItemHeight(self.ItemHeight)
 		self.l.setVisualMode(eListboxServiceContent.visModeComplex)
 
-		if config.usage.service_icon_enable.value:
+		if config.usage.service_icon_enable.getValue():
 			self.l.setGetPiconNameFunc(getPiconName)
 		else:
 			self.l.setGetPiconNameFunc(None)
@@ -339,19 +331,19 @@ class ServiceList(HTMLComponent, GUIComponent):
 		progressBarWidth = 52
 		rowWidth = self.instance.size().width() - 30 #scrollbar is fixed 20 + 10 Extra marge
 
-		if mode == self.MODE_NORMAL or not config.usage.show_channel_numbers_in_servicelist.value:
+		if mode == self.MODE_NORMAL or not config.usage.show_channel_numbers_in_servicelist.getValue():
 			channelNumberWidth = 0
 			channelNumberSpace = 0
 		else:
-			channelNumberWidth = config.usage.alternative_number_mode.value and 55 or 63
+			channelNumberWidth = config.usage.alternative_number_mode.getValue() and 55 or 63
 			channelNumberSpace = 10
 
 		self.l.setElementPosition(self.l.celServiceNumber, eRect(0, 0, channelNumberWidth, self.ItemHeight))
 
-		if "left" in config.usage.show_event_progress_in_servicelist.value:
+		if "left" in config.usage.show_event_progress_in_servicelist.getValue():
 			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(channelNumberWidth+channelNumberSpace, 0, progressBarWidth , self.ItemHeight))
 			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace+progressBarWidth+10, 0, rowWidth - (channelNumberWidth+channelNumberSpace+progressBarWidth+10), self.ItemHeight))
-		elif "right" in config.usage.show_event_progress_in_servicelist.value:
+		elif "right" in config.usage.show_event_progress_in_servicelist.getValue():
 			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(rowWidth-progressBarWidth, 0, progressBarWidth, self.ItemHeight))
 			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace, 0, rowWidth - (channelNumberWidth+channelNumberSpace+progressBarWidth+10), self.ItemHeight))
 		else:
@@ -360,8 +352,6 @@ class ServiceList(HTMLComponent, GUIComponent):
 		self.l.setElementFont(self.l.celServiceName, self.ServiceNameFont)
 		self.l.setElementFont(self.l.celServiceNumber, self.ServiceNumberFont)
 		self.l.setElementFont(self.l.celServiceInfo, self.ServiceInfoFont)
-		if "perc" in config.usage.show_event_progress_in_servicelist.value:
+		if "perc" in config.usage.show_event_progress_in_servicelist.getValue():
 			self.l.setElementFont(self.l.celServiceEventProgressbar, self.ServiceInfoFont)
-		self.l.setServiceTypeIconMode(int(config.usage.servicetype_icon_mode.value))
-		self.l.setCryptoIconMode(int(config.usage.crypto_icon_mode.value))
-		self.l.setColumnWidth(int(config.usage.servicelist_column.value))
+		self.l.setServiceTypeIconMode(int(config.usage.servicetype_icon_mode.getValue()))

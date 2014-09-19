@@ -4,9 +4,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: enigma2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-05-03 18:32+0100\n"
-"PO-Revision-Date: 2014-05-04 14:34+0100\n"
-"Last-Translator: Stig-O <stiose@hotmail.com>\n"
+"POT-Creation-Date: 2014-04-06 03:53+0100\n"
+"PO-Revision-Date: 2014-04-07 20:42+0100\n"
+"Last-Translator: Koivo <koivo@hdfreaks.cc>\n"
 "Language-Team: Stig-O\n"
 "Language: nb_NO\n"
 "MIME-Version: 1.0\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
-"X-Generator: Poedit 1.6.3\n"
+"X-Generator: Poedit 1.6.4\n"
 
 #
 msgid ""
@@ -132,19 +132,6 @@ msgstr " (Radio)"
 
 msgid " (TV)"
 msgstr " (TV)"
-
-#
-msgid " (disabled)"
-msgstr "(deaktivert)"
-
-msgid " (higher than any auto)"
-msgstr "(høyere enn noen auto)"
-
-msgid " (higher than rotor any auto)"
-msgstr "(høyere enn rotor noen auto)"
-
-msgid " (lower than any auto)"
-msgstr "(lavere enn noen auto)"
 
 msgid " and"
 msgstr "og"
@@ -704,14 +691,16 @@ msgstr ""
 msgid "A/V settings"
 msgstr "A/V-Innstillinger"
 
+#
+msgid "AA"
+msgstr "AA"
+
 msgid "AAC downmix"
 msgstr "AAC downmix"
 
-msgid "AAC transcoding"
-msgstr "AAC omkoding"
-
-msgid "AC3"
-msgstr "AC3"
+#
+msgid "AB"
+msgstr "AB"
 
 msgid "ACQUIRING TSID/ONID"
 msgstr "ACQUIRING TSID/ONID"
@@ -897,10 +886,6 @@ msgstr ""
 "lukke Video-Finjustering, eller bruk nummer knapper for å velge andre "
 "testbilder"
 
-#
-msgid "Advanced"
-msgstr "Avansert"
-
 msgid "Advanced options"
 msgstr "Avanserte innstillinger"
 
@@ -939,17 +924,8 @@ msgstr "Alle aldre"
 msgid "All resolutions"
 msgstr "Alle oppløsninger"
 
-msgid "All satellites 1 (DiSEqC mode 1.2)"
-msgstr "Alle satelliter 1 (DiSEqC mode 1.2)"
-
-msgid "All satellites 2 (DiSEqC mode 1.2)"
-msgstr "Alle satelliter 2 (DiSEqC mode 1.2)"
-
-msgid "All satellites 3 (DiSEqC mode 1.2)"
-msgstr "Alle satelliter 3 (DiSEqC mode 1.2)"
-
-msgid "All satellites 4 (DiSEqC mode 1.2)"
-msgstr "Alle satelliter 4 (DiSEqC mode 1.2)"
+msgid "All satellites"
+msgstr "Alle Satellitter"
 
 msgid "Allocate"
 msgstr "Tildele"
@@ -1294,6 +1270,14 @@ msgstr "Tilgjengelige delinger:"
 #
 msgid "B"
 msgstr "B"
+
+#
+msgid "BA"
+msgstr "BA"
+
+#
+msgid "BB"
+msgstr "BB"
 
 #
 msgid "Back"
@@ -1813,9 +1797,6 @@ msgstr "Velg tidsintervall som grafikken vil bli avrundet til."
 msgid "Choose what you want the '0' button to do when PIP is active."
 msgstr "Velg hva du vil at knappen '0' skal gjøre når BiB er aktiv."
 
-msgid "Choose whether AAC sound tracks should be transcoded."
-msgstr "Velg om flerkanals lydspor bør nedmikses til stereo."
-
 msgid ""
 "Choose whether multi channel sound tracks should be downmixed to stereo."
 msgstr "Velg om flerkanals lydspor bør nedmikses til stereo."
@@ -1940,6 +1921,10 @@ msgid "Command type"
 msgstr "Kommando type"
 
 #
+msgid "Committed DiSEqC command"
+msgstr "Committed DiSEqC kommando"
+
+#
 msgid "Common Interface"
 msgstr "Common Interface"
 
@@ -2006,11 +1991,6 @@ msgstr ""
 
 msgid "Configure how recording filenames are constructed."
 msgstr "Konfigurer hvordan opptakets filnavn er konstruert."
-
-msgid ""
-"Configure if and how crypto icons will be shown in the channel selection "
-"list."
-msgstr "Konfigurer om og hvordan kanal ikon vil bli vist i kanallisten."
 
 msgid "Configure if and how service type icons will be shown."
 msgstr "Konfigurere om og hvordan kanalens ikoner vil bli vist."
@@ -2603,9 +2583,6 @@ msgstr "DMM avanserte"
 msgid "DMM normal"
 msgstr "DMM normal"
 
-msgid "DTS"
-msgstr "DTS"
-
 #
 msgid "DUAL LAYER DVD"
 msgstr "DOBBEL LAGS DVD"
@@ -2814,18 +2791,6 @@ msgid "DiSEqC"
 msgstr "DiSEqC"
 
 #
-msgid "DiSEqC 1.0 command"
-msgstr "DiSEqC 1.0 kommando"
-
-#
-msgid "DiSEqC 1.1 command"
-msgstr "DiSEqC 1.1 kommando"
-
-#
-msgid "DiSEqC 1.1 repeats"
-msgstr "DiSEqC 1.1 repeterer"
-
-#
 msgid "DiSEqC A/B"
 msgstr "DiSEqC A/B"
 
@@ -2840,6 +2805,10 @@ msgstr "DiSEqC-Modus"
 #, python-format
 msgid "DiSEqC port %s: %s"
 msgstr "DiSEqC port %s: %s"
+
+#
+msgid "DiSEqC repeats"
+msgstr "DiSEqC gjentakelser"
 
 #
 msgid "DiSEqC-tester settings"
@@ -2972,9 +2941,6 @@ msgid ""
 msgstr ""
 "Vil du virkelig formatere enheten?\n"
 "Alle data på enheten vil forsvinner!"
-
-msgid "Do you really want to move to trashcan ?"
-msgstr "Ønsker du virkelig å flytte til søppelbøtta?"
 
 #, python-format
 msgid "Do you really want to permamently remove '%s' from trash can ?"
@@ -3388,10 +3354,6 @@ msgstr ""
 
 msgid "Entitlements"
 msgstr "Rettigheter"
-
-#
-msgid "Equal to"
-msgstr "Samme som"
 
 #
 msgid "Error"
@@ -4756,10 +4718,6 @@ msgstr "Langt tastetrykk"
 msgid "Longitude"
 msgstr "Lengdegrad"
 
-#
-msgid "Loop through to"
-msgstr "Loop til"
-
 msgid "Luxembourgish"
 msgstr "Luxembourgsk"
 
@@ -4806,10 +4764,6 @@ msgstr "Behandle utvidelser"
 #, python-format
 msgid "Manage your %s %s's software"
 msgstr "Behandle din %s %s programvare"
-
-#
-msgid "Manual"
-msgstr "Manuell"
 
 #
 msgid "Manual Scan"
@@ -5478,10 +5432,6 @@ msgstr "Vises ikke"
 msgid "Not associated"
 msgstr "Ikke assosiert"
 
-#
-msgid "Not configured"
-msgstr "Ikke konfigurert"
-
 #, python-format
 msgid ""
 "Not enough disk space. Please free up some disk space and try again. (%d MB "
@@ -5513,10 +5463,6 @@ msgstr "Ikke Assosiert"
 #
 msgid "Nothing"
 msgstr "Ingenting"
-
-#
-msgid "Nothing connected"
-msgstr "Ingenting tilkoblet"
 
 #
 msgid ""
@@ -5710,8 +5656,9 @@ msgstr "PLP ID"
 msgid "PMT PID"
 msgstr "PMT PID"
 
+#, fuzzy
 msgid "PRIMETIME"
-msgstr "BESTE SENDETID"
+msgstr "PRIMETIME"
 
 #
 msgid "Package list update"
@@ -7147,10 +7094,6 @@ msgid "Searching west ..."
 msgstr "Søking vest..."
 
 #
-msgid "Second cable of motorized LNB"
-msgstr "Sekundær kabel til motorisert LNB"
-
-#
 msgid "Secondary DNS"
 msgstr "Sekundær DNS"
 
@@ -7324,6 +7267,10 @@ msgstr "Send"
 
 msgid "Send Confirmation"
 msgstr "Send bekreftelse"
+
+#
+msgid "Send DiSEqC"
+msgstr "Send DiSEqC"
 
 #
 msgid "Send DiSEqC only on satellite change"
@@ -7738,10 +7685,6 @@ msgstr "Vis kanalnummer i infolinjen"
 msgid "Show channel numbers in channel selection"
 msgstr "Vis kanalnummer i kanalvalg"
 
-#
-msgid "Show crypto icons"
-msgstr "Vis kanaltype ikoner"
-
 msgid "Show crypto info in infobar"
 msgstr "Vis crypto info i Infovindu"
 
@@ -8134,17 +8077,11 @@ msgstr "Sorte"
 msgid "Sort EPG List"
 msgstr "Sorter EPG Liste"
 
-msgid "Sort by"
-msgstr "Sorter etter"
-
 msgid "Sort by default"
 msgstr "Sorter etter standard"
 
 msgid "Sort list by"
 msgstr "Sorter listen etter"
-
-msgid "Sort list:"
-msgstr "Sorter listen etter:"
 
 msgid "Sort menu screens alphabetically"
 msgstr "Sorter menyene alfabetisk"
@@ -8198,10 +8135,6 @@ msgstr "Standby / Restart"
 #
 msgid "Standby / restart"
 msgstr "Dvalemodus / Restart"
-
-#
-msgid "StandbyLED"
-msgstr "StandbyLED"
 
 msgid "Start"
 msgstr "Start"
@@ -9519,9 +9452,6 @@ msgstr "Tuner :"
 msgid "Tuner configuration"
 msgstr "Tuner konfigurasjon"
 
-msgid "Tuner is not supported"
-msgstr "Tuner støttes ikke"
-
 msgid "Tuner settings"
 msgstr "Tuner innstillinger"
 
@@ -9546,9 +9476,6 @@ msgstr "Tuning trinn størrelse"
 #
 msgid "Turkish"
 msgstr "Tyrkisk"
-
-msgid "Turn on the power LED during standby."
-msgstr "Slå på strøm LED under standby."
 
 #
 msgid "Two"
@@ -9581,6 +9508,10 @@ msgstr "USB pinne veiviseren"
 
 msgid "Unattended upgrade without GUI and reboot system"
 msgstr "Uovervåket oppgradering uten GUI og restart system"
+
+#
+msgid "Uncommitted DiSEqC command"
+msgstr "Uncommitted DiSEqC kommando"
 
 msgid "Undetermined"
 msgstr "Ubestemt"
@@ -11764,9 +11695,6 @@ msgstr "Ingen"
 msgid "normal"
 msgstr "normal"
 
-msgid "not available"
-msgstr "ikke tilgjengelig"
-
 #
 msgid "not configured"
 msgstr "ikke konfigurert"
@@ -12246,6 +12174,9 @@ msgstr "turisme/reise"
 msgid "true"
 msgstr "sant"
 
+msgid "tuner is not supported"
+msgstr "tuner er ikke støttet"
+
 msgid "uShare Log"
 msgstr "uShare Logg"
 
@@ -12407,3 +12338,15 @@ msgstr "zapped"
 
 #~ msgid "3d mode"
 #~ msgstr "3d mode"
+
+#~ msgid "Adjust 3D settings"
+#~ msgstr "Juster 3D innstillinger"
+
+#~ msgid "Advanced video setup"
+#~ msgstr "Avansert video oppsett"
+
+#~ msgid "Display"
+#~ msgstr "Vis"
+
+#~ msgid "Lamedb"
+#~ msgstr "Lamedb"
