@@ -1,4 +1,4 @@
-enigma2
+enigma2 for test
 =======
 
-OpenDroid gui
+OpenDroid gui sh4 box
